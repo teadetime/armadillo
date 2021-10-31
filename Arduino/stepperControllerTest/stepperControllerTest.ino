@@ -38,7 +38,7 @@ void loop() {
   int sensorReading = analogRead(A0);
   Serial.println(sensorReading);
   // map it to a range from 0 to 100:
-  int motorSpeed = map(sensorReading, 0, 1023, 0, 255);
+  int motorSpeed = map(sensorReading, 0, 1023, 0, 8000);
   // set the motor speed:
   if (motorSpeed > 0) {
     stepper1.setSpeed(motorSpeed);
