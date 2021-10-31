@@ -24,7 +24,8 @@ const int stepsPerRevolution = 200;  // change this to fit the number of steps p
 
 
 // initialize the stepper library on pins 8 through 11:
-Stepper myStepper(stepsPerRevolution, 8, 9, 10, 11);
+Stepper stepper1(stepsPerRevolution, 2, 3, 10, 11);
+Stepper stepper2(stepsPerRevolution, 8, 9, 10, 11);
 
 int stepCount = 0;  // number of steps the motor has taken
 
@@ -37,12 +38,14 @@ void loop() {
   int sensorReading = analogRead(A0);
   Serial.println(sensorReading);
   // map it to a range from 0 to 100:
-  int motorSpeed = map(sensorReading, 0, 1023, 0, 100);
+  int motorSpeed = map(sensorReading, 0, 1023, 0, 255);
   // set the motor speed:
   if (motorSpeed > 0) {
-    myStepper.setSpeed(motorSpeed);
+    stepper1.setSpeed(motorSpeed);
+    stepper2.setSpeed(motorSpeed);
     // step 1/100 of a revolution:
-    myStepper.step(stepsPerRevolution / 100);
+    stepper1.step(stepsPerRevolution / 100);
+    stepper2.step(stepsPerRevolution / 100);
   }
 }
 
