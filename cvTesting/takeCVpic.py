@@ -1,5 +1,7 @@
 import cv2
 
+import os
+
 cam = cv2.VideoCapture(0)
 
 cv2.namedWindow("test")
@@ -20,11 +22,10 @@ while True:
         break
     elif k%256 == 32:
         # SPACE pressed
-        img_name = "opencv_frame_{}.png".format(img_counter)
+        img_name = "test_frames/frame_{}.png".format(img_counter)
         cv2.imwrite(img_name, frame)
         print("{} written!".format(img_name))
         img_counter += 1
 
 cam.release()
-
 cv2.destroyAllWindows()

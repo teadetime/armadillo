@@ -29,6 +29,7 @@ class ShapeDetector:
 			# bounding box to compute the aspect ratio
             (x, y, w, h) = cv2.boundingRect(approx)
             print(x, y, w, h)
+            print(f"Ratio of w/h: {w/h}")
             ar = w / float(h)
 			# a square will have an aspect ratio that is approximately
 			# equal to one, otherwise, the shape is a rectangle
@@ -43,6 +44,9 @@ class ShapeDetector:
 # load the image and resize it to a smaller factor so that
 # the shapes can be approximated better
 image = cv2.imread(args["image"])
+if not image.any():
+    print("Couldn't load image")
+
 resized = imutils.resize(image, width=600)
 ratio = image.shape[0] / float(resized.shape[0])
 print(ratio)
@@ -62,9 +66,6 @@ cv2.imshow("Threshold Binary", thresh)
 cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
 	cv2.CHAIN_APPROX_SIMPLE)
 cnts = imutils.grab_contours(cnts)
-sd = ShapeDetector()
-
-
 
 
 # loop over the contours
@@ -72,7 +73,15 @@ for c in cnts:
 	# compute the center of the contour, then detect the name of the
 	# shape using only the contour
     rot_rect = cv2.minAreaRect(c)
-    print(f"Center(x,y): {rot_rect[0]}, Width,Height: {rot_rect[1]}, rotation: {rot_rect[2]}")
+    rotation = rot_rect[2]
+    print(f"Center(x,y): {rot_rect[0]}, Width,Height: {rot_rect[1]}, rotation: {rotation}")
+    if rot_rect[1][0] <= rot_rect[1][1]:
+        # This means the block is in a certain orientation
+        print("Apply offset ")
+        rotation += 90
+
+    print(f"realrotation: {rotation}")
+    print(f"Ratio of w/h: {rot_rect[1][0]/rot_rect[1][1]}")
     box = cv2.boxPoints(rot_rect)* ratio
     box = np.int0(box)
     print(box)
