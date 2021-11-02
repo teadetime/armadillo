@@ -1,5 +1,18 @@
 #include <AccelStepper.h>
 
+#define dirPin1 2
+#define stepPin1 3
+#define motorInterfaceType 1
+
+#define dirPin2 4
+#define stepPin2 5
+#define motorInterfaceType 1
+
+AccelStepper stepper1 = AccelStepper(motorInterfaceType, stepPin1, dirPin1);
+AccelStepper stepper2 = AccelStepper(motorInterfaceType, stepPin2, dirPin2);
+
+
+
 #define L1 180 // millimeters
 #define L2 180 // millimeters
 #define PI 3.1415926535
@@ -58,11 +71,64 @@ int stepCount = 0;  // number of steps the motor has taken
 
 void setup() {
   Serial.begin(115200);
-  setXYZ(100, 100, 25); // initializes the target desination and prepares the motors to move
+  stepper1.setMaxSpeed(500);
+  stepper1.setSpeed(50);
+  stepper1.setCurrentPosition(0);
+
+  stepper2.setMaxSpeed(500);
+  stepper2.setCurrentPosition(0);
+
+  long steppy = 50;
+
+  stepper1.moveTo(steppy);
+
+
+  
+//  setXYZ(100, 100, 25); // initializes the target desination and prepares the motors to move
 }
 
 void loop() {
-    printTarget(); // what is the target destination in terms of arm angles?
-    printMotors(); // what is the current location of all the angles?
-    runMotors(); // needs to be run every loop cycle
+  stepper1.run();
+//  stepper1.moveTo(steppy);
+//  stepper1.run();
+//  stepper2.moveTo(50);
+  
+
+//  stepper1.moveTo(-steppy);
+//  stepper1.run();
+
+
+
+
+  Serial.print("motorThetaBase: "); Serial.print(stepper1.currentPosition()); Serial.print("\t");
+  Serial.print("motorPhiBase: "); Serial.print(stepper2.currentPosition()); Serial.print("\n");
+ 
+  
+//  while((stepper1.currentPosition() != 50) && (stepper2.currentPosition() != 50))
+//  {
+//    stepper1.setSpeed(50);
+//    stepper2.setSpeed(50);
+//    
+//    stepper1.runSpeed();
+//    stepper2.runSpeed();
+//  }
+//
+//  delay(1000);
+//  
+//  stepper1.setCurrentPosition(0);
+//  stepper2.setCurrentPosition(0);
+//  
+//  while((stepper1.currentPosition() != -50) && (stepper2.currentPosition() != -50))
+//  {
+//    stepper1.setSpeed(-50);
+//    stepper2.setSpeed(-50);
+//    
+//    stepper1.runSpeed();
+//    stepper2.runSpeed();
+//  }
+//  delay(1000);
+  
+//    printTarget(); // what is the target destination in terms of arm angles?
+//    printMotors(); // what is the current location of all the angles?
+//    runMotors(); // needs to be run every loop cycle
 }
