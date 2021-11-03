@@ -2,6 +2,7 @@ import serial
 import serial.tools.list_ports as list_ports
 import string, array
 from datetime import datetime
+import time
 
 class Serial_cmd:
     Arduino_IDs = ((0x2341, 0x0043), (0x2341, 0x0001), 
@@ -39,41 +40,89 @@ class Serial_cmd:
         if self.connected:
             return self.dev.readline().decode()
 
-    def get_yellow(self):
-        if self.connected:
-            self.write('YELLOW?')
-            return int(self.read(), 16)
+    # def get_yellow(self):
+    #     if self.connected:
+    #         self.write('YELLOW?')
+    #         return int(self.read(), 16)
 
-    def set_yellow(self, val):
-        if self.connected:
-            self.write('YELLOW!{:X}'.format(int(val)))
+    # def set_yellow(self, val):
+    #     if self.connected:
+    #         self.write('YELLOW!{:X}'.format(int(val)))
+
+def createMessage(jPos, vac, speed, startChar = '<', endChar = '>', sep = ','):
+    """
+    Sends form startChar j1,j2,j3,j4,vac,speed endChar
+    ie. <0,20,30,50,1.0,50>
+    """
+    # Make sure that jPos etc are trimmed to x decimals
+    # Should we send angles or steps?
+    message = (startChar+str(jPos[0])+sep+str(jPos[1])
+                +sep+str(jPos[2])+sep+str(jPos[3])+sep+str(vac)+sep+str(speed)+endChar)
+    return message
+
+def sendMessage(message):
+    s.write(message)
+    return message
+
+def worldToJoint(xyzPos):
+    jPos = xyzPos
+    return jPos
+
+def waitForArduino():
+    # Established serial connection
+    while 1:
+        var = s.dev.read().decode()
+        print(f"{var, type(var)}")
+        if var == startChar:
+            s.write('A')
+            print("Handshake Done!")
+            s.dev.reset_input_buffer() # may be uneccessary
+            # state = 1
+            # start = datetime.now()
+            break
 
 
 if __name__=='__main__':
     startChar = 'A'
-    state = 0
+    state = 1
     stop = False
-    s = Serial_cmd()
     test_vals = []
-    start = 0 
+    
+    history = []
+    messToSend = 5
+    counter = 0
+
+    last_send_time = datetime.now()
+    messageSpacing = 1
+    s = Serial_cmd()
+    if not s.connected:
+        print("Please Connect Arduino")
+        quit()
+
+    waitForArduino()
+    start = datetime.now()
     while not stop:
-        if state == 0:
-            ## Established serial connection
-            var = s.dev.read().decode()
-            print(f"{var, type(var)}")
-            if var == startChar:
-                s.write('A')
-                print("Handshake Done!")
-                state = 1
-                start = datetime.now()
-                continue
         if state == 1:  
-            data = s.read().strip()[1:-1]
-            #print(data)
+            data = s.read().strip()#[1:-1]
+
+            seconds = datetime.now()-last_send_time
+
+
+            if seconds.total_seconds() > messageSpacing:
+                # Send a message
+                jPos = (0,1,2.0,3)
+                nextPoint = createMessage(jPos,1.0,40.0)
+                sendMessage(nextPoint)
+                history.append((nextPoint, datetime.now))
+                last_send_time = datetime.now()
+            print(data)
             test_vals.append(data)
-            if len(test_vals) >= 1000:
+
+            if len(test_vals) >= 500:
+                state = 2
                 stop = True
-    print(f"first:{test_vals[0]} last: {test_vals[-1]}, Count:{len(test_vals)}")
-    seconds = datetime.now()-start
-    seconds = seconds.total_seconds()
-    print(f"total time: {seconds}, Hz: {len(test_vals)/seconds}")
+                print(f"first:{test_vals[0]} last: {test_vals[-1]}, Count:{len(test_vals)}")
+                seconds = datetime.now()-start
+                seconds = seconds.total_seconds()
+                print(f"total time: {seconds}, Hz: {len(test_vals)/seconds}")
+
