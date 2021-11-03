@@ -83,7 +83,7 @@ void setup() {
   stepper1.moveTo(steppy);
 
 
-  
+
 //  setXYZ(100, 100, 25); // initializes the target desination and prepares the motors to move
 }
 
@@ -92,7 +92,7 @@ void loop() {
 //  stepper1.moveTo(steppy);
 //  stepper1.run();
 //  stepper2.moveTo(50);
-  
+
 
 //  stepper1.moveTo(-steppy);
 //  stepper1.run();
@@ -102,32 +102,32 @@ void loop() {
 
   Serial.print("motorThetaBase: "); Serial.print(stepper1.currentPosition()); Serial.print("\t");
   Serial.print("motorPhiBase: "); Serial.print(stepper2.currentPosition()); Serial.print("\n");
- 
-  
+
+
 //  while((stepper1.currentPosition() != 50) && (stepper2.currentPosition() != 50))
 //  {
 //    stepper1.setSpeed(50);
 //    stepper2.setSpeed(50);
-//    
+//
 //    stepper1.runSpeed();
 //    stepper2.runSpeed();
 //  }
 //
 //  delay(1000);
-//  
+//
 //  stepper1.setCurrentPosition(0);
 //  stepper2.setCurrentPosition(0);
-//  
+//
 //  while((stepper1.currentPosition() != -50) && (stepper2.currentPosition() != -50))
 //  {
 //    stepper1.setSpeed(-50);
 //    stepper2.setSpeed(-50);
-//    
+//
 //    stepper1.runSpeed();
 //    stepper2.runSpeed();
 //  }
 //  delay(1000);
-  
+
 //    printTarget(); // what is the target destination in terms of arm angles?
 //    printMotors(); // what is the current location of all the angles?
 //    runMotors(); // needs to be run every loop cycle
