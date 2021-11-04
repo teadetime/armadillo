@@ -33,8 +33,9 @@ boolean newData = false;
 
 bool moving = false;        //Set to true to if executing a move command
 boolean objectiveInProgress = false;  // Switches to true when waiting to send a specific response
-boolean debug = true;      // Flag for debuggin data NOT IN USE
+boolean debug = true;       // Flag for debuggin data NOT IN USE
 
+byte microStep = 32;
 
 /////////////////////////////////
 //Used for reporting RobotState//
@@ -50,12 +51,12 @@ void setup() {
   // put your setup code here, to run once:
   messTime = millis();
   stepper1.setMaxSpeed(1000);
-  stepper1.setSpeed(5000);
+  stepper1.setSpeed(4000);
   stepper1.setCurrentPosition(0);
   stepper1.setAcceleration(1500);
 
   stepper2.setMaxSpeed(1000);
-  stepper2.setSpeed(5000);
+  stepper2.setSpeed(4000);
   stepper2.setCurrentPosition(0);
   stepper2.setAcceleration(1500);
 
@@ -74,8 +75,7 @@ void loop() {
   stepper2.run();
 
   // Only Send Status if we are moving
-  //if (moving && objectiveInProgress && it_is_time(currTime, messTime, messInt)) {
-  if (it_is_time(currTime, messTime, messInt)) {
+  if (moving && objectiveInProgress && it_is_time(currTime, messTime, messInt)) {
     numMessages += 1;
     messTime = currTime;
     //////////////////
@@ -128,6 +128,9 @@ void loop() {
         }
         break;
       case messCharHome:
+        
+
+      
         resetSteppers();
         sendObjectiveCompleted(objectiveType, messCharSuccess);
         objectiveInProgress = false;

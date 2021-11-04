@@ -65,7 +65,33 @@ splitChar = ","
 infoList = []
 lastObjective = ''
 
-def createMessage(messageType, jPos, vac, speed, startChar = '<', endChar = '>', sep = ','):
+
+"""
+Commands and Repsonses(->)
+# MOVE
+<M, 24, 0, 0, 2, 0, 50> # Send a Move command IN STEPS
+-> <M, Y> Success
+-> <M, N> Failure
+
+# HOME
+<H, 0, 0, 0, 0, 0, 0> # ONLY THE H IS READ, starts a homing proceedure
+-> <H, Y> Success (Homing angles are known in Pyhton already obviously 0 steps maps to those angles)
+-> <M, N> Failure
+
+# INFO
+<I,> # INFO Get info of robot arm
+-> <I,j1,j2,j3,j4,vac,speed>
+
+# SETUP
+<S, microstep > # Other things that need to be changed? speed? Speed is same for all motors?
+-> <S, Y> # Microstepping set (should update speeds and accelerations)
+
+# CONTROL
+<C, Stop, Pause, DisableMotors > # Priority left to right set to 1 or zero, could be 0,1, or 2 also?
+-> <C, Y> # Control Done, should ech back what it did?
+
+"""
+def createMessage(messageType, jPos=(0,0,0,0), vac = 0, speed = 0, startChar = '<', endChar = '>', sep = ','):
     """
     Sends form startChar j1,j2,j3,j4,vac,speed endChar
     ie. <0,20,30,50,1.0,50>
@@ -135,6 +161,12 @@ if __name__=='__main__':
 
     waitForArduino()
     
+    # Initiate Homing Proceedure
+    # nextPoint = createMessage(home)
+    # s.write(nextPoint)
+    # result = waitForResponse()
+
+
     jPosList = [
                 (-0,0,0,0),
 
@@ -151,7 +183,7 @@ if __name__=='__main__':
     #for jengaBlock in range(54):
     for jPos in jPosList: 
         # Calculate position
-        # layer = jengaBlock//3 + 1
+        # layer = jengaBlock // 3 + 1
         # rotation = (layer % 2) * 90
         # position = (jengaBlock) % 3
         #jPos = (jengaBlock*10,0,0,0)
@@ -163,6 +195,3 @@ if __name__=='__main__':
         result = waitForResponse()
         print(result)
         #time.sleep(1)
-
-
-        
