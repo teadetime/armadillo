@@ -184,7 +184,6 @@ void showParsedData() {
 
 void sendObjectiveCompleted() {
   Serial.print(startMarker);
-  Serial.print();
   Serial.println(endMarker);
 }
 
