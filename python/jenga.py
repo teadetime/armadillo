@@ -135,19 +135,34 @@ if __name__=='__main__':
 
     waitForArduino()
     
+    jPosList = [
+                (-0,0,0,0),
 
+                (0,-1000,0,0),
+                # (0,80,0,0),
+                # (0,-150,0,0),
+                # (0,0,0,0),
+
+                (800,-600,0,0),
+
+                (0,0,0,0)
+                ]
     last_send_time = datetime.now()
-    for jengaBlock in range(54):
+    #for jengaBlock in range(54):
+    for jPos in jPosList: 
         # Calculate position
-        layer = jengaBlock//3 + 1
-        rotation = (layer % 2) * 90
-        position = (jengaBlock) % 3
-        jPos = (jengaBlock*10,0,0,0)
+        # layer = jengaBlock//3 + 1
+        # rotation = (layer % 2) * 90
+        # position = (jengaBlock) % 3
+        #jPos = (jengaBlock*10,0,0,0)
 
-        print(f"Working on Block:{jengaBlock+1} Layer:{layer}, rotation:{rotation}, position {position} ")
+        # print(f"Working on Block:{jengaBlock+1} Layer:{layer}, rotation:{rotation}, position {position} ")
         nextPoint = createMessage(move,jPos,1.0,40.0)
         s.write(nextPoint)
         print(f"sent message: {nextPoint}")
         result = waitForResponse()
         print(result)
-        time.sleep(2)
+        #time.sleep(1)
+
+
+        

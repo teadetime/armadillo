@@ -50,14 +50,14 @@ void setup() {
   // put your setup code here, to run once:
   messTime = millis();
   stepper1.setMaxSpeed(1000);
-  stepper1.setSpeed(1000);
+  stepper1.setSpeed(5000);
   stepper1.setCurrentPosition(0);
-  stepper1.setAcceleration(50);
+  stepper1.setAcceleration(1500);
 
   stepper2.setMaxSpeed(1000);
-  stepper2.setSpeed(500);
+  stepper2.setSpeed(5000);
   stepper2.setCurrentPosition(0);
-  stepper2.setAcceleration(25);
+  stepper2.setAcceleration(1500);
 
   objectiveStartTime = messTime;    // Set this to the current time
   Serial.begin(115200);     // Fast Baud to send data more quickly!
@@ -119,7 +119,7 @@ void loop() {
   if (objectiveInProgress) {
     switch (objectiveType) {
       case messCharMove:
-        if (!motorsMoving() || debug) {
+        if (!motorsMoving()) {
           // Send Objective completed message
           objectiveInProgress = false;
           moving = false;
