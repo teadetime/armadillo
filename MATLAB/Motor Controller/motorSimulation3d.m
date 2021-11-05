@@ -12,7 +12,7 @@ c = L2;
 
 phiBase = -(acos((a .^ 2 + b .^ 2 - c .^ 2) ./ (2 .* a .* b)) + atan(Pz ./ sqrt(Px .^ 2 + Py .^ 2))) + pi ./ 2; % Base vertical
 phiArm = -acos((-cos(phiBase) .* L1 + Pz) ./ L2); % Elbow
-thetaBase = asin(Py ./ sqrt(Px .^ 2 + Py .^ 2)); % Base lateral
+thetaBase = atan2(Py, Px); % Base lateral
 Angle = table(phiBase, phiArm, thetaBase);
 
 X1 = L1 .* sin(Angle.phiBase) .* cos(Angle.thetaBase);
@@ -69,6 +69,5 @@ figure(2);
            thetaBase(ii), phiBase(ii), phiArm(ii)))
        drawnow;
        pause(0.015);
-       [caz, cel]
     end
 % end
