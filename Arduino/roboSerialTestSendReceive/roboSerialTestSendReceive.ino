@@ -2,8 +2,9 @@
 //Stepper Setup//
 /////////////////
 #include <AccelStepper.h>
-AccelStepper stepper1(1, 5, 4);
-AccelStepper stepper2(1, 3, 2);
+AccelStepper stepper1(1, 3, 2);
+AccelStepper stepper2(1, 5, 4);
+AccelStepper stepper3(1, 9, 8);
 
 
 ////////////////////////////
@@ -50,15 +51,20 @@ bool it_is_time(uint32_t t, uint32_t t0, uint16_t dt);
 void setup() {
   // put your setup code here, to run once:
   messTime = millis();
-  stepper1.setMaxSpeed(1000);
+  stepper1.setMaxSpeed(2000);
   stepper1.setSpeed(4000);
   stepper1.setCurrentPosition(0);
   stepper1.setAcceleration(1500);
 
-  stepper2.setMaxSpeed(1000);
+  stepper2.setMaxSpeed(2000);
   stepper2.setSpeed(4000);
   stepper2.setCurrentPosition(0);
   stepper2.setAcceleration(1500);
+  
+  stepper3.setMaxSpeed(1000);
+  stepper3.setSpeed(1000);
+  stepper3.setCurrentPosition(0);
+  stepper3.setAcceleration(1000);
 
   objectiveStartTime = messTime;    // Set this to the current time
   Serial.begin(115200);     // Fast Baud to send data more quickly!
@@ -73,6 +79,7 @@ void loop() {
   // ALwatys have the steppers stay put
   stepper1.run();
   stepper2.run();
+  stepper3.run();
 
   // Only Send Status if we are moving
   if (moving && objectiveInProgress && it_is_time(currTime, messTime, messInt)) {
@@ -109,6 +116,7 @@ void loop() {
         //          stepper2.setAcceleration(vacPC);
         stepper1.moveTo(j1PC);
         stepper2.moveTo(j2PC);
+        stepper3.moveTo(j3PC);
 
       }
     }
@@ -259,29 +267,20 @@ void sendObjectiveCompleted(char objective, char success) {
 void sendRobotState(int message) {
   char sep = ',';
   Serial.print(startMarker);
-  //  Serial.print(j1);
-  //  Serial.print(sep);
-  //  Serial.print(j2);
-  //  Serial.print(sep);
-  //  Serial.print(j3);
-  //  Serial.print(sep);
-  //  Serial.print(j4);
-  //  Serial.print(sep);
-  //  Serial.print(vac);
-  //  Serial.print(sep);
-  //  Serial.print(speed);
   Serial.print(messCharInfo);
   Serial.print(sep);
   Serial.print(stepper1.currentPosition());
   Serial.print(sep);
   Serial.print(stepper2.currentPosition());
+  Serial.print(sep);
+  Serial.print(stepper3.currentPosition());
   //  Serial.print(sep);
   //  Serial.print(stepper1.currentPosition());
   Serial.println(endMarker);
 }
 
 bool motorsMoving() {
-  return (stepper1.isRunning() || stepper2.isRunning());
+  return (stepper1.isRunning() || stepper2.isRunning() || stepper3.isRunning() );
   // return (stepper1.isRunning() || stepper2.isRunning()|| stepper3.isRunning() || servoSPINNING);
 }
 
@@ -291,6 +290,6 @@ bool motorsMoving() {
 void resetSteppers() {
   stepper1.setCurrentPosition(0);
   stepper2.setCurrentPosition(0);
-  // stepper3.setCurrentPosition(0);
+  stepper3.setCurrentPosition(0);
   //TODO 0 of the servo will be constant
 }
