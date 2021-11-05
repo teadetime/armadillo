@@ -2,11 +2,11 @@ L1 = 3;
 L2 = 4;
 c = 1;
 
-Pxs = [1, -1, 1, -1, 1, -1, 1, -1].';
-Pys = [2,  2, 2,  2, 1,  1, 2,  2].';
-Pzs = [2,  2, 2,  2, 3,  3, 4,  4].';
+Pxs = [1, -1, 1, -1, 1, -1, 1, -1, 1, -1].';
+Pys = [2,  2, 2,  2, 1,  1, 2,  2, .5, .5].';
+Pzs = [2,  2, 2,  2, 3,  3, 4,  4, 1, 1].';
 
-nSteps = 10;
+nSteps = 7;
 lenArray = (length(Pxs) - 1) .* nSteps;
 
 Px = zeros(lenArray, 1)
@@ -29,7 +29,7 @@ c = L2;
 
 phiBase = -(acos((a .^ 2 + b .^ 2 - c .^ 2) ./ (2 .* a .* b)) + atan(Pz ./ sqrt(Px .^ 2 + Py .^ 2))) + pi ./ 2; % Base vertical
 phiArm = -acos((-cos(phiBase) .* L1 + Pz) ./ L2); % Elbow
-thetaBase = asin(Py ./ sqrt(Px .^ 2 + Py .^ 2)); % Base lateral
+thetaBase = atan2(Py, Px); % Base lateral
 Angle = table(phiBase, phiArm, thetaBase);
 
 X1 = L1 .* sin(Angle.phiBase) .* cos(Angle.thetaBase);
@@ -65,7 +65,7 @@ ylabel("Y");
 zlabel("Z");
 
 figure(2);
-% while 1
+while 1
     for ii = 1:length(Position.X1)
        clf;
        hold on;
@@ -78,7 +78,8 @@ figure(2);
        plot3(Px, Py, Pz, 'g-');
 
        axis equal;
-       view([ii .* 180 ./ length(Position.X1), ii .* 90 ./ length(Position.X1)]);
+%        view([ii .* 180 ./ length(Position.X1), ii .* 90 ./ length(Position.X1)]);
+        view(3)
        xlim([-5, 5]);
        ylim([-5, 5]);
        zlim([-5, 5]);
@@ -88,4 +89,4 @@ figure(2);
        pause(0.015);
 %        [caz, cel]
     end
-% end
+end
