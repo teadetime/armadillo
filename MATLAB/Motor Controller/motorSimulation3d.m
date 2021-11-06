@@ -10,19 +10,14 @@ a = L1;
 b = sqrt(Px .^ 2 + Pz .^ 2 + Py .^ 2); % Only major difference from 2D version
 c = L2;
 
-phiBase = -(acos((a .^ 2 + b .^ 2 - c .^ 2) ./ (2 .* a .* b)) + atan(Pz ./ sqrt(Px .^ 2 + Py .^ 2))) + pi ./ 2; % Base vertical
-phiArm2 = -acos((-cos(phiBase) .* L1 + Pz) ./ L2); % Elbow
-phiArm =   acos((a .^ 2 + c .^ 2 - b .^ 2) ./ (2 .* a .* c)) + -phiBase - pi
-all(phiArm1 == phiArm2)
-phi = [phiArm1, phiArm2];
-dff = phiArm1 - phiArm2
-
+phiBase = acos((a .^ 2 + b .^ 2 - c .^ 2) ./ (2 .* a .* b)) + atan(Pz ./ sqrt(Px .^ 2 + Py .^ 2)); % Base vertical
+phiArm =   acos((a .^ 2 + c .^ 2 - b .^ 2) ./ (2 .* a .* c)) + phiBase + pi ./ 2;
 thetaBase = atan2(Py, Px); % Base lateral
 Angle = table(phiBase, phiArm, thetaBase);
 
-X1 = L1 .* sin(Angle.phiBase) .* cos(Angle.thetaBase);
-Y1 = L1 .* sin(Angle.phiBase) .* sin(Angle.thetaBase);
-Z1 = L1 .* cos(Angle.phiBase);
+X1 = L1 .* cos(Angle.phiBase) .* cos(Angle.thetaBase);
+Y1 = L1 .* cos(Angle.phiBase) .* sin(Angle.thetaBase);
+Z1 = L1 .* sin(Angle.phiBase);
 % 
 X2 = X1 + L2 .* sin(-Angle.phiArm) .* cos(Angle.thetaBase); % may later be T4
 Y2 = Y1 + L2 .* sin(-Angle.phiArm) .* sin(Angle.thetaBase); % may later be T4
