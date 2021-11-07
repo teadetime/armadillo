@@ -2,6 +2,8 @@ L1 = 3;
 L2 = 4;
 c = 1;
 
+[T, phiBase] = ode45(@(t, x) phiVelocity(-1, 0, 0, x, 3, 3, 5, 5), [0, 2], 5)
+
 Px = linspace(1, 5, 200).';
 Py = Px .* 0.5 .* sin(Px) + 3;
 Pz = 3 .* sin(2 .* Px) + 2;
@@ -70,4 +72,4 @@ zlabel("Z");
 %        drawnow;
 %        pause(0.015);
 %     end
-% % end
+% % end 
