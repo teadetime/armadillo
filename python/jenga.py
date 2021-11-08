@@ -3,6 +3,7 @@ import serial.tools.list_ports as list_ports
 import string, array
 from datetime import datetime
 import time
+import math
 
 class Serial_cmd:
     Arduino_IDs = ((0x2341, 0x0043), (0x2341, 0x0001), 
@@ -166,15 +167,18 @@ if __name__=='__main__':
     # s.write(nextPoint)
     # result = waitForResponse()
 
-
     jPosList = [
         (-0,0,0,0),
-        (400, -100, 200,0),
-        (0,0,0,0),
-        (-400, -250, 0,0),
-        (0,0,0,0),
-        (0,0,300,0),
-        (0,0,0,0),
+        (-0,0,10,0),
+        (-0,0,0,0),
+        # Nicer demo code
+        # (-0,0,0,0),
+        # (400, -100, 200,0),
+        # (0,0,0,0),
+        # (-400, -250, 0,0),
+        # (0,0,0,0),
+        # (0,0,300,0),
+        # (0,0,0,0),
         #2d DMEO CODE
         # (-0,0,0,0),
         # (100, 200,0,0),
@@ -207,3 +211,46 @@ if __name__=='__main__':
         result = waitForResponse()
         print(result)
         #time.sleep(1)
+def worldToJoint((xb,yb,zb), thetab):
+    '''
+    Takes True world frame coordinates of the block! thetab is relative to block
+    '''
+    # First lets assume we are choosing the position of the end effector ie 45*
+    roboBase = (0,0,70)
+
+    thetabRad = math.radians(thetab)
+
+    L1 = 180    # mm  1st Arm length
+    L2 = 180
+    L3 = 40     # mm of end effector
+    #TODO: Update these from CAD
+    servoOffsetArm = 30 #mm offset from the joint of rotation
+    servoOffsetZ = 15 #mm offset from the joint of rotation
+
+    suctionZoffset = 25 #Z offset from servo horn mm
+
+    # Calculate the xyz of arm
+    #First work backwords from block to position the end of servo
+    za = zb + suctionZoffset #Z_arm
+    xa = xb + L3*math.sin(thetabRad)
+    ya = xb - L3*math.cos(math.radians(thetabRad))
+
+    # Now calculate the position of the rotating joint of the arm
+    za -=  servoOffsetZ
+
+    # Time for Law of Cosines
+    effectiveArmShadow = math.sqrt(xa**2 + ya**2)-servoOffsetArm # imagine shinging a light directly above the arm
+    zextra = (za-roboBase(2)) # bottom of law of cosines trinagle
+    a = L1
+    c = L2
+    b = math.sqrt(zextra**2 + effectiveArmShadow**2)
+    
+    gamma = math.atan2(zextra, effectiveArmShadow)
+
+    # NOTE THETSE ARE BOTH Zero when they point straight out
+    theta1 = math.acos((a**2 + b**2 - c**2)/(2*a*b)) + gamma
+    theta2 = math.acos((a**2 - b**2 + c**2)/(2*a*c)) + theta1
+    theta3 = math.atan2(ya, xa) - math.pi/2
+    theta4 = theta1 + thetabRad
+
+    return (theta1, theta2, theta3, theta4)
