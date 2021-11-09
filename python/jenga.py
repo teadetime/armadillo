@@ -65,7 +65,7 @@ splitChar = ","
 
 infoList = []
 lastObjective = ''
-
+microSteps = 32
 
 """
 Commands and Repsonses(->)
@@ -95,7 +95,7 @@ Commands and Repsonses(->)
 def createMessage(messageType, jPos=(0,0,0,0), vac = 0, speed = 0, startChar = '<', endChar = '>', sep = ','):
     """
     Sends form startChar j1,j2,j3,j4,vac,speed endChar
-    ie. <0,20,30,50,1.0,50>
+    ie. <M,0,20,30,50,1.0,50>
     """
     # Make sure that jPos etc are trimmed to x decimals
     # Should we send angles or steps?
@@ -104,10 +104,6 @@ def createMessage(messageType, jPos=(0,0,0,0), vac = 0, speed = 0, startChar = '
     message = (startChar+messageType+sep+str(jPos[0])+sep+str(jPos[1])
                 +sep+str(jPos[2])+sep+str(jPos[3])+sep+str(vac)+sep+str(speed)+endChar)
     return message
-
-def worldToJoint(xyzPos):
-    jPos = xyzPos
-    return jPos
 
 def waitForArduino():
     # Established serial connection
@@ -133,7 +129,7 @@ def waitForResponse():
                 data_tup = tuple('('+data+')')
                 infoList.append(data_tup)
                 if(lastObjective == info):
-                    return True
+                    return data[2:]
                     break
             
             if(data[0] == lastObjective):
@@ -143,6 +139,68 @@ def waitForResponse():
         time.sleep(.05)
     return
 
+def radToSteps(rad, microSteps, stepsRev = 200):
+    '''
+    Conversion from radians to a number of steps 
+    given ceratin steps per revolution and microstepping
+    '''
+    return rad/(2*math.pi) * stepsRev * microSteps
+
+def worldToJoint( coords , thetab):
+    '''
+    Takes True world frame coordinates of the block! thetab is relative to block
+    coords: tuple looks like -> (xb,yb,zb) 
+    '''
+    # First lets assume we are choosing the position of the end effector ie 45*
+    roboBase = (0,0,95) 
+
+    thetabRad = math.radians(thetab)
+
+    L1 = 180    # mm  1st Arm length
+    L2 = 180
+    L3 = 0     # mm of end effector
+    #TODO: Update these from CAD
+    servoOffsetArm = 30 #mm offset from the joint of rotation
+    servoOffsetZ = 15 #mm offset from the joint of rotation
+
+    suctionZoffset = 0 #Z offset from servo horn mm
+
+    # Calculate the xyz of arm
+    #First work backwords from block to position the end of servo
+    za = coords[2] + suctionZoffset #Z_arm
+    xa = coords[0] + L3*math.sin(thetabRad)
+    ya = coords[1] - L3*math.cos(math.radians(thetabRad))
+
+    # Now calculate the position of the rotating joint of the arm
+    za -=  servoOffsetZ
+
+    # Time for Law of Cosines
+    effectiveArmShadow = math.sqrt(xa**2 + ya**2)-servoOffsetArm # imagine shinging a light directly above the arm
+    zextra = (za-roboBase[2]) # bottom of law of cosines trinagle
+    a = L1
+    c = L2
+    b = math.sqrt(zextra**2 + effectiveArmShadow**2)
+    
+    gamma = math.atan2(zextra, effectiveArmShadow)
+
+    # NOTE THETSE ARE BOTH Zero when they point straight out
+    theta2 = math.acos((a**2 + b**2 - c**2)/(2*a*b)) + gamma
+    theta3 = math.acos((a**2 - b**2 + c**2)/(2*a*c)) + theta2
+    theta1 = math.atan2(ya, xa) - math.pi/2
+    theta4 = theta1 + thetabRad
+
+    return (theta1, theta2, theta3, theta4)
+
+def radTupleToSteptuple(jPos):
+    if len(jPos) != 4:
+        print("Error!")
+        return
+    else:
+        step1 = radToSteps(jPos[0], microSteps)
+        step2 = radToSteps(jPos[1], microSteps)
+        step3 = radToSteps(jPos[2], microSteps)
+        step4 = 0
+        return (step1, step2, step3, step4)
 
 if __name__=='__main__':
     startChar = 'A'
@@ -197,60 +255,58 @@ if __name__=='__main__':
                 ]*2
     last_send_time = datetime.now()
     #for jengaBlock in range(54):
-    for jPos in jPosList: 
+    theta1ZeroSteps = radToSteps(0, 32)
+    theta2ZeroSteps = radToSteps(math.pi/2, 32)
+    theta3ZeroSteps = radToSteps(3*math.pi/4, 32)
+    homeTuple = (theta1ZeroSteps,theta2ZeroSteps, theta3ZeroSteps, 0)
+    homingMessage = createMessage(home,homeTuple,0,0)
+    s.write(homingMessage)
+    print(f"Homing: {homingMessage}")
+    result = waitForResponse()
+    print(result)
+
+    test = createMessage(info,(0,0,0,0),0,0)
+    s.write(test)
+    print(f"Test: {test}, {lastObjective}")
+    result = waitForResponse()
+    print(result)
+
+
+
+    # Go to a position
+    jPos = worldToJoint((0,220, 120), 0)
+    stepPos = radTupleToSteptuple(jPos)
+    nextPoint = createMessage(move,(0,0,0,0),1.0,40.0)
+    s.write(nextPoint)
+    print(f"sent message: {nextPoint}")
+    result = waitForResponse()
+    print(result)
+
+
+    nextPoint = createMessage(move,(0,1600,2400,0),1.0,40.0)
+    s.write(nextPoint)
+    print(f"sent message: {nextPoint}")
+    result = waitForResponse()
+    print(result)
+
+    # jPos = worldToJoint((100,220, 120), 0)
+    # stepPos = radTupleToSteptuple(jPos)
+    # nextPoint = createMessage(move,stepPos,1.0,40.0)
+    # s.write(nextPoint)
+    # print(f"sent message: {nextPoint}")
+    # result = waitForResponse()
+
+    #for jPos in jPosList: 
         # Calculate position
         # layer = jengaBlock // 3 + 1
         # rotation = (layer % 2) * 90
         # position = (jengaBlock) % 3
-        #jPos = (jengaBlock*10,0,0,0)
+        # jPos = (jengaBlock*10,0,0,0)
 
         # print(f"Working on Block:{jengaBlock+1} Layer:{layer}, rotation:{rotation}, position {position} ")
-        nextPoint = createMessage(move,jPos,1.0,40.0)
-        s.write(nextPoint)
-        print(f"sent message: {nextPoint}")
-        result = waitForResponse()
-        print(result)
+        #nextPoint = createMessage(move,jPos,1.0,40.0)
+        #print(lastObjective)
+        # s.write(nextPoint)
+        # print(f"sent message: {nextPoint}")
+        # result = waitForResponse()
         #time.sleep(1)
-def worldToJoint((xb,yb,zb), thetab):
-    '''
-    Takes True world frame coordinates of the block! thetab is relative to block
-    '''
-    # First lets assume we are choosing the position of the end effector ie 45*
-    roboBase = (0,0,70)
-
-    thetabRad = math.radians(thetab)
-
-    L1 = 180    # mm  1st Arm length
-    L2 = 180
-    L3 = 40     # mm of end effector
-    #TODO: Update these from CAD
-    servoOffsetArm = 30 #mm offset from the joint of rotation
-    servoOffsetZ = 15 #mm offset from the joint of rotation
-
-    suctionZoffset = 25 #Z offset from servo horn mm
-
-    # Calculate the xyz of arm
-    #First work backwords from block to position the end of servo
-    za = zb + suctionZoffset #Z_arm
-    xa = xb + L3*math.sin(thetabRad)
-    ya = xb - L3*math.cos(math.radians(thetabRad))
-
-    # Now calculate the position of the rotating joint of the arm
-    za -=  servoOffsetZ
-
-    # Time for Law of Cosines
-    effectiveArmShadow = math.sqrt(xa**2 + ya**2)-servoOffsetArm # imagine shinging a light directly above the arm
-    zextra = (za-roboBase(2)) # bottom of law of cosines trinagle
-    a = L1
-    c = L2
-    b = math.sqrt(zextra**2 + effectiveArmShadow**2)
-    
-    gamma = math.atan2(zextra, effectiveArmShadow)
-
-    # NOTE THETSE ARE BOTH Zero when they point straight out
-    theta1 = math.acos((a**2 + b**2 - c**2)/(2*a*b)) + gamma
-    theta2 = math.acos((a**2 - b**2 + c**2)/(2*a*c)) + theta1
-    theta3 = math.atan2(ya, xa) - math.pi/2
-    theta4 = theta1 + thetabRad
-
-    return (theta1, theta2, theta3, theta4)
