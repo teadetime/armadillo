@@ -146,7 +146,10 @@ def radToSteps(rad, microSteps, stepsRev = 200):
     '''
     return rad/(2*math.pi) * stepsRev * microSteps
 
-def worldToJoint( coords , thetab):
+def stepsToRads(steps, microSteps, stepsRev = 200):
+    return steps/(stepsRev * microSteps) * (2*math.pi)
+
+def worldToJoint(coords , thetab):
     '''
     Takes True world frame coordinates of the block! thetab is relative to block
     coords: tuple looks like -> (xb,yb,zb) 
@@ -158,7 +161,7 @@ def worldToJoint( coords , thetab):
 
     L1 = 180    # mm  1st Arm length
     L2 = 180
-    L3 = 0     # mm of end effector
+    L3 = 30     # mm of end effector
     #TODO: Update these from CAD
     servoOffsetArm = 30 #mm offset from the joint of rotation
     servoOffsetZ = 15 #mm offset from the joint of rotation
@@ -172,7 +175,7 @@ def worldToJoint( coords , thetab):
     ya = coords[1] - L3*math.cos(math.radians(thetabRad))
 
     # Now calculate the position of the rotating joint of the arm
-    za -=  servoOffsetZ
+    za +=  servoOffsetZ
 
     # Time for Law of Cosines
     effectiveArmShadow = math.sqrt(xa**2 + ya**2)-servoOffsetArm # imagine shinging a light directly above the arm
@@ -191,7 +194,57 @@ def worldToJoint( coords , thetab):
 
     return (theta1, theta2, theta3, theta4)
 
-def radTupleToSteptuple(jPos):
+
+def jointToWorld(stepPos):
+    # COnstnats
+    L1 = 180 
+    L2 = 180
+    L3 = 30
+    servoZOffset = 15
+    servoArmOffset = 30
+    eofZOffset = 0
+
+    baseX = 0
+    baseY = 0
+    baseZ = 95
+
+    jPos = stepTupleToRadTuple(stepPos)
+
+    theta1 = jPos[0]
+    theta2 = jPos[1]
+    theta3 = jPos[2]   # Angle of stepper arm to the angle of the triangle
+    theta4 = math.radians(jPos[3])
+
+    thetaI = theta3 - (math.pi/2)  # COuld be jPos - 90
+
+    print(f"{theta1}, {theta2}, {theta3}, {theta4}, {thetaI}")
+    middleJointZ = L1 * math.sin(theta2) - L2*math.cos(thetaI)
+    middleJointArm = L1 * math.cos(theta2) + L2*math.sin(thetaI)
+
+    # Now lets offset to servo, Please lets design this so the horn is in line
+    servoZ = middleJointZ - servoZOffset
+    servoArm = middleJointArm + servoArmOffset
+    
+    
+    # Now lets decompose the arm
+    servoHornX = servoArm * math.sin(-1*theta1)
+    servoHornY = servoArm * math.cos(theta1)
+    print(f"{baseX + servoHornX}, {baseY + servoHornY}, {baseZ + servoZ}")
+
+    # now do the rotation of the end effector
+    eofRot = theta1 + theta4
+    eofX = L3 * math.sin(eofRot)
+    eofY = L3 * math.cos(eofRot)
+    
+    # Apply EOF Z adjustment
+    finalX = baseX + servoHornX - eofX
+    finalY = baseY + servoHornY + eofY
+    finalZ = baseZ + servoZ - eofZOffset 
+
+
+
+    return (finalX,finalY,finalZ)
+def radTupleToStepTuple(jPos):
     if len(jPos) != 4:
         print("Error!")
         return
@@ -199,20 +252,39 @@ def radTupleToSteptuple(jPos):
         step1 = radToSteps(jPos[0], microSteps)
         step2 = radToSteps(jPos[1], microSteps)
         step3 = radToSteps(jPos[2], microSteps)
-        step4 = 0
+        step4 = jPos[3]
         return (step1, step2, step3, step4)
 
-if __name__=='__main__':
-    startChar = 'A'
-    state = 1
-    stop = False
-    test_vals = []
-    
-    history = []
-    messToSend = 5
-    counter = 0
+def stepTupleToRadTuple(stepPos):
+    if len(stepPos) != 4:
+        print("Error!")
+        return
+    rad1 = stepsToRads(stepPos[0], microSteps)
+    rad2 = stepsToRads(stepPos[1], microSteps)
+    rad3 = stepsToRads(stepPos[2], microSteps)
+    rad4 = stepPos[3]
+    return (rad1, rad2, rad3, rad4)
 
-   
+if __name__=='__main__':
+    theta1ZeroSteps = radToSteps(0, 32)
+    theta2ZeroSteps = radToSteps(math.pi/2, 32)
+    theta3ZeroSteps = radToSteps(3*math.pi/4, 32)
+    angle = 20
+    homeTuple = (theta1ZeroSteps,theta2ZeroSteps, theta3ZeroSteps, angle)
+
+
+    print(f"HomeJointTuple: {homeTuple}")
+    xyz = jointToWorld(homeTuple)
+
+    print(f"World: {xyz}")
+    jPos = worldToJoint(xyz, angle)
+
+    print(f"Reconvert: {radTupleToStepTuple(jPos)}")
+    
+
+
+    startChar = 'A'
+    history = []   
     s = Serial_cmd()
     if not s.connected:
         print("Please Connect Arduino")
@@ -253,7 +325,6 @@ if __name__=='__main__':
                 # (0,0,0,0),
                 
                 ]*2
-    last_send_time = datetime.now()
     #for jengaBlock in range(54):
     theta1ZeroSteps = radToSteps(0, 32)
     theta2ZeroSteps = radToSteps(math.pi/2, 32)
@@ -275,7 +346,7 @@ if __name__=='__main__':
 
     # Go to a position
     jPos = worldToJoint((0,220, 120), 0)
-    stepPos = radTupleToSteptuple(jPos)
+    stepPos = radTupleToStepTuple(jPos)
     nextPoint = createMessage(move,(0,0,0,0),1.0,40.0)
     s.write(nextPoint)
     print(f"sent message: {nextPoint}")
