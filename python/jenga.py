@@ -50,22 +50,6 @@ class Serial_cmd:
     #     if self.connected:
     #         self.write('YELLOW!{:X}'.format(int(val)))
 
-####################
-##Global Constants##
-####################
-move = "M"
-info = "I"
-home = "H"
-other = "O"
-control = "C"
-timeout = "T"
-successChar = "Y"
-failChar = "N"
-splitChar = ","
-
-infoList = []
-lastObjective = ''
-microSteps = 32
 
 """
 Commands and Repsonses(->)
@@ -92,205 +76,240 @@ Commands and Repsonses(->)
 -> <C, Y> # Control Done, should ech back what it did?
 
 """
-def createMessage(messageType, jPos=(0,0,0,0), vac = 0, speed = 0, startChar = '<', endChar = '>', sep = ','):
-    """
-    Sends form startChar j1,j2,j3,j4,vac,speed endChar
-    ie. <M,0,20,30,50,1.0,50>
-    """
-    # Make sure that jPos etc are trimmed to x decimals
-    # Should we send angles or steps?
-    global lastObjective
-    lastObjective = messageType
-    message = (startChar+messageType+sep+str(jPos[0])+sep+str(jPos[1])
-                +sep+str(jPos[2])+sep+str(jPos[3])+sep+str(vac)+sep+str(speed)+endChar)
-    return message
 
-def waitForArduino():
-    # Established serial connection
-    while 1:
-        var = s.dev.read().decode()
-        print(f"{var, type(var)}")
-        if var == startChar:
-            s.write('A')
-            print("Handshake Done!")
-            s.dev.reset_input_buffer() # may be uneccessary
-            data = s.read().strip()     # This line is essential and somehow reads the empty line that is output at the end of Setup
-            break
+class robot:
+    def __init__(self):
+        self.serial = Serial_cmd()
+        # if not self.serial.connected:
+        #     print("Please Connect Arduino")
+        #     quit()
 
-def waitForResponse():
-    while 1:
-        if(s.dev.in_waiting > 0):
-            #print(f"bytes:{s.dev.in_waiting}")
-            data = s.read().strip()[1:-1] #gets data of form <I,435,45,4,3,3,2>
-            #print(f"data: {data} type: {type(data)}")
-            if not data: continue
-            if (data[0] == info):
-                # PARSE INFO INTO A LIST
-                data_tup = tuple('('+data+')')
-                infoList.append(data_tup)
-                if(lastObjective == info):
-                    return data[2:]
+        self.stepsPerRev = 200      # Number of steps in 1 rev of the steppers
+        self.P1xyz = (0,0,85)       # Only the Z offset does anything
+        self.L1 = 320               # mm length of first Arm Bearing to bearing
+        self.L2 = 320               # 2nd Arm
+        self.L3 = 0                 # Length of rotating end effector
+
+        # Radian values for the limit switches
+        self.limitJ1 = 0
+        self.limitJ2 = math.pi/2
+        self.limitJ3 = math.pi
+
+        # Offsets from Pivot point to servo Horn
+        self.servoArmOffset = 32
+        self.servoZOffset = 15
+
+        self.suctionOffset = 0 # Also could be droop
+
+        # This should just be steps each stepper is currently Commanded to? Not in Use
+        self.theta1 = 0
+        self.theta2 = 0
+        self.theta3 = 0
+        self.theta4 = 0
+        self.lastObjective = ''
+
+        # ETC
+        self.commands = {}
+        self.commands["info"] = 'I'
+        self.commands["move"] = 'M'
+        self.commands["home"] = 'H'
+        self.commands["other"] = 'O'
+        self.commands["control"] = 'C'
+
+        # self.infoChar = 'I'
+        # self.move = "M"
+        # self.info = "I"
+        # self.home = "H"
+        # self.other = "O"
+        # self.control = "C"
+        # self.timeout = "T"
+        self.handshakeChar = "A"
+        self.successChar = "Y"
+        self.failChar = "N"
+        self.splitChar = ","
+        self.startChar = '<'
+        self.endChar = '>'
+        self.J1microSteps = 32
+        self.J2microSteps = 32
+        self.J3microSteps = 32
+        self.J1gearing = 3
+        self.J2gearing = 3
+        self.J3gearing = 3
+
+    def worldToJoint(self, coords , thetab):
+        '''
+        Takes True world frame coordinates of the block! thetab is relative to block
+        coords: tuple looks like -> (xb,yb,zb) 
+        '''
+        # First lets assume we are choosing the position of the end effector ie 45*
+        thetabRad = thetab
+
+        # Calculate the xyz of arm
+        #First work backwords from block to position the end of servo
+        za = coords[2] + self.suctionOffset #Z_arm
+        xa = coords[0] + self.L3*math.sin(thetabRad)
+        ya = coords[1] - self.L3*math.cos(thetabRad)
+
+        # Now calculate the position of the rotating joint of the arm
+        za +=  self.servoZOffset
+
+        # Time for Law of Cosines
+        effectiveArmShadow = math.sqrt(xa**2 + ya**2)-self.servoArmOffset # imagine shinging a light directly above the arm
+        zextra = (za-self.P1xyz[2]) # bottom of law of cosines trinagle
+
+        b = math.sqrt(zextra**2 + effectiveArmShadow**2)
+        
+        gamma = math.atan2(zextra, effectiveArmShadow)
+
+        # NOTE THETSE ARE BOTH Zero when they point straight out
+        theta2 = math.acos((self.L1**2 + b**2 - self.L2**2)/(2*self.L2*b)) + gamma
+        theta3 = math.acos((self.L1**2 - b**2 + self.L2**2)/(2*self.L1*self.L2)) + theta2
+        theta1 = math.atan2(ya, xa) - math.pi/2
+        theta4 = thetabRad-theta1
+
+        return (theta1, theta2, theta3, theta4)
+
+    def jointToWorld(self, stepPos):
+        jPos = self.stepTupleToRadTuple(stepPos)
+
+        theta1 = jPos[0]
+        theta2 = jPos[1]
+        theta3 = jPos[2]   # Angle of stepper arm to the angle of the triangle
+        theta4 = jPos[3]
+
+        thetaI = theta3 - (math.pi/2)
+
+        #print(f"{theta1}, {theta2}, {theta3}, {theta4}, {thetaI}")
+        middleJointZ = self.L1 * math.sin(theta2) - self.L2*math.cos(thetaI)
+        middleJointArm = self.L1 * math.cos(theta2) + self.L2*math.sin(thetaI)
+
+        # Now lets offset to servo, Please lets design this so the horn is in line
+        servoZ = middleJointZ - self.servoZOffset
+        servoArm = middleJointArm + self.servoArmOffset
+        
+        # Now lets decompose the arm
+        servoHornX = servoArm * math.sin(-1*theta1)
+        servoHornY = servoArm * math.cos(theta1)
+
+        #Uncomment to look at the pivot point
+        #print(f"{self.P1xyz[0] + servoHornX}, {self.P1xyz[1] + servoHornY}, {self.P1xyz[2] + servoZ}")
+
+        # now do the rotation of the end effector
+        eofRot = theta1 + theta4
+        eofX = self.L3 * math.sin(eofRot)
+        eofY = self.L3 * math.cos(eofRot)
+        
+        # Apply EOF Z adjustment
+        finalX = self.P1xyz[0] + servoHornX - eofX
+        finalY = self.P1xyz[1] + servoHornY + eofY
+        finalZ = self.P1xyz[2] + servoZ - self.suctionOffset 
+        return (finalX,finalY,finalZ)
+
+    def radTupleToStepTuple(self, jPos):
+        if len(jPos) != 4:
+            print("Error!")
+            return
+        else:
+            step1 = self.radToSteps(jPos[0], self.J1microSteps, self.J1gearing)
+            step2 = self.radToSteps(jPos[1], self.J2microSteps, self.J2gearing)
+            step3 = self.radToSteps(jPos[2], self.J3microSteps, self.J3gearing)
+            step4 = jPos[3]
+            return (int(step1), int(step2), int(step3), int(step4))
+
+    def stepTupleToRadTuple(self, stepPos):
+        if len(stepPos) != 4:
+            print("Error!")
+            return
+        rad1 = self.stepsToRads(stepPos[0], self.J1microSteps, self.J1gearing)
+        rad2 = self.stepsToRads(stepPos[1], self.J2microSteps, self.J2gearing)
+        rad3 = self.stepsToRads(stepPos[2], self.J3microSteps, self.J3gearing)
+        rad4 = stepPos[3]
+        return (rad1, rad2, rad3, rad4)
+
+    def radToSteps(self, rad, microSteps, gearing, stepsRev = 200):
+        '''
+        Conversion from radians to a number of steps 
+        given ceratin steps per revolution and microstepping
+        '''
+        return rad/(2*math.pi) * stepsRev * microSteps * gearing
+
+    def stepsToRads(self, steps, microSteps, gearing, stepsRev = 200):
+        return steps/(stepsRev * microSteps * gearing) * (2*math.pi)
+        
+    def waitForResponse(self):
+        while 1:
+            if(self.serial.dev.in_waiting > 0):
+                #print(f"bytes:{s.dev.in_waiting}")
+                data = self.serial.read().strip()[1:-1] #gets data of form <I,435,45,4,3,3,2>
+                #print(f"data: {data} type: {type(data)}")
+                if not data: continue
+                if (data[0] == self.commands["info"]):
+                    # PARSE INFO INTO A LIST
+                    data_tup = tuple('('+data+')')
+                    #infoList.append(data_tup)
+                    if(self.lastObjective == self.commands["info"]):
+                        print(data[2:])
+                        return data[2:]
+                        break
+                
+                if(data[0] == self.lastObjective):
+                    resultChar = data.split(self.splitChar)[-1]
+                    return(resultChar == self.successChar)
                     break
-            
-            if(data[0] == lastObjective):
-                resultChar = data.split(splitChar)[-1]
-                return(resultChar == successChar)
+            time.sleep(.05)
+        return
+
+    def waitForArduino(self):
+        # Established serial connection
+        while 1:
+            var = s.dev.read().decode()
+            print(f"{var, type(var)}")
+            if var == self.handshakeChar:
+                s.write(self.handshakeChar)
+                print("Handshake Done!")
+                s.dev.reset_input_buffer() # may be uneccessary
+                data = s.read().strip()     # This line is essential and somehow reads the empty line that is output at the end of Setup
                 break
-        time.sleep(.05)
-    return
 
-def radToSteps(rad, microSteps, stepsRev = 200):
-    '''
-    Conversion from radians to a number of steps 
-    given ceratin steps per revolution and microstepping
-    '''
-    return rad/(2*math.pi) * stepsRev * microSteps
+    def createMessage(self, messageType, jPos, vac = 0, speed = 0):
+        """
+        Sends form startChar j1,j2,j3,j4,vac,speed endChar
+        ie. <M,0,20,30,50,1.0,50>
+        """
+        # Make sure that jPos etc are trimmed to x decimals
+        # Should we send angles or steps?
+        self.lastObjective = messageType
+        message = (self.startChar+messageType+self.splitChar+str(jPos[0])+self.splitChar+str(jPos[1])
+                    +self.splitChar+str(jPos[2])+self.splitChar+str(jPos[3])
+                    +self.splitChar+str(vac)+self.splitChar+str(speed)+self.endChar)
+        return message
 
-def stepsToRads(steps, microSteps, stepsRev = 200):
-    return steps/(stepsRev * microSteps) * (2*math.pi)
-
-def worldToJoint(coords , thetab):
-    '''
-    Takes True world frame coordinates of the block! thetab is relative to block
-    coords: tuple looks like -> (xb,yb,zb) 
-    '''
-    # First lets assume we are choosing the position of the end effector ie 45*
-    roboBase = (0,0,95) 
-
-    thetabRad = math.radians(thetab)
-
-    L1 = 180    # mm  1st Arm length
-    L2 = 180
-    L3 = 30     # mm of end effector
-    #TODO: Update these from CAD
-    servoOffsetArm = 30 #mm offset from the joint of rotation
-    servoOffsetZ = 15 #mm offset from the joint of rotation
-
-    suctionZoffset = 0 #Z offset from servo horn mm
-
-    # Calculate the xyz of arm
-    #First work backwords from block to position the end of servo
-    za = coords[2] + suctionZoffset #Z_arm
-    xa = coords[0] + L3*math.sin(thetabRad)
-    ya = coords[1] - L3*math.cos(math.radians(thetabRad))
-
-    # Now calculate the position of the rotating joint of the arm
-    za +=  servoOffsetZ
-
-    # Time for Law of Cosines
-    effectiveArmShadow = math.sqrt(xa**2 + ya**2)-servoOffsetArm # imagine shinging a light directly above the arm
-    zextra = (za-roboBase[2]) # bottom of law of cosines trinagle
-    a = L1
-    c = L2
-    b = math.sqrt(zextra**2 + effectiveArmShadow**2)
-    
-    gamma = math.atan2(zextra, effectiveArmShadow)
-
-    # NOTE THETSE ARE BOTH Zero when they point straight out
-    theta2 = math.acos((a**2 + b**2 - c**2)/(2*a*b)) + gamma
-    theta3 = math.acos((a**2 - b**2 + c**2)/(2*a*c)) + theta2
-    theta1 = math.atan2(ya, xa) - math.pi/2
-    theta4 = theta1 + thetabRad
-
-    return (theta1, theta2, theta3, theta4)
-
-
-def jointToWorld(stepPos):
-    # COnstnats
-    L1 = 180 
-    L2 = 180
-    L3 = 30
-    servoZOffset = 15
-    servoArmOffset = 30
-    eofZOffset = 0
-
-    baseX = 0
-    baseY = 0
-    baseZ = 95
-
-    jPos = stepTupleToRadTuple(stepPos)
-
-    theta1 = jPos[0]
-    theta2 = jPos[1]
-    theta3 = jPos[2]   # Angle of stepper arm to the angle of the triangle
-    theta4 = math.radians(jPos[3])
-
-    thetaI = theta3 - (math.pi/2)  # COuld be jPos - 90
-
-    print(f"{theta1}, {theta2}, {theta3}, {theta4}, {thetaI}")
-    middleJointZ = L1 * math.sin(theta2) - L2*math.cos(thetaI)
-    middleJointArm = L1 * math.cos(theta2) + L2*math.sin(thetaI)
-
-    # Now lets offset to servo, Please lets design this so the horn is in line
-    servoZ = middleJointZ - servoZOffset
-    servoArm = middleJointArm + servoArmOffset
-    
-    
-    # Now lets decompose the arm
-    servoHornX = servoArm * math.sin(-1*theta1)
-    servoHornY = servoArm * math.cos(theta1)
-    print(f"{baseX + servoHornX}, {baseY + servoHornY}, {baseZ + servoZ}")
-
-    # now do the rotation of the end effector
-    eofRot = theta1 + theta4
-    eofX = L3 * math.sin(eofRot)
-    eofY = L3 * math.cos(eofRot)
-    
-    # Apply EOF Z adjustment
-    finalX = baseX + servoHornX - eofX
-    finalY = baseY + servoHornY + eofY
-    finalZ = baseZ + servoZ - eofZOffset 
-
-
-
-    return (finalX,finalY,finalZ)
-def radTupleToStepTuple(jPos):
-    if len(jPos) != 4:
-        print("Error!")
-        return
-    else:
-        step1 = radToSteps(jPos[0], microSteps)
-        step2 = radToSteps(jPos[1], microSteps)
-        step3 = radToSteps(jPos[2], microSteps)
-        step4 = jPos[3]
-        return (step1, step2, step3, step4)
-
-def stepTupleToRadTuple(stepPos):
-    if len(stepPos) != 4:
-        print("Error!")
-        return
-    rad1 = stepsToRads(stepPos[0], microSteps)
-    rad2 = stepsToRads(stepPos[1], microSteps)
-    rad3 = stepsToRads(stepPos[2], microSteps)
-    rad4 = stepPos[3]
-    return (rad1, rad2, rad3, rad4)
 
 if __name__=='__main__':
-    theta1ZeroSteps = radToSteps(0, 32)
-    theta2ZeroSteps = radToSteps(math.pi/2, 32)
-    theta3ZeroSteps = radToSteps(3*math.pi/4, 32)
-    angle = 20
+    arm = robot()
+
+    #####################
+    # Test Zero Position#
+    #####################
+    theta1ZeroSteps = arm.radToSteps(arm.limitJ1, arm.J1microSteps, arm.J1gearing)
+    theta2ZeroSteps = arm.radToSteps(arm.limitJ2, arm.J2microSteps, arm.J2gearing)
+    theta3ZeroSteps = arm.radToSteps(arm.limitJ3, arm.J3microSteps, arm.J3gearing)
+    angle = 0
+    block_angle = 0 + angle
     homeTuple = (theta1ZeroSteps,theta2ZeroSteps, theta3ZeroSteps, angle)
 
-
     print(f"HomeJointTuple: {homeTuple}")
-    xyz = jointToWorld(homeTuple)
-
+    xyz = arm.jointToWorld(homeTuple)
     print(f"World: {xyz}")
-    jPos = worldToJoint(xyz, angle)
-
-    print(f"Reconvert: {radTupleToStepTuple(jPos)}")
+    jPos = arm.worldToJoint(xyz, block_angle)
+    print(f"Reconvert: {arm.radTupleToStepTuple(jPos)}")
     
 
-
-    startChar = 'A'
-    history = []   
-    s = Serial_cmd()
-    if not s.connected:
+    if not arm.serial.connected:
         print("Please Connect Arduino")
         quit()
 
-    waitForArduino()
+    arm.waitForArduino()
     
     # Initiate Homing Proceedure
     # nextPoint = createMessage(home)
@@ -326,38 +345,50 @@ if __name__=='__main__':
                 
                 ]*2
     #for jengaBlock in range(54):
-    theta1ZeroSteps = radToSteps(0, 32)
-    theta2ZeroSteps = radToSteps(math.pi/2, 32)
-    theta3ZeroSteps = radToSteps(3*math.pi/4, 32)
+    theta1ZeroSteps = arm.radToSteps(0, 32, arm.J1gearing)
+    theta2ZeroSteps = arm.radToSteps(math.pi/2,32, arm.J1gearing)
+    theta3ZeroSteps = arm.radToSteps(3*math.pi/4,32, arm.J1gearing)
     homeTuple = (theta1ZeroSteps,theta2ZeroSteps, theta3ZeroSteps, 0)
-    homingMessage = createMessage(home,homeTuple,0,0)
+    homingMessage = arm.createMessage(arm.commands["home"],homeTuple,0,0)
     s.write(homingMessage)
     print(f"Homing: {homingMessage}")
-    result = waitForResponse()
+    result = arm.waitForResponse()
     print(result)
-
-    test = createMessage(info,(0,0,0,0),0,0)
-    s.write(test)
-    print(f"Test: {test}, {lastObjective}")
-    result = waitForResponse()
-    print(result)
-
 
 
     # Go to a position
-    jPos = worldToJoint((0,220, 120), 0)
-    stepPos = radTupleToStepTuple(jPos)
-    nextPoint = createMessage(move,(0,0,0,0),1.0,40.0)
+    jPos = arm.worldToJoint((0,200, 130), 0)
+    stepPos = arm.radTupleToStepTuple(jPos)
+    nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
     s.write(nextPoint)
     print(f"sent message: {nextPoint}")
-    result = waitForResponse()
+    result = arm.waitForResponse()
+    print(result)
+
+    # Go to a position
+    jPos = arm.worldToJoint((0,300, 130), 0)
+    stepPos = arm.radTupleToStepTuple(jPos)
+    nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
+    s.write(nextPoint)
+    print(f"sent message: {nextPoint}")
+    result = arm.waitForResponse()
+    print(result)
+
+    # Go to a position
+    jPos = arm.worldToJoint((50,300, 130), 0)
+    stepPos = arm.radTupleToStepTuple(jPos)
+    nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
+    s.write(nextPoint)
+    print(f"sent message: {nextPoint}")
+    result = arm.waitForResponse()
     print(result)
 
 
-    nextPoint = createMessage(move,(0,1600,2400,0),1.0,40.0)
+    # Go home
+    nextPoint = arm.createMessage(arm.commands["move"],homeTuple,1.0,40.0)
     s.write(nextPoint)
     print(f"sent message: {nextPoint}")
-    result = waitForResponse()
+    result = arm.waitForResponse()
     print(result)
 
     # jPos = worldToJoint((100,220, 120), 0)
