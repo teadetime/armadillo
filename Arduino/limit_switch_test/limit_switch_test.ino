@@ -2,21 +2,20 @@ int limit_switch_1 = 6;
 
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(limit_switch_1, INPUT_PULLUP);
 
 }
 
 void loop() {
-  if (digitalRead(limit_switch_1) == LOW)
-  {
-    Serial.println("Activated!");
+  while (digitalRead(limit_switch_1) == HIGH) {
+         Serial.println(digitalRead(limit_switch_1));
+        
+        if (digitalRead(limit_switch_1) == LOW) {
+          Serial.println(digitalRead(limit_switch_1));
+        }
   }
- 
-  else
-  {
-    Serial.println("Not activated.");
-  }
+//  Serial.println("limit switch hit!");
    
-  delay(100);
+  
 }
