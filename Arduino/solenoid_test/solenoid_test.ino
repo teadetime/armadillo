@@ -1,5 +1,5 @@
-int solenoidPin = 5;                    //This is the output pin on the Arduino
-int vacPin = 6;
+int solenoidPin = 2;                    //This is the output pin on the Arduino
+int vacPin = 3;
 
 void setup() 
 {
@@ -10,8 +10,17 @@ void setup()
 
 void loop() 
 {
-  digitalWrite(solenoidPin, HIGH);      //Switch Solenoid ON
-  delay(5000);                          //Wait 1 Second
-  digitalWrite(solenoidPin, LOW);       //Switch Solenoid OFF
-  delay(5000);                          //Wait 1 Second
+//  digitalWrite(vacPin, HIGH);
+//  delay(2000);
+//  digitalWrite(solenoidPin, LOW);      //Switch Solenoid ON
+//  delay(2000);    
+//  digitalWrite(vacPin,LOW);
+//  delay(2000);
+//  digitalWrite(solenoidPin, HIGH);       //Switch Solenoid OFF
+//  delay(2000);                          //Wait 5 Second
+
+  digitalWrite(solenoidPin, LOW);      //Switch Solenoid ON
+  delay(2000);    
+  digitalWrite(solenoidPin, HIGH);       //Switch Solenoid OFF
+  delay(2000);                          //Wait 1 Second
 }
