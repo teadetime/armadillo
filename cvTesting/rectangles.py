@@ -53,10 +53,10 @@ print(ratio)
 # convert the resized image to grayscale, blur it slightly,
 # and threshold it
 gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
-blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+#blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 #thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY)[1]
 
-thresh = cv2.threshold(blurred, 0, 255,
+thresh = cv2.threshold(gray, 0, 255,
 	cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
 #inverted = thresh
 thresh = cv2.bitwise_not(thresh)
@@ -81,7 +81,8 @@ for c in cnts:
         rotation += 90
 
     print(f"realrotation: {rotation}")
-    print(f"Ratio of w/h: {rot_rect[1][0]/rot_rect[1][1]}")
+    if rot_rect[1][1] != 0:
+        print(f"Ratio of w/h: {rot_rect[1][0]/rot_rect[1][1]}")
     box = cv2.boxPoints(rot_rect)* ratio
     box = np.int0(box)
     print(box)

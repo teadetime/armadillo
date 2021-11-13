@@ -14,13 +14,14 @@ char objectiveType = 'Z';           // Objective type, must be one of messChar**
 const char messCharMove = 'M';      // First Byte in a message sent that has robot state data
 const char messCharInfo = 'I';      // First Byte in data the indicates something about an objective
 const char messCharHome = 'H';          // First Byte for messages regarding homing
+const char messCharTest = 'T'; 
 const char messCharOther = 'O';
 const char messCharSuccess = 'Y';
 const char messCharFail = 'N';
 
 const char startMarker = '<';
 const char endMarker = '>';
-const byte numChars = 36;
+const byte numChars = 64;
 char receivedChars[numChars];
 char tempChars[numChars];   // temporary array for use when parsing
 // variables to hold the parsed data
@@ -36,7 +37,7 @@ bool moving = false;        //Set to true to if executing a move command
 boolean objectiveInProgress = false;  // Switches to true when waiting to send a specific response
 boolean debug = true;       // Flag for debuggin data NOT IN USE
 
-byte microStep = 32;
+byte microStep = 16;
 
 /////////////////////////////////
 //Used for reporting RobotState//
@@ -51,20 +52,20 @@ bool it_is_time(uint32_t t, uint32_t t0, uint16_t dt);
 void setup() {
   // put your setup code here, to run once:
   messTime = millis();
-  stepper1.setMaxSpeed(2000);
-  stepper1.setSpeed(4000);
+  stepper1.setMaxSpeed(1000);
+  stepper1.setSpeed(1000);
   stepper1.setCurrentPosition(0);
-  stepper1.setAcceleration(1500);
+  stepper1.setAcceleration(500);
 
-  stepper2.setMaxSpeed(2000);
-  stepper2.setSpeed(4000);
+  stepper2.setMaxSpeed(1000);
+  stepper2.setSpeed(1000);
   stepper2.setCurrentPosition(0);
-  stepper2.setAcceleration(1500);
+  stepper2.setAcceleration(500);
   
   stepper3.setMaxSpeed(1000);
   stepper3.setSpeed(1000);
   stepper3.setCurrentPosition(0);
-  stepper3.setAcceleration(1000);
+  stepper3.setAcceleration(500);
 
   objectiveStartTime = messTime;    // Set this to the current time
   Serial.begin(115200);     // Fast Baud to send data more quickly!
@@ -136,14 +137,19 @@ void loop() {
         }
         break;
       case messCharHome:
-        
-
-      
-        resetSteppers();
+        resetSteppers(j1PC,j2PC,j3PC,j4PC);
+        sendObjectiveCompleted(objectiveType, messCharSuccess);
+        objectiveInProgress = false;
+        break;
+      case messCharTest:
+        resetSteppers(j1PC,j2PC,j3PC,j4PC);
         sendObjectiveCompleted(objectiveType, messCharSuccess);
         objectiveInProgress = false;
         break;
       case messCharInfo:
+        sendRobotState(numMessages);
+        objectiveInProgress = false;
+        sendObjectiveCompleted(objectiveType, messCharSuccess);
         break;
       default:
         break;
@@ -212,6 +218,7 @@ void recvWithStartEndMarkers() {
 
 
 void parseData() {      // split the data into its parts
+  //Example <M,0,0,0,0,1,50>
   char * strtokIndx; // this is used by strtok() as an index
 
 
@@ -287,9 +294,9 @@ bool motorsMoving() {
 /////////////////////////////
 //Used When Homing the steppers//
 /////////////////////////////
-void resetSteppers() {
-  stepper1.setCurrentPosition(0);
-  stepper2.setCurrentPosition(0);
-  stepper3.setCurrentPosition(0);
+void resetSteppers(float theta1,float theta2,float theta3, float theta4) {
+  stepper1.setCurrentPosition(theta1);
+  stepper2.setCurrentPosition(theta2);
+  stepper3.setCurrentPosition(theta3);
   //TODO 0 of the servo will be constant
 }
