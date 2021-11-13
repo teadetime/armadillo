@@ -92,8 +92,8 @@ class robot:
 
         # Radian values for the limit switches
         self.limitJ1 = 0
-        self.limitJ2 = math.pi/2
-        self.limitJ3 = math.pi
+        self.limitJ2 = math.pi/4
+        self.limitJ3 = 3*math.pi/4
 
         # Offsets from Pivot point to servo Horn
         self.servoArmOffset = 32
@@ -129,9 +129,9 @@ class robot:
         self.splitChar = ","
         self.startChar = '<'
         self.endChar = '>'
-        self.J1microSteps = 32
-        self.J2microSteps = 32
-        self.J3microSteps = 32
+        self.J1microSteps = 16
+        self.J2microSteps = 16
+        self.J3microSteps = 16        
         self.J1gearing = 3
         self.J2gearing = 3
         self.J3gearing = 3
@@ -262,13 +262,13 @@ class robot:
     def waitForArduino(self):
         # Established serial connection
         while 1:
-            var = s.dev.read().decode()
+            var = self.serial.dev.read().decode()
             print(f"{var, type(var)}")
             if var == self.handshakeChar:
-                s.write(self.handshakeChar)
+                self.serial.write(self.handshakeChar)
                 print("Handshake Done!")
-                s.dev.reset_input_buffer() # may be uneccessary
-                data = s.read().strip()     # This line is essential and somehow reads the empty line that is output at the end of Setup
+                self.serial.dev.reset_input_buffer() # may be uneccessary
+                data = self.serial.read().strip()     # This line is essential and somehow reads the empty line that is output at the end of Setup
                 break
 
     def createMessage(self, messageType, jPos, vac = 0, speed = 0):
@@ -311,6 +311,10 @@ if __name__=='__main__':
 
     arm.waitForArduino()
     
+
+
+
+
     # Initiate Homing Proceedure
     # nextPoint = createMessage(home)
     # s.write(nextPoint)
@@ -345,48 +349,65 @@ if __name__=='__main__':
                 
                 ]*2
     #for jengaBlock in range(54):
-    theta1ZeroSteps = arm.radToSteps(0, 32, arm.J1gearing)
-    theta2ZeroSteps = arm.radToSteps(math.pi/2,32, arm.J1gearing)
-    theta3ZeroSteps = arm.radToSteps(3*math.pi/4,32, arm.J1gearing)
+    theta1ZeroSteps = arm.radToSteps(0, arm.J1microSteps, arm.J1gearing)
+    theta2ZeroSteps = arm.radToSteps(math.pi/2,arm.J2microSteps, arm.J1gearing)
+    theta3ZeroSteps = arm.radToSteps(3*math.pi/4,arm.J3microSteps, arm.J1gearing)
     homeTuple = (theta1ZeroSteps,theta2ZeroSteps, theta3ZeroSteps, 0)
     homingMessage = arm.createMessage(arm.commands["home"],homeTuple,0,0)
-    s.write(homingMessage)
+    arm.serial.write(homingMessage)
     print(f"Homing: {homingMessage}")
     result = arm.waitForResponse()
     print(result)
 
 
+    #Move j1
     # Go to a position
-    jPos = arm.worldToJoint((0,200, 130), 0)
-    stepPos = arm.radTupleToStepTuple(jPos)
-    nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
-    s.write(nextPoint)
+    nextPoint = arm.createMessage(arm.commands["move"],(0,1500, 3600,0),1.0,40.0)
+    arm.serial.write(nextPoint)
+    print(f"sent message: {nextPoint}")
+    result = arm.waitForResponse()
+    print(result)
+    #Move j2
+    # Go to a position
+    nextPoint = arm.createMessage(arm.commands["move"],(0,1500, 4000,0),1.0,40.0)
+    arm.serial.write(nextPoint)
     print(f"sent message: {nextPoint}")
     result = arm.waitForResponse()
     print(result)
 
-    # Go to a position
-    jPos = arm.worldToJoint((0,300, 130), 0)
-    stepPos = arm.radTupleToStepTuple(jPos)
-    nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
-    s.write(nextPoint)
-    print(f"sent message: {nextPoint}")
-    result = arm.waitForResponse()
-    print(result)
 
-    # Go to a position
-    jPos = arm.worldToJoint((50,300, 130), 0)
-    stepPos = arm.radTupleToStepTuple(jPos)
-    nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
-    s.write(nextPoint)
-    print(f"sent message: {nextPoint}")
-    result = arm.waitForResponse()
-    print(result)
+
+    # # Go to a position
+    # jPos = arm.worldToJoint((0,352, 350), 0)
+    # stepPos = arm.radTupleToStepTuple(jPos)
+    # nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
+    # arm.serial.write(nextPoint)
+    # print(f"sent message: {nextPoint}")
+    # result = arm.waitForResponse()
+    # print(result)
+
+    # # Go to a position
+    # jPos = arm.worldToJoint((0,280, 300), 0)
+    # stepPos = arm.radTupleToStepTuple(jPos)
+    # nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
+    # arm.serial.write(nextPoint)
+    # print(f"sent message: {nextPoint}")
+    # result = arm.waitForResponse()
+    # print(result)
+
+    # # Go to a position
+    # jPos = arm.worldToJoint((100,280, 300), 0)
+    # stepPos = arm.radTupleToStepTuple(jPos)
+    # nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
+    # arm.serial.write(nextPoint)
+    # print(f"sent message: {nextPoint}")
+    # result = arm.waitForResponse()
+    # print(result)
 
 
     # Go home
     nextPoint = arm.createMessage(arm.commands["move"],homeTuple,1.0,40.0)
-    s.write(nextPoint)
+    arm.serial.write(nextPoint)
     print(f"sent message: {nextPoint}")
     result = arm.waitForResponse()
     print(result)

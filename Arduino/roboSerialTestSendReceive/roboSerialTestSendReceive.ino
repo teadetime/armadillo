@@ -37,7 +37,7 @@ bool moving = false;        //Set to true to if executing a move command
 boolean objectiveInProgress = false;  // Switches to true when waiting to send a specific response
 boolean debug = true;       // Flag for debuggin data NOT IN USE
 
-byte microStep = 32;
+byte microStep = 16;
 
 /////////////////////////////////
 //Used for reporting RobotState//
@@ -52,20 +52,20 @@ bool it_is_time(uint32_t t, uint32_t t0, uint16_t dt);
 void setup() {
   // put your setup code here, to run once:
   messTime = millis();
-  stepper1.setMaxSpeed(2000);
-  stepper1.setSpeed(4000);
+  stepper1.setMaxSpeed(1000);
+  stepper1.setSpeed(1000);
   stepper1.setCurrentPosition(0);
-  stepper1.setAcceleration(1500);
+  stepper1.setAcceleration(500);
 
-  stepper2.setMaxSpeed(2000);
-  stepper2.setSpeed(4000);
+  stepper2.setMaxSpeed(1000);
+  stepper2.setSpeed(1000);
   stepper2.setCurrentPosition(0);
-  stepper2.setAcceleration(1500);
+  stepper2.setAcceleration(500);
   
   stepper3.setMaxSpeed(1000);
   stepper3.setSpeed(1000);
   stepper3.setCurrentPosition(0);
-  stepper3.setAcceleration(1000);
+  stepper3.setAcceleration(500);
 
   objectiveStartTime = messTime;    // Set this to the current time
   Serial.begin(115200);     // Fast Baud to send data more quickly!
