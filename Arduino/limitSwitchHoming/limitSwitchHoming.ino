@@ -15,6 +15,9 @@ bool j1_limit = 0;
 bool j2_limit = 0;
 bool j3_limit = 0;
 
+const int SLOW_SPEED = 200;
+const int FAST_SPEED = 200;
+
 void setup() {
   // initialize serial communication at 9600 bits per second:
   Serial.begin(9600);
@@ -23,6 +26,7 @@ void setup() {
   pinMode(j3_limitPin, INPUT);
 
   messTime = millis();
+
   stepper1.setMaxSpeed(2000);
   stepper1.setSpeed(4000);
   stepper1.setCurrentPosition(0);
@@ -37,11 +41,7 @@ void setup() {
   stepper3.setSpeed(1000);
   stepper3.setCurrentPosition(0);
   stepper3.setAcceleration(1000);
-
 }
-
-
-
 
 
 void readLimits() {
@@ -56,28 +56,33 @@ void goToHome() {
         readLimits();
 
         if (!j1_limit) {
-            setSpeed(j1, "slow");
+            stepper1.runSpeed(SLOW_SPEED);
         }
         else {
-            setspeed(j1, "stop");
+            stepper1.stop();
+            stepper1.moveTo(currentPosition());
         }
 
         if (!j2_limit) {
-            setSpeed(j2, "slow");
+            stepper2.runSpeed(SLOW_SPEED);
         }
         else {
-            setspeed(j2, "stop");
+            stepper2.stop();
+            stepper2.moveTo(currentPosition());
         }
 
         if (!j3_limit) {
-            setSpeed(j3, "slow");
+            stepper3.runSpeed(SLOW_SPEED);
         }
         else {
-            setspeed(j3, "stop");
+            stepper3.stop();
+            stepper3.moveTo(currentPosition());
         }
     }
 }
 
 void loop() {
-
+    stepper1.run();
+    stepper2.run();
+    stepper3.run();
 }
