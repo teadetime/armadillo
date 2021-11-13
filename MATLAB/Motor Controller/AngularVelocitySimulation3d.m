@@ -1,25 +1,29 @@
-L1 = 3;
-L2 = 4;
+L1 = 5;
+L2 = 5;
 c = 1;
 
-[T, phiBase1] = ode45(@odefun, [0, 2], [5; 4; 1], odeset('MaxStep', 1.4));
+[T, jointAngles] = ode45(@odefun, [0, 5], [0; 0; 0], odeset('MaxStep', 1.4));
 
-Px = phiBase1(:, 1);
-Py = phiBase1(:, 2);
-Pz = phiBase1(:, 3);
+thetaBase = jointAngles(:, 1);
+phiBase = jointAngles(:, 2);
+phiArm = jointAngles(:, 3);
+Angle = table(phiBase, phiArm, thetaBase);
+% Px = jointAngles(:, 1);
+% Py = jointAngles(:, 2);
+% Pz = jointAngles(:, 3);
 
 % Px = linspace(1, 5, 200).';
 % Py = Px .* 0.5 .* sin(Px) + 3;
 % Pz = 3 .* sin(2 .* Px) + 2;
 
-a = L1;
-b = sqrt(Px .^ 2 + Pz .^ 2 + Py .^ 2); % Only major difference from 2D version
-c = L2;
+% a = L1;
+% b = sqrt(Px .^ 2 + Pz .^ 2 + Py .^ 2); % Only major difference from 2D version
+% c = L2;
 
-phiBase = acos((a .^ 2 + b .^ 2 - c .^ 2) ./ (2 .* a .* b)) + atan(Pz ./ sqrt(Px .^ 2 + Py .^ 2)); % Base vertical
-phiArm =   acos((a .^ 2 + c .^ 2 - b .^ 2) ./ (2 .* a .* c)) + phiBase + pi ./ 2;
-thetaBase = atan2(Py, Px); % Base lateral
-Angle = table(phiBase, phiArm, thetaBase);
+% phiBase = acos((a .^ 2 + b .^ 2 - c .^ 2) ./ (2 .* a .* b)) + atan(Pz ./ sqrt(Px .^ 2 + Py .^ 2)); % Base vertical
+% phiArm =   acos((a .^ 2 + c .^ 2 - b .^ 2) ./ (2 .* a .* c)) + phiBase + pi ./ 2;
+% thetaBase = atan2(Py, Px); % Base lateral
+% Angle = table(phiBase, phiArm, thetaBase);
 
 X1 = L1 .* cos(Angle.phiBase) .* cos(Angle.thetaBase);
 Y1 = L1 .* cos(Angle.phiBase) .* sin(Angle.thetaBase);
@@ -38,17 +42,18 @@ armZ = [zeros(length(Position.Z2), 1), Position.Z1, Position.Z2];
 figure(1);
 clf;
 hold on;
-plot3(phiBase1(:, 1), phiBase1(:, 2), phiBase1(:, 3));
+plot3(jointAngles(:, 1), jointAngles(:, 2), jointAngles(:, 3));
 axis equal;
-xlabel("X");
-ylabel("Y");
-zlabel("Z");
+xlabel("ThetaBase");
+ylabel("PhiBase");
+zlabel("PhiArm");
+title("Raw Joint Angles");
 
 figure(2);
 clf;
 hold on;
 
-plot3(Px, Py, Pz, 'go');
+plot3(X2, Y2, Z2, 'go');
 plot3(armX, armY, armZ, 'r-');
 
 plot3(0, 0, 0, 'ko');
@@ -61,6 +66,7 @@ axis equal;
 xlabel("X");
 ylabel("Y");
 zlabel("Z");
+title("World Frame 3D Arm Coordinates");
 
 % figure(2);
 % % while 1
@@ -87,12 +93,13 @@ zlabel("Z");
 %     end
 % % end
 
-function dPdt = odefun(t, P)
+function dAdt = odefun(t, A)
 
-    Px = P(1);
-    Py = P(2);
-    Pz = P(3);
+    thetaBase = A(1);
+    phiBase = A(2);
+    phiArm = A(3);
 
+    % define constants (pass in later)
     L1 = 5;
     L2 = 5;
 
@@ -100,11 +107,26 @@ function dPdt = odefun(t, P)
     vy = 0;
     vz = 0;
 
-    a = L1;
-    b = sqrt(Px .^ 2 + Pz .^ 2 + Py .^ 2); % Only major difference from 2D version
-    c = L2;
+    % a = L1;
+    % b = sqrt(Px .^ 2 + Pz .^ 2 + Py .^ 2); % Only major difference from 2D version
+    % c = L2;
+
+    % get current position
+    X1 = L1 .* cos(phiBase) .* cos(thetaBase);
+    Y1 = L1 .* cos(phiBase) .* sin(thetaBase);
+    Z1 = L1 .* sin(phiBase);
+    %
+    X2 = X1 + L2 .* sin(-phiArm) .* cos(thetaBase); % may later be T4
+    Y2 = Y1 + L2 .* sin(-phiArm) .* sin(thetaBase); % may later be T4
+    Z2 = Z1 + L2 .* cos(-phiArm);
+
+    Px = X2;
+    Py = Y2;
+    Pz = Z2;
+
 
     [thetaBase, phiBase, phiArm] = phiVelocity(vx, vy, vz, Px, Py, Pz, L1, L2);
+    dAdt = [thetaBase; phiBase; phiArm];
 
     if imag(Py) ~= 0
         disp("extended too far")
@@ -114,22 +136,7 @@ function dPdt = odefun(t, P)
     out_of_bounds = Px .^ 2 + Pz .^ 2 + Py .^ 2 > (L1 + L2 - 1) .^ 2;
     if out_of_bounds
         disp("out of bounds!")
-        dPdt = [0; 0; 0];
+        dAdt = [0; 0; 0];
         return
     end
-
-
-    % phiBase = acos((a .^ 2 + b .^ 2 - c .^ 2) ./ (2 .* a .* b)) + atan(Pz ./ sqrt(Px .^ 2 + Py .^ 2)); % Base vertical
-    % phiArm =  acos((a .^ 2 + c .^ 2 - b .^ 2) ./ (2 .* a .* c)) + phiBase + pi ./ 2;
-    % thetaBase = atan2(Py, Px); % Base lateral
-
-    X1 = L1 .* cos(phiBase) .* cos(thetaBase);
-    Y1 = L1 .* cos(phiBase) .* sin(thetaBase);
-    Z1 = L1 .* sin(phiBase);
-    %
-    X2 = X1 + L2 .* sin(-phiArm) .* cos(thetaBase); % may later be T4
-    Y2 = Y1 + L2 .* sin(-phiArm) .* sin(thetaBase); % may later be T4
-    Z2 = Z1 + L2 .* cos(-phiArm);
-
-    dPdt = [X2; Y2; Z2];
 end

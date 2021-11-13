@@ -11,3 +11,11 @@ thetaBase = atan2(Py, Px); % Base lateral
 diff(phiBase, Px)
 diff(phiBase, Py)
 diff(phiBase, Pz)
+
+diff(phiArm, Px)
+diff(phiArm, Py)
+diff(phiArm, Pz)
+
+diff(thetaBase, Px)
+diff(thetaBase, Py)
+diff(thetaBase, Pz)
