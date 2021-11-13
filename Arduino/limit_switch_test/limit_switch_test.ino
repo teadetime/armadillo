@@ -1,4 +1,4 @@
-int limit_switch_1 = 5;
+int limit_switch_1 = 6;
 
 
 void setup() {

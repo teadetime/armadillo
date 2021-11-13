@@ -7,6 +7,18 @@ AccelStepper stepper2(1, 5, 4);
 AccelStepper stepper3(1, 9, 8);
 
 
+///////////////////////////
+//Vars for Limit Switches//
+///////////////////////////
+
+#define j1_limitPin 11
+//#define j2_limitPin 12
+//#define j3_limitPin 13
+
+bool j1_limit = 1;                  // In current config, switch will go low when pressed
+bool j2_limit = 1;
+bool j3_limit = 1;
+
 ////////////////////////////
 //Vars for Incoming Serial//
 ////////////////////////////
@@ -51,6 +63,12 @@ bool it_is_time(uint32_t t, uint32_t t0, uint16_t dt);
 
 void setup() {
   // put your setup code here, to run once:
+
+  // need to use INPUT_PULLUP here to have hardware debouncing
+  pinMode(j1_limit, INPUT_PULLUP);
+  pinMode(j2_limit, INPUT_PULLUP);
+  pinMode(j3_limit, INPUT_PULLUP);
+  
   messTime = millis();
   stepper1.setMaxSpeed(1000);
   stepper1.setSpeed(1000);
@@ -137,6 +155,7 @@ void loop() {
         }
         break;
       case messCharHome:
+        homingProcedure();
         resetSteppers(j1PC,j2PC,j3PC,j4PC);
         sendObjectiveCompleted(objectiveType, messCharSuccess);
         objectiveInProgress = false;
@@ -299,4 +318,55 @@ void resetSteppers(float theta1,float theta2,float theta3, float theta4) {
   stepper2.setCurrentPosition(theta2);
   stepper3.setCurrentPosition(theta3);
   //TODO 0 of the servo will be constant
+}
+
+void readLimitSwitches() {
+    j1_limit = digitalRead(j1_limit);
+    j2_limit = digitalRead(j2_limit);
+    j3_limit = digitalRead(j3_limit);
+}
+
+void homingProcedure() {
+
+  while (j1_limit || j2_limit || j3_limit) {
+        readLimitSwitches();
+
+        if (j1_limit) {
+            stepper1.moveTo(10000);
+            stepper1.run();
+        }
+        else {
+            stepper1.stop();
+            stepper1.moveTo(stepper1.currentPosition());
+            
+    }
+  }
+  
+//  while (j1_limit || j2_limit || j3_limit) {
+//        readLimits();
+//
+//        if (j1_limit) {
+//            stepper1.runSpeed(SLOW_SPEED);
+//        }
+//        else {
+//            stepper1.stop();
+//            stepper1.moveTo(currentPosition());
+//        }
+//
+//        if (j2_limit) {
+//            stepper2.runSpeed(SLOW_SPEED);
+//        }
+//        else {
+//            stepper2.stop();
+//            stepper2.moveTo(currentPosition());
+//        }
+//
+//        if (j3_limit) {
+//            stepper3.runSpeed(SLOW_SPEED);
+//        }
+//        else {
+//            stepper3.stop();
+//            stepper3.moveTo(currentPosition());
+//        }
+//    }
 }

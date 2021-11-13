@@ -1,6 +1,6 @@
-#define j1_limitPin 5
-#define j2_limitPin 6
-#define j3_limitPin 7
+#define j1_limitPin 6
+#define j2_limitPin 7
+#define j3_limitPin 8
 
 /////////////////
 //Stepper Setup//
@@ -11,9 +11,10 @@ AccelStepper stepper2(1, 5, 4);
 AccelStepper stepper3(1, 9, 8);
 
 
-bool j1_limit = 0;
-bool j2_limit = 0;
-bool j3_limit = 0;
+//in current config, limit switch will go low when pressed
+bool j3_limit = 1;
+bool j1_limit = 1;
+bool j2_limit = 1;
 
 const int SLOW_SPEED = 200;
 const int FAST_SPEED = 200;
@@ -21,9 +22,9 @@ const int FAST_SPEED = 200;
 void setup() {
   // initialize serial communication at 9600 bits per second:
   Serial.begin(9600);
-  pinMode(j1_limitPin, INPUT);
-  pinMode(j2_limitPin, INPUT);
-  pinMode(j3_limitPin, INPUT);
+  pinMode(j1_limitPin, INPUT_PULLUP);
+  pinMode(j2_limitPin, INPUT_PULLUP);
+  pinMode(j3_limitPin, INPUT_PULLUP);
 
   messTime = millis();
 
@@ -52,10 +53,10 @@ void readLimits() {
 
 void goToHome() {
 
-    while (!j1_limit || !j2_limit || !j3_limit) {
+    while (j1_limit || j2_limit || j3_limit) {
         readLimits();
 
-        if (!j1_limit) {
+        if (j1_limit) {
             stepper1.runSpeed(SLOW_SPEED);
         }
         else {
@@ -63,7 +64,7 @@ void goToHome() {
             stepper1.moveTo(currentPosition());
         }
 
-        if (!j2_limit) {
+        if (j2_limit) {
             stepper2.runSpeed(SLOW_SPEED);
         }
         else {
@@ -71,7 +72,7 @@ void goToHome() {
             stepper2.moveTo(currentPosition());
         }
 
-        if (!j3_limit) {
+        if (j3_limit) {
             stepper3.runSpeed(SLOW_SPEED);
         }
         else {
