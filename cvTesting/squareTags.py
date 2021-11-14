@@ -79,9 +79,17 @@ cv2.imshow("HSV Yellow", yellowMask) # Yellow Tag 2
 cv2.imshow("HSV Red", redMask) # Red Tag 2
 
 
-cnts = cv2.findContours(yellowMask.copy(), cv2.RETR_EXTERNAL,
+cntsYellow = cv2.findContours(yellowMask.copy(), cv2.RETR_EXTERNAL,
 	cv2.CHAIN_APPROX_SIMPLE)
-cnts = imutils.grab_contours(cnts)
+cntsYellow = imutils.grab_contours(cntsYellow)
+
+cntsRed = cv2.findContours(redMask.copy(), cv2.RETR_EXTERNAL,
+	cv2.CHAIN_APPROX_SIMPLE)
+cntsRed = imutils.grab_contours(cntsRed)
+
+cntsGreen = cv2.findContours(greenMask.copy(), cv2.RETR_EXTERNAL,
+	cv2.CHAIN_APPROX_SIMPLE)
+cntsGreen = imutils.grab_contours(cntsGreen)
 
 # THRESHOLD FOR DETECTING A SQUARE
 # Not looking at Color Now
@@ -92,61 +100,44 @@ expectedSize = 31
 originTag = None
 rightTag = None
 
+
 # loop over the contours
-for c in cnts:
-	# compute the center of the contour, then detect the name of the
-	# shape using only the contour
-    rot_rect = cv2.minAreaRect(c)
+def getPixelCenter(cnts):
+    for c in cnts:
+        # compute the center of the contour, then detect the name of the
+        # shape using only the contour
+        rot_rect = cv2.minAreaRect(c)
 
-    # This isn't Valid
-    if rot_rect[1][0] == 0 or rot_rect[1][1] == 0:
-        continue
-    
-    # Get Rid of too Big
-    if rot_rect[1][0] > 1.2 * expectedSize or rot_rect[1][0] < .8 * expectedSize or  rot_rect[1][1] > 1.2 * expectedSize or rot_rect[1][1] < .8 * expectedSize:
-        continue
+        # This isn't Valid
+        if rot_rect[1][0] == 0 or rot_rect[1][1] == 0:
+            continue
+        
+        # Get Rid of too Big
+        if rot_rect[1][0] > 1.2 * expectedSize or rot_rect[1][0] < .8 * expectedSize or  rot_rect[1][1] > 1.2 * expectedSize or rot_rect[1][1] < .8 * expectedSize:
+            continue
 
-    widthHeightRatio = rot_rect[1][0]/rot_rect[1][1] 
-    if widthHeightRatio < widthHeightHigh and widthHeightRatio > widthHeightLow:
-        #Add a check to see if it about the right size!!
-        aTag = True
-    else:
-        continue
-        aTag = False
-
-
-    #rotation = rot_rect[2]
-    print(f"Center(x,y): {rot_rect[0]}, Width,Height: {rot_rect[1]}")
-    # if rot_rect[1][0] <= rot_rect[1][1]:
-    #     # This means the block is in a certain orientation
-    #     print("Apply offset ")
-    #     rotation += 90
+        widthHeightRatio = rot_rect[1][0]/rot_rect[1][1] 
+        if widthHeightRatio < widthHeightHigh and widthHeightRatio > widthHeightLow:
+            #Add a check to see if it about the right size!!
+            aTag = True
+        else:
+            continue
+            aTag = False
 
 
-    box = cv2.boxPoints(rot_rect) #* ratio
-    box = np.int0(box)
-    print(box)
-    # draw rotated rectangle on copy of img
-    rot_bbox = resized.copy()
-    cv2.drawContours(rot_bbox,[box],0,(0,0,255),2)
-    cv2.imshow("Image", rot_bbox)
+        #rotation = rot_rect[2]
+        print(f"Center(x,y): {rot_rect[0]}, Width,Height: {rot_rect[1]}")
 
-    # Calculate Center
+        box = cv2.boxPoints(rot_rect) #* ratio
+        box = np.int0(box)
+        print(box)
+        # draw rotated rectangle on copy of img
+        rot_bbox = resized.copy()
+        cv2.drawContours(rot_bbox,[box],0,(0,0,255),2)
+        cv2.imshow("Image", rot_bbox)
 
+        cv2.waitKey(0)
 
-
-    # M = cv2.moments(c)
-    # cX = int((M["m10"] / M["m00"]) * ratio)
-    # cY = int((M["m01"] / M["m00"]) * ratio)
-    # shape = sd.detect(c)
-	# # multiply the contour (x, y)-coordinates by the resize ratio,
-	# # then draw the contours and the name of the shape on the image
-    # c = c.astype("float")
-    # c *= ratio
-    # c = c.astype("int")
-    # # cv2.drawContours(image, [c], -1, (0, 255, 0), 2)
-    # # cv2.putText(image, shape, (cX, cY), cv2.FONT_HERSHEY_SIMPLEX,
-	# # 	0.5, (255, 255, 255), 2)
-	# # # show the output image
-    # cv2.imshow("Image", image)
-    cv2.waitKey(0)
+getPixelCenter(cntsGreen)
+getPixelCenter(cntsYellow)
+getPixelCenter(cntsRed)
