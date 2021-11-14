@@ -47,30 +47,36 @@ image = cv2.imread(args["image"])
 if not image.any():
     print("Couldn't load image")
 
-resized = image #imutils.resize(image, width=600)
+resized = imutils.resize(image, width=600)
 ratio = image.shape[0] / float(resized.shape[0])
 print(ratio)
 
 
 
-hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-lower_red = np.array([30,150,50])
-upper_red = np.array([255,255,180])
+hsv = cv2.cvtColor(resized, cv2.COLOR_BGR2HSV)
+lower_red = np.array([0,150,180])
+upper_red = np.array([22,240,240])
 
-lower_green = np.array([36,0,0])
-upper_green = np.array([86,255,255])
+lower_green = np.array([66,82,77])
+upper_green = np.array([87,208,190])
 
-lower_yellow = np.array([30,0,0])
-upper_yellow = np.array([36,255,255])
+lower_yellow = np.array([26,43,240])
+upper_yellow = np.array([43,110,255])
+
+lowerBlocks =  np.array([16,0,216])
+upperBlocks = np.array([43,81,255])
 
 greenMask = cv2.inRange(hsv, lower_green, upper_green)
-greenRes = cv2.bitwise_and(image,image, mask= greenMask)
+greenRes = cv2.bitwise_and(resized,resized, mask= greenMask)
 
 yellowMask = cv2.inRange(hsv, lower_yellow, upper_yellow)
-yellowRes = cv2.bitwise_and(image,image, mask= yellowMask)
+yellowRes = cv2.bitwise_and(resized,resized, mask= yellowMask)
+redMask = cv2.inRange(hsv, lower_red, upper_red)
+redRes = cv2.bitwise_and(resized,resized, mask= redMask)
 
 cv2.imshow("HSV Green", greenMask)  # Tag 1
-cv2.imshow("HSV Yellow", yellowMask) # Red Tag 2
+cv2.imshow("HSV Yellow", yellowMask) # Yellow Tag 2
+cv2.imshow("HSV Red", redMask) # Red Tag 2
 
 
 cnts = cv2.findContours(yellowMask.copy(), cv2.RETR_EXTERNAL,
@@ -81,6 +87,7 @@ cnts = imutils.grab_contours(cnts)
 # Not looking at Color Now
 widthHeightLow = .9
 widthHeightHigh = 1.1
+expectedSize = 31
 
 originTag = None
 rightTag = None
@@ -92,7 +99,11 @@ for c in cnts:
     rot_rect = cv2.minAreaRect(c)
 
     # This isn't Valid
-    if rot_rect[1][0] == 0 or rot_rect[1][0] == 0:
+    if rot_rect[1][0] == 0 or rot_rect[1][1] == 0:
+        continue
+    
+    # Get Rid of too Big
+    if rot_rect[1][0] > 1.2 * expectedSize or rot_rect[1][0] < .8 * expectedSize or  rot_rect[1][1] > 1.2 * expectedSize or rot_rect[1][1] < .8 * expectedSize:
         continue
 
     widthHeightRatio = rot_rect[1][0]/rot_rect[1][1] 
@@ -100,10 +111,9 @@ for c in cnts:
         #Add a check to see if it about the right size!!
         aTag = True
     else:
+        continue
         aTag = False
 
-    if aTag:
-        pass
 
     #rotation = rot_rect[2]
     print(f"Center(x,y): {rot_rect[0]}, Width,Height: {rot_rect[1]}")
@@ -113,11 +123,11 @@ for c in cnts:
     #     rotation += 90
 
 
-    box = cv2.boxPoints(rot_rect) * ratio
+    box = cv2.boxPoints(rot_rect) #* ratio
     box = np.int0(box)
     print(box)
     # draw rotated rectangle on copy of img
-    rot_bbox = image.copy()
+    rot_bbox = resized.copy()
     cv2.drawContours(rot_bbox,[box],0,(0,0,255),2)
     cv2.imshow("Image", rot_bbox)
 

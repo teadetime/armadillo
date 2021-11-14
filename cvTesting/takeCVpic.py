@@ -2,8 +2,7 @@ import cv2
 
 import os
 
-cam = cv2.VideoCapture(0)
-
+cam = cv2.VideoCapture(2)
 cv2.namedWindow("test")
 
 img_counter = 0
