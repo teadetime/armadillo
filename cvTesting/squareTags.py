@@ -18,13 +18,13 @@ if not image.any():
     print("Couldn't load image")
 
 # Image Loading and Resizing
-resized = imutils.resize(image, width=1000)
+resized = imutils.resize(image, width=600)
 ratio = image.shape[0] / float(resized.shape[0])
 hsv = cv2.cvtColor(resized, cv2.COLOR_BGR2HSV)
 print(ratio)
 
 # CONSTANTS
-debug = False
+debug = True
 widthHeightLow = 0.9
 widthHeightHigh = 1.1
 expectedSize = 31   # TODO Change This in Pixels
@@ -39,18 +39,33 @@ upper_green = np.array([87,208,190])
 lower_yellow = np.array([26,43,240])
 upper_yellow = np.array([43,110,255])
 
-lowerBlocks =  np.array([16,0,216])
-upperBlocks = np.array([43,81,255])
+lowerBlocks =  np.array([10,0,140])
+upperBlocks = np.array([47,70,255])
 
 # Create Masks Based on the Bounds
 greenMask = cv2.inRange(hsv, lower_green, upper_green)
 yellowMask = cv2.inRange(hsv, lower_yellow, upper_yellow)
 redMask = cv2.inRange(hsv, lower_red, upper_red)
 
-cv2.imshow("HSV Green", greenMask)  # Tag 1
-cv2.imshow("HSV Yellow", yellowMask) # Yellow Tag 2
-cv2.imshow("HSV Red", redMask) # Red Tag 2
+# cv2.imshow("HSV Green", greenMask)  # Tag 1
+# cv2.imshow("HSV Yellow", yellowMask) # Yellow Tag 2
+# cv2.imshow("HSV Red", redMask) # Red Tag 2
 
+# Wrap some basic OpenCV for Easier Use
+def drawContours(image, box, color=(0, 0, 255), thickness=2):
+    cv2.drawContours(image,[box],0,color,thickness)
+
+def drawPoint(image, point, color = (0, 255, 255), r = 1):
+    cv2.circle(image, (int(point[0]), int(point[1])), r, color, 2)
+
+def drawBasis(originPixel, basis, arrowSize = 50, colorX = (0, 255, 0), colorY = (0, 0, 255)):
+    originTuple = (int(originPixel[0]), int(originPixel[1]))
+    
+    basisLarger = arrowSize*basis + originPixel
+    endXPosVec = (int(basisLarger[0][0]), int(basisLarger[1][0]))
+    endYPosVec = (int(basisLarger[0][1]), int(basisLarger[1][1]))
+    cv2.arrowedLine(tags_image, originTuple, endXPosVec, colorX, 2)
+    cv2.arrowedLine(tags_image, originTuple, endYPosVec, colorY, 2)
 
 def getCnts(image):
     cnts = cv2.findContours(image, cv2.RETR_EXTERNAL,
@@ -85,6 +100,38 @@ def getPixelCenter(cnts):
 
         return (rot_rect[0], box) # Returns the center in pixels and also the box
 
+def calcBasis(baseTagWorld, secondaryTagWorld, baseTagPixel, secondaryTagPixel):
+    """ np.array 2x1, np.array 2x1, np.array 2x1, np.array 2x1 """
+    tagToTagVectorWorld = secondaryTagWorld-baseTagWorld
+    distWorld = np.hypot(tagToTagVectorWorld[0], tagToTagVectorWorld[1]) # Calculates hypotenuse!
+
+    tagToTagVectorPixel = secondaryTagPixel-baseTagPixel
+    distPixel = np.hypot(tagToTagVectorPixel[0], tagToTagVectorPixel[1]) 
+
+    frameRotation = math.atan2(tagToTagVectorPixel[1], tagToTagVectorPixel[0])  # This may need to be adjusted since images use weird coordinates
+
+    mmPerPixel = distWorld/distPixel
+
+    xPosVector = -1* tagToTagVectorPixel/distPixel * mmPerPixel
+    yPosVector = -1* np.vstack((xPosVector[1], xPosVector[0]))
+
+    basis = np.hstack((xPosVector,yPosVector))
+    basisInv = np.linalg.inv(basis)
+
+    return basis, basisInv, frameRotation
+    
+def changeBasisAtoB(bOffset, aOffset, fRot, basis, aVector, bRot):
+    """
+    Expects np.array(mm), np.array(pixels), radians, np.array(2x2)(mm), np.array(pixels), radians
+    """
+    blockCenterImage = aVector - aOffset
+    bVector = np.matmul(basis, blockCenterImage)
+    bVector = bVector + bOffset
+    rotation = bRot-fRot
+    return bVector, rotation 
+
+
+
 cntsYellow = getCnts(yellowMask)
 cntsRed = getCnts(redMask)
 cntsGreen = getCnts(greenMask)
@@ -97,65 +144,66 @@ cntsGreen = getCnts(greenMask)
 # draw rotated rectangle on copy of img
 tags_image = resized.copy()
 if greenBox is not None:
-    cv2.drawContours(tags_image,[greenBox],0,(0,0,255),2)
+    drawContours(tags_image, greenBox)
+    drawPoint(tags_image, greenCenter)
 if yellowBox is not None:
-    cv2.drawContours(tags_image,[yellowBox],0,(0,0,255),2)
+    drawContours(tags_image, yellowBox)
+    drawPoint(tags_image, yellowCenter)
 if redBox is not None:
-    cv2.drawContours(tags_image,[redBox],0,(0,0,255),2)
-
+    drawContours(tags_image, redBox)
+    drawPoint(tags_image, redCenter)
 
 
 
 # Offsets to use for all parts Only Using Two Squares RN
-greenWorld = np.array([[-200],[525]])
-redWorld = np.array([[200],[525]])
-offset = greenWorld-redWorld
-distWorld = np.hypot(offset[0], offset[1] ) # Calculates hypotenuse!
-print(distWorld)
+greenWorld = np.array([[200],[525]])
+redWorld = np.array([[-200],[525]])
+# offset = greenWorld-redWorld
+# distWorld = np.hypot(offset[0], offset[1]) # Calculates hypotenuse!
+# print(distWorld)
 
 
 # Recognize tag1
 # Image coords pixels
-tag1Center = np.array([[greenCenter[0]], 
-                      [greenCenter[1]]])
-
-
+originTag = np.array([[greenCenter[0]], [greenCenter[1]]])
 # Image coords pixels
-u2 = 120
-v2 = 40
-tag2Center = np.array([[redCenter[0]], 
-                      [redCenter[1]]])
+secondaryTag = np.array([[redCenter[0]], [redCenter[1]]])
 
-tagOffset = tag2Center - tag1Center
-distPixel = np.hypot(tagOffset[0], tagOffset[1] ) # Calculates hypotenuse!
+basisWorld, basisPixel, frameRotation = calcBasis(greenWorld, redWorld, originTag, secondaryTag)
 
-frameRotation = math.atan2(tagOffset[1], tagOffset[0])  # This may need to be adjusted since images use weird coordinates
 
-mmPerPixel = distWorld/distPixel
-vectorRight = tagOffset/distPixel * mmPerPixel
-vectorDown = np.vstack((vectorRight[1], vectorRight[0]))
 
-print(f"test Normal should be {mmPerPixel}")
-testNormal = np.hypot(vectorRight[0], vectorRight[1] ) # Calculates hypotenuse!
-print(testNormal)
+drawBasis(originTag, basisWorld)
 
-basisWorld = np.hstack((vectorRight,vectorDown))
-
+print(f"World: \n{basisWorld}\nPixel: \n{basisPixel}")
 
 ####THESE PARAMS NEED TO BE FROM THE BLOCK/OPENCV
 blockRotationImage = 0
 blockCenterImageFullFrame = np.array([[yellowCenter[0]],
                                       [yellowCenter[1]]])
 print("yellow", yellowCenter)
-blockCenterImage = blockCenterImageFullFrame - tag1Center
-
-coordinatesWorld = np.matmul(basisWorld, blockCenterImage)
-coordinatesWorld = coordinatesWorld + greenWorld
-rotationWorld = blockRotationImage-frameRotation
 
 
-print(f"Coords: {coordinatesWorld}, Rotation: {rotationWorld}")
+# Example to World Coords
+coordWorld, rotationWorld = changeBasisAtoB(greenWorld, originTag, frameRotation, basisWorld,
+                                         blockCenterImageFullFrame, blockRotationImage )
+print(f"World Coords: {coordWorld}, World Rotation: {rotationWorld}")
 
+# Example to Pixel Coords
+testWorldCoords = np.array([[0],[100]])
+coordPixel, rotationBlock = changeBasisAtoB(originTag, greenWorld , blockRotationImage, basisPixel,
+                                         testWorldCoords, frameRotation  )
+print(f"Pixel Coords:\n {coordPixel}\n Pixel rotation: {rotationBlock}")
+drawPoint(tags_image, coordPixel)
+
+
+#Display a grid
+for i in range(-500, 500, 50):
+    for j in range(0, 650, 50):
+        testWorldCoords = np.array([[i],[j]])
+        coordPixel, rotationBlock = changeBasisAtoB(originTag, greenWorld , blockRotationImage, basisPixel,
+                                                testWorldCoords, frameRotation  )
+        drawPoint(tags_image, coordPixel)
 
 
 if debug:
