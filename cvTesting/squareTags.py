@@ -3,43 +3,13 @@ import argparse
 import imutils
 import numpy as np
 import cv2
+from numpy.core.shape_base import hstack
+import math
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", required=True,
     help="path to the input image")
 args = vars(ap.parse_args())
-
-
-# class ShapeDetector:
-#     def __init__(self):
-# 	    pass
-
-#     def detect(self, c):
-# 		# initialize the shape name and approximate the contour
-#         shape = "unidentified"
-#         peri = cv2.arcLength(c, True)
-#         approx = cv2.approxPolyDP(c, 0.04 * peri, True)
-#         # if the shape is a triangle, it will have 3 vertices
-# 	    #if len(approx) == 3:
-# 		#    shape = "triangle"
-# 		# if the shape has 4 vertices, it is either a square or
-# 		# a rectangle
-#         if len(approx) == 4:
-# 			# compute the bounding box of the contour and use the
-# 			# bounding box to compute the aspect ratio
-#             (x, y, w, h) = cv2.boundingRect(approx)
-#             print(x, y, w, h)
-#             print(f"Ratio of w/h: {w/h}")
-#             ar = w / float(h)
-# 			# a square will have an aspect ratio that is approximately
-# 			# equal to one, otherwise, the shape is a rectangle
-#             shape = "square" #if ar >= 0.95 and ar <= 1.05 else "rectangle"
-#         # if the shape is a pentagon, it will have 5 vertices
-#         else:
-#             shape = len(approx)+"-agon"
-# 		# otherwise, we assume the shape is a circle
-#         return shape
-
 
 # load the image and resize it to a smaller factor so that
 # the shapes can be approximated better
@@ -47,13 +17,19 @@ image = cv2.imread(args["image"])
 if not image.any():
     print("Couldn't load image")
 
-resized = imutils.resize(image, width=600)
+# Image Loading and Resizing
+resized = imutils.resize(image, width=1000)
 ratio = image.shape[0] / float(resized.shape[0])
+hsv = cv2.cvtColor(resized, cv2.COLOR_BGR2HSV)
 print(ratio)
 
+# CONSTANTS
+debug = False
+widthHeightLow = 0.9
+widthHeightHigh = 1.1
+expectedSize = 31   # TODO Change This in Pixels
 
-
-hsv = cv2.cvtColor(resized, cv2.COLOR_BGR2HSV)
+# Boundaries for the different  Colors
 lower_red = np.array([0,150,180])
 upper_red = np.array([22,240,240])
 
@@ -66,40 +42,20 @@ upper_yellow = np.array([43,110,255])
 lowerBlocks =  np.array([16,0,216])
 upperBlocks = np.array([43,81,255])
 
+# Create Masks Based on the Bounds
 greenMask = cv2.inRange(hsv, lower_green, upper_green)
-greenRes = cv2.bitwise_and(resized,resized, mask= greenMask)
-
 yellowMask = cv2.inRange(hsv, lower_yellow, upper_yellow)
-yellowRes = cv2.bitwise_and(resized,resized, mask= yellowMask)
 redMask = cv2.inRange(hsv, lower_red, upper_red)
-redRes = cv2.bitwise_and(resized,resized, mask= redMask)
 
 cv2.imshow("HSV Green", greenMask)  # Tag 1
 cv2.imshow("HSV Yellow", yellowMask) # Yellow Tag 2
 cv2.imshow("HSV Red", redMask) # Red Tag 2
 
 
-cntsYellow = cv2.findContours(yellowMask.copy(), cv2.RETR_EXTERNAL,
+def getCnts(image):
+    cnts = cv2.findContours(image, cv2.RETR_EXTERNAL,
 	cv2.CHAIN_APPROX_SIMPLE)
-cntsYellow = imutils.grab_contours(cntsYellow)
-
-cntsRed = cv2.findContours(redMask.copy(), cv2.RETR_EXTERNAL,
-	cv2.CHAIN_APPROX_SIMPLE)
-cntsRed = imutils.grab_contours(cntsRed)
-
-cntsGreen = cv2.findContours(greenMask.copy(), cv2.RETR_EXTERNAL,
-	cv2.CHAIN_APPROX_SIMPLE)
-cntsGreen = imutils.grab_contours(cntsGreen)
-
-# THRESHOLD FOR DETECTING A SQUARE
-# Not looking at Color Now
-widthHeightLow = .9
-widthHeightHigh = 1.1
-expectedSize = 31
-
-originTag = None
-rightTag = None
-
+    return imutils.grab_contours(cnts)
 
 # loop over the contours
 def getPixelCenter(cnts):
@@ -113,31 +69,95 @@ def getPixelCenter(cnts):
             continue
         
         # Get Rid of too Big
-        if rot_rect[1][0] > 1.2 * expectedSize or rot_rect[1][0] < .8 * expectedSize or  rot_rect[1][1] > 1.2 * expectedSize or rot_rect[1][1] < .8 * expectedSize:
-            continue
+        #if rot_rect[1][0] > 1.2 * expectedSize or rot_rect[1][0] < .8 * expectedSize or  rot_rect[1][1] > 1.2 * expectedSize or rot_rect[1][1] < .8 * expectedSize:
+        #    continue
 
         widthHeightRatio = rot_rect[1][0]/rot_rect[1][1] 
-        if widthHeightRatio < widthHeightHigh and widthHeightRatio > widthHeightLow:
+        if widthHeightRatio > widthHeightHigh or widthHeightRatio < widthHeightLow:
             #Add a check to see if it about the right size!!
-            aTag = True
-        else:
             continue
-            aTag = False
-
 
         #rotation = rot_rect[2]
         print(f"Center(x,y): {rot_rect[0]}, Width,Height: {rot_rect[1]}")
 
         box = cv2.boxPoints(rot_rect) #* ratio
         box = np.int0(box)
-        print(box)
-        # draw rotated rectangle on copy of img
-        rot_bbox = resized.copy()
-        cv2.drawContours(rot_bbox,[box],0,(0,0,255),2)
-        cv2.imshow("Image", rot_bbox)
 
-        cv2.waitKey(0)
+        return (rot_rect[0], box) # Returns the center in pixels and also the box
 
-getPixelCenter(cntsGreen)
-getPixelCenter(cntsYellow)
-getPixelCenter(cntsRed)
+cntsYellow = getCnts(yellowMask)
+cntsRed = getCnts(redMask)
+cntsGreen = getCnts(greenMask)
+
+# Calculate the centers of each piece
+(greenCenter, greenBox) = getPixelCenter(cntsGreen)
+(yellowCenter, yellowBox) = getPixelCenter(cntsYellow)
+(redCenter, redBox) = getPixelCenter(cntsRed)
+
+# draw rotated rectangle on copy of img
+tags_image = resized.copy()
+if greenBox is not None:
+    cv2.drawContours(tags_image,[greenBox],0,(0,0,255),2)
+if yellowBox is not None:
+    cv2.drawContours(tags_image,[yellowBox],0,(0,0,255),2)
+if redBox is not None:
+    cv2.drawContours(tags_image,[redBox],0,(0,0,255),2)
+
+
+
+
+# Offsets to use for all parts Only Using Two Squares RN
+greenWorld = np.array([[-200],[525]])
+redWorld = np.array([[200],[525]])
+offset = greenWorld-redWorld
+distWorld = np.hypot(offset[0], offset[1] ) # Calculates hypotenuse!
+print(distWorld)
+
+
+# Recognize tag1
+# Image coords pixels
+tag1Center = np.array([[greenCenter[0]], 
+                      [greenCenter[1]]])
+
+
+# Image coords pixels
+u2 = 120
+v2 = 40
+tag2Center = np.array([[redCenter[0]], 
+                      [redCenter[1]]])
+
+tagOffset = tag2Center - tag1Center
+distPixel = np.hypot(tagOffset[0], tagOffset[1] ) # Calculates hypotenuse!
+
+frameRotation = math.atan2(tagOffset[1], tagOffset[0])  # This may need to be adjusted since images use weird coordinates
+
+mmPerPixel = distWorld/distPixel
+vectorRight = tagOffset/distPixel * mmPerPixel
+vectorDown = np.vstack((vectorRight[1], vectorRight[0]))
+
+print(f"test Normal should be {mmPerPixel}")
+testNormal = np.hypot(vectorRight[0], vectorRight[1] ) # Calculates hypotenuse!
+print(testNormal)
+
+basisWorld = np.hstack((vectorRight,vectorDown))
+
+
+####THESE PARAMS NEED TO BE FROM THE BLOCK/OPENCV
+blockRotationImage = 0
+blockCenterImageFullFrame = np.array([[yellowCenter[0]],
+                                      [yellowCenter[1]]])
+print("yellow", yellowCenter)
+blockCenterImage = blockCenterImageFullFrame - tag1Center
+
+coordinatesWorld = np.matmul(basisWorld, blockCenterImage)
+coordinatesWorld = coordinatesWorld + greenWorld
+rotationWorld = blockRotationImage-frameRotation
+
+
+print(f"Coords: {coordinatesWorld}, Rotation: {rotationWorld}")
+
+
+
+if debug:
+    cv2.imshow("Image", tags_image)
+    cv2.waitKey(0)
