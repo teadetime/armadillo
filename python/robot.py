@@ -39,10 +39,22 @@ class robot:
         self.L2 = 320               # 2nd Arm
         self.L3 = 0                 # Length of rotating end effector
 
+        # 
+        self.J1microSteps = 16
+        self.J2microSteps = 16
+        self.J3microSteps = 16        
+        self.J1gearing = 3
+        self.J2gearing = 3
+        self.J3gearing = 3
+
         # Radian values for the limit switches
         self.limitJ1 = 0
         self.limitJ2 = math.pi/4
-        self.limitJ3 = 3*math.pi/4
+        self.limitJ3 = 4*math.pi/4
+
+        self.j1ZeroSteps = self.radToSteps(self.limitJ1, self.J1microSteps, self.J1gearing)
+        self.j2ZeroSteps = self.radToSteps(self.limitJ2, self.J2microSteps, self.J2gearing)
+        self.j3ZeroSteps = self.radToSteps(self.limitJ3, self.J3microSteps, self.J3gearing)
 
         # Offsets from Pivot point to servo Horn
         self.servoArmOffset = 32
@@ -78,12 +90,7 @@ class robot:
         self.splitChar = ","
         self.startChar = '<'
         self.endChar = '>'
-        self.J1microSteps = 16
-        self.J2microSteps = 16
-        self.J3microSteps = 16        
-        self.J1gearing = 3
-        self.J2gearing = 3
-        self.J3gearing = 3
+
 
     def worldToJoint(self, coords , thetab):
         '''
