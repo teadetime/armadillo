@@ -18,6 +18,9 @@ const int j3_limitPin = 7;
 bool j1_limitVal = 0;                  // In current config, switch will go low when pressed
 bool j2_limitVal = 1;
 bool j3_limitVal = 1;
+bool j1Homed = false;
+bool j2Homed = false;
+bool j3Homed = false;
 
 ////////////////////////////
 //Vars for Incoming Serial//
@@ -50,6 +53,7 @@ boolean objectiveInProgress = false;  // Switches to true when waiting to send a
 boolean debug = true;       // Flag for debuggin data NOT IN USE
 
 byte microStep = 16;
+int stepsRev = 200;
 
 /////////////////////////////////
 //Used for reporting RobotState//
@@ -68,6 +72,8 @@ void setup() {
   pinMode(j1_limitPin, INPUT_PULLUP);
   pinMode(j2_limitPin, INPUT_PULLUP);
   pinMode(j3_limitPin, INPUT_PULLUP);
+
+  readLimitSwitches()
   
   messTime = millis();
   stepper1.setMaxSpeed(1000);
@@ -138,6 +144,15 @@ void loop() {
         stepper3.moveTo(j3PC);
 
       }
+      if (objectiveType == messCharHome) {
+        moving = true;
+        j1Homed = false;
+        j2Homed = false;
+        j3Homed = false;
+        stepper1.moveTo(stepsRev*microStep);
+        stepper2.moveTo(stepsRev*microStep);
+        stepper3.moveTo(stepsRev*microStep);
+      }
     }
   }
   ////////////////
@@ -156,10 +171,15 @@ void loop() {
         break;
       case messCharHome:
         homingProcedure();
-        resetSteppers(j1PC,j2PC,j3PC,j4PC);
-        sendObjectiveCompleted(objectiveType, messCharSuccess);
-        objectiveInProgress = false;
-        break;
+        //homingLoop();
+        if(j1Homed && j2Homed && j3Homed){
+          resetSteppers(j1PC,j2PC,j3PC,j4PC);
+          sendObjectiveCompleted(objectiveType, messCharSuccess);
+          objectiveInProgress = false;
+          break;
+        }
+        
+        
       case messCharTest:
         resetSteppers(j1PC,j2PC,j3PC,j4PC);
         sendObjectiveCompleted(objectiveType, messCharSuccess);
@@ -326,6 +346,28 @@ void readLimitSwitches() {
     j3_limitVal = digitalRead(j3_limitPin);
 }
 
+void homingLoop(){
+  readLimitSwitches();
+  stepper1.run();
+  stepper2.run();
+  stepper3.run();
+  if (j1_limitVal == 1) {
+    //  Serial.println(j1_limitVal);
+      stepper1.stop();
+      j1Homed = true;
+    }
+  if (j2_limitVal == 0) {
+    //  Serial.println(j2_limitVal);
+      stepper2.stop();
+      j2Homed = true;
+  }
+  if (j3_limitVal == 0) {
+    //  Serial.println(j3_limitVal);
+      stepper3.stop();
+      j3Homed = true;
+  }
+}
+
 void homingProcedure() {
   // so far this homes each joint individually
   
@@ -339,6 +381,7 @@ void homingProcedure() {
 //    if (j1_limitVal == 1) {
 //    //  Serial.println(j1_limitVal);
 //      stepper1.stop();
+//      j1Homed = true;
 //    }
 //  }
 
@@ -352,6 +395,7 @@ void homingProcedure() {
     if (j2_limitVal == 0) {
     //  Serial.println(j2_limitVal);
       stepper2.stop();
+      j2Homed = true;
     }
   }
 
@@ -365,6 +409,7 @@ void homingProcedure() {
 //    if (j3_limitVal == 0) {
 //      //Serial.println(j3_limitVal);
 //      stepper3.stop();
+//      j1Homed = true;
 //    }
 //  }
  
