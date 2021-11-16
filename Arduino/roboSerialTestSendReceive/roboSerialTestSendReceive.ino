@@ -12,8 +12,8 @@ AccelStepper stepper3(1, 9, 8);
 ///////////////////////////
 
 const int j1_limitPin = 6;
-//#define j2_limitPin 12
-//#define j3_limitPin 13
+const int j2_limitPin = 7;
+const int j3_limitPin = 8;
 
 bool j1_limitVal = 1;                  // In current config, switch will go low when pressed
 bool j2_limitVal = 1;
@@ -66,8 +66,8 @@ void setup() {
 
   // need to use INPUT_PULLUP here to have hardware debouncing
   pinMode(j1_limitPin, INPUT_PULLUP);
-//  pinMode(j2_limitPin, INPUT_PULLUP);
-//  pinMode(j3_limitPin, INPUT_PULLUP);
+  pinMode(j2_limitPin, INPUT_PULLUP);
+  pinMode(j3_limitPin, INPUT_PULLUP);
   
   messTime = millis();
   stepper1.setMaxSpeed(1000);
@@ -322,14 +322,15 @@ void resetSteppers(float theta1,float theta2,float theta3, float theta4) {
 
 void readLimitSwitches() {
     j1_limitVal = digitalRead(j1_limitPin);
-//    j2_limitVal = digitalRead(j2_limit);
-//    j3_limitVal = digitalRead(j3_limit);
+    j2_limitVal = digitalRead(j2_limitPin);
+    j3_limitVal = digitalRead(j3_limitPin);
 }
 
 void homingProcedure() {
+  // so far this homes each joint individually
+  
+  // homes j1
   stepper1.moveTo(10000);
-  
-  
   readLimitSwitches();
   while (digitalRead(j1_limitPin) == 1) {
     stepper1.run();
@@ -338,6 +339,32 @@ void homingProcedure() {
     if (j1_limitVal == 0) {
       Serial.println(j1_limitVal);
       stepper1.stop();
+    }
+  }
+
+  // homes j2
+  stepper2.moveTo(10000);
+  readLimitSwitches();
+  while (digitalRead(j2_limitPin) == 1) {
+    stepper2.run();
+    readLimitSwitches();
+    Serial.println(j2_limitVal);
+    if (j2_limitVal == 0) {
+      Serial.println(j2_limitVal);
+      stepper2.stop();
+    }
+  }
+
+  // homes j3
+  stepper3.moveTo(10000);
+  readLimitSwitches();
+  while (digitalRead(j3_limitPin) == 1) {
+    stepper3.run();
+    readLimitSwitches();
+    Serial.println(j3_limitVal);
+    if (j3_limitVal == 0) {
+      Serial.println(j3_limitVal);
+      stepper3.stop();
     }
   }
  
