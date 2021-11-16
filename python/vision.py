@@ -325,7 +325,7 @@ class vision:
 
         while True:
             ret, frame = cap.read()
-            image = imutils.resize(frame, width=self.resizedSize)
+            image = imutils.resize(frame, width=400)
 
 
             # get current positions of all trackbars

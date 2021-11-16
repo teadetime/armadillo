@@ -69,34 +69,34 @@ if __name__=='__main__':
         result = arm.waitForResponse()
         print(result)
 
-        #Move j2
-        nextPoint = arm.createMessage(arm.commands["move"],(arm.j1ZeroSteps,arm.j2ZeroSteps, arm.j3ZeroSteps-300,0),1.0,40.0)
-        arm.serial.write(nextPoint)
-        print(f"sent message: {nextPoint}")
-        result = arm.waitForResponse()
-        print(result)
+        # #Move j2
+        # nextPoint = arm.createMessage(arm.commands["move"],(arm.j1ZeroSteps,arm.j2ZeroSteps, arm.j3ZeroSteps-300,0),1.0,40.0)
+        # arm.serial.write(nextPoint)
+        # print(f"sent message: {nextPoint}")
+        # result = arm.waitForResponse()
+        # print(result)
 
-        #Move j3
-        nextPoint = arm.createMessage(arm.commands["move"],(arm.j1ZeroSteps,arm.j2ZeroSteps-300, arm.j3ZeroSteps-300,0),1.0,40.0)
-        arm.serial.write(nextPoint)
-        print(f"sent message: {nextPoint}")
-        result = arm.waitForResponse()
-        print(result)
+        # #Move j3
+        # nextPoint = arm.createMessage(arm.commands["move"],(arm.j1ZeroSteps,arm.j2ZeroSteps-300, arm.j3ZeroSteps-300,0),1.0,40.0)
+        # arm.serial.write(nextPoint)
+        # print(f"sent message: {nextPoint}")
+        # result = arm.waitForResponse()
+        # print(result)
 
-        #Move j1
-        nextPoint = arm.createMessage(arm.commands["move"],(arm.j1ZeroSteps-300,arm.j2ZeroSteps-300, arm.j3ZeroSteps-300,0),1.0,40.0)
-        arm.serial.write(nextPoint)
-        print(f"sent message: {nextPoint}")
-        result = arm.waitForResponse()
-        print(result)
+        # #Move j1
+        # nextPoint = arm.createMessage(arm.commands["move"],(arm.j1ZeroSteps-300,arm.j2ZeroSteps-300, arm.j3ZeroSteps-300,0),1.0,40.0)
+        # arm.serial.write(nextPoint)
+        # print(f"sent message: {nextPoint}")
+        # result = arm.waitForResponse()
+        # print(result)
     
     
-        # Go home
-        nextPoint = arm.createMessage(arm.commands["move"],homeTuple,1.0,40.0)
-        arm.serial.write(nextPoint)
-        print(f"sent message: {nextPoint}")
-        result = arm.waitForResponse()
-        print(result)
+        # # Go home
+        # nextPoint = arm.createMessage(arm.commands["move"],homeTuple,1.0,40.0)
+        # arm.serial.write(nextPoint)
+        # print(f"sent message: {nextPoint}")
+        # result = arm.waitForResponse()
+        # print(result)
 
 
     # # Go to a position

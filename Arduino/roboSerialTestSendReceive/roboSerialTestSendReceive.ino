@@ -2,7 +2,7 @@
 //Stepper Setup//
 /////////////////
 #include <AccelStepper.h>
-AccelStepper stepper1(1, 3, 2);
+AccelStepper stepper1(1, 3, 2); //Step dir?
 AccelStepper stepper2(1, 5, 4);
 AccelStepper stepper3(1, 9, 8);
 
@@ -11,11 +11,11 @@ AccelStepper stepper3(1, 9, 8);
 //Vars for Limit Switches//
 ///////////////////////////
 
-const int j1_limitPin = 6;
-const int j2_limitPin = 7;
-const int j3_limitPin = 8;
+const int j1_limitPin = 10;
+const int j2_limitPin = 6;
+const int j3_limitPin = 7;
 
-bool j1_limitVal = 1;                  // In current config, switch will go low when pressed
+bool j1_limitVal = 0;                  // In current config, switch will go low when pressed
 bool j2_limitVal = 1;
 bool j3_limitVal = 1;
 
@@ -329,18 +329,18 @@ void readLimitSwitches() {
 void homingProcedure() {
   // so far this homes each joint individually
   
-  // homes j1
-  stepper1.moveTo(10000);
-  readLimitSwitches();
-  while (digitalRead(j1_limitPin) == 1) {
-    stepper1.run();
-    readLimitSwitches();
-    Serial.println(j1_limitVal);
-    if (j1_limitVal == 0) {
-      Serial.println(j1_limitVal);
-      stepper1.stop();
-    }
-  }
+  //homes j1
+//  stepper1.moveTo(10000);
+//  readLimitSwitches();
+//  while (digitalRead(j1_limitPin) == 0) {
+//    stepper1.run();
+//    readLimitSwitches();
+//    //Serial.println(j1_limitVal);
+//    if (j1_limitVal == 1) {
+//    //  Serial.println(j1_limitVal);
+//      stepper1.stop();
+//    }
+//  }
 
   // homes j2
   stepper2.moveTo(10000);
@@ -348,24 +348,24 @@ void homingProcedure() {
   while (digitalRead(j2_limitPin) == 1) {
     stepper2.run();
     readLimitSwitches();
-    Serial.println(j2_limitVal);
+    //Serial.println(j2_limitVal);
     if (j2_limitVal == 0) {
-      Serial.println(j2_limitVal);
+    //  Serial.println(j2_limitVal);
       stepper2.stop();
     }
   }
 
   // homes j3
-  stepper3.moveTo(10000);
-  readLimitSwitches();
-  while (digitalRead(j3_limitPin) == 1) {
-    stepper3.run();
-    readLimitSwitches();
-    Serial.println(j3_limitVal);
-    if (j3_limitVal == 0) {
-      Serial.println(j3_limitVal);
-      stepper3.stop();
-    }
-  }
+//  stepper3.moveTo(10000);
+//  readLimitSwitches();
+//  while (digitalRead(j3_limitPin) == 1) {
+//    stepper3.run();
+//    readLimitSwitches();
+//    //Serial.println(j3_limitVal);
+//    if (j3_limitVal == 0) {
+//      //Serial.println(j3_limitVal);
+//      stepper3.stop();
+//    }
+//  }
  
 }
