@@ -17,7 +17,7 @@ class vision:
 
         # Image Loading and Resizing
         self.needsBasis = True  # Run ceratin calculations if they haven't been run before
-        self.camIndex = 0       # 0 is internal webcam
+        self.camIndex = 2       # 0 is internal webcam
         self.image = None
         self.resized = None     #imutils.resize(image, width=self.resizedSize)
         self.drawImg = None
@@ -64,13 +64,22 @@ class vision:
         # TODO: doesn't actually fail as instructed
         cap = cv2.VideoCapture(self.camIndex)
         # Check if the webcam is opened correctly
+        # while True:
+        #     ret, frame = cap.read()
+        #     if ret == True:
+        #         cv2.imshow('Frame',frame)
+        #         # Press Q on keyboard to  exit
+        #         if cv2.waitKey(25) & 0xFF == ord('q'):
+        #             break
+
+
         if not cap.isOpened():
             cap.release()
             return False
         cap.release()
         return True
 
-    def grabImage(self, delay = .2, fromPath = True):
+    def grabImage(self, delay = 2, fromPath = True):
         if fromPath:
             self.image = cv2.imread(args["image"])
         else:
@@ -80,11 +89,14 @@ class vision:
         self.resized = imutils.resize(self.image, width=self.resizedSize)
         self.drawImg = self.resized.copy()
         if self.needsBasis:
-            self.establishBasis()
+            success = self.establishBasis()
+            if not success:
+                return False
         # Always update the block mask
         self.blockMask = cv2.inRange(self.hsv, self.lowerBlocks, self.upperBlocks)
         if self.jengaDebug:
             cv2.imshow("HSV Block Mask", self.blockMask)  # Tag 1
+        return True
     # TODO: WHY DOESNT THIS WORK!?!?!?
     #image = cv2.flip(image,0)
 
@@ -103,6 +115,9 @@ class vision:
         cntsYellow = self.getCnts(yellowMask)
         cntsRed = self.getCnts(redMask)
         cntsGreen = self.getCnts(greenMask)
+
+        if not cntsGreen or not cntsRed:
+            return False
 
         # Calculate the centers of each piece
         (greenCenter, greenBox) = self.getPixelCenterSquare(cntsGreen)
@@ -157,6 +172,7 @@ class vision:
             cv2.waitKey(0)
         self.drawImg = self.resized.copy()  # Reset the image for other operations!
         self.needsBasis = False
+        return True # This means we were successful
 
     # Wrap some basic OpenCV for Easier Use
     def drawContours(self, box, color=(0, 0, 255), thickness=2):

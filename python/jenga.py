@@ -10,7 +10,8 @@ if __name__=='__main__':
 
 
 
-    vs.grabImage()
+    grabImageSuccess = vs.grabImage(fromPath=False)
+    print(grabImageSuccess)
     vs.getBlockWorld()
 
     #####################
