@@ -12,6 +12,9 @@ args = vars(ap.parse_args())
 
 class vision:
     def __init__(self):
+        self.debug = False
+        self.jengaDebug = True
+
         # Image Loading and Resizing
         self.needsBasis = True  # Run ceratin calculations if they haven't been run before
         self.camIndex = 0       # 0 is internal webcam
@@ -30,7 +33,6 @@ class vision:
         self.greenWorldOrigin = np.array([[200],[525]])
         self.originTagPixel = None
         self.redWorld = np.array([[-200],[525]])
-        self.debug = False
         self.widthHeightLow = 0.9
         self.widthHeightHigh = 1.1
         self.expectedSize = 31   # TODO Change This in Pixels
@@ -52,7 +54,7 @@ class vision:
         self.jengaWLow = 36
         self.jengaLHigh = 121
         self.jengaLLow = 115
-
+        self.singleBlock = None     # Resets after finding a block sets to None if no block found
 
         self.basisWorld = None
         self.basisPixel = None
@@ -81,8 +83,8 @@ class vision:
             self.establishBasis()
         # Always update the block mask
         self.blockMask = cv2.inRange(self.hsv, self.lowerBlocks, self.upperBlocks)
-    
-    
+        if self.jengaDebug:
+            cv2.imshow("HSV Block Mask", self.blockMask)  # Tag 1
     # TODO: WHY DOESNT THIS WORK!?!?!?
     #image = cv2.flip(image,0)
 
@@ -153,8 +155,8 @@ class vision:
                     self.drawPoint(coordPixel, (0,0,255))
             cv2.imshow("Image", self.drawImg)
             cv2.waitKey(0)
+        self.drawImg = self.resized.copy()  # Reset the image for other operations!
         self.needsBasis = False
-
 
     # Wrap some basic OpenCV for Easier Use
     def drawContours(self, box, color=(0, 0, 255), thickness=2):
@@ -176,6 +178,55 @@ class vision:
         cnts = cv2.findContours(mask, cv2.RETR_EXTERNAL,
         cv2.CHAIN_APPROX_SIMPLE)
         return imutils.grab_contours(cnts)
+
+    def getBlockPixel(self):
+        cnts = self.getCnts(self.blockMask)
+        for c in reversed(cnts): # Start from top of frame since I can't seem to flip the image
+            rot_rect = cv2.minAreaRect(c)
+            rotation = rot_rect[2]
+            # small pixel cutoff
+            pixelCutoff = 10
+            if rot_rect[1][1] < pixelCutoff or rot_rect[1][0] < pixelCutoff: # THIS HANDLES-> or rot_rect[1][1] == 0 or rot_rect[1][0] == 0:
+                continue
+            blockLong = max(rot_rect[1])*self.ratio
+            blockShort = min(rot_rect[1])*self.ratio
+            if blockLong > self.jengaLHigh or blockLong < self.jengaLLow or blockShort > self.jengaWHigh or blockShort < self.jengaWLow:
+                # This isn't a jenga Block
+                continue
+                # TODO: LOOK FOR CLUSTERS HERE!!!
+            
+            # This means the block is in a certain orientation that needs an offset
+            if rot_rect[1][0] <= rot_rect[1][1]:
+                rotation += 90
+            rotation *= -1      # All rotation needs to be adjusted!
+
+            #DEBUG 
+            if self.jengaDebug:
+                print(f"Center(x,y): {rot_rect[0]}, Width,Height: {rot_rect[1]}, rotation: {rotation}")
+                print(f"ratio:{self.ratio}, w: {self.ratio*rot_rect[1][0]}, h: {self.ratio*rot_rect[1][1]}")
+                print(f"Final rotation: {rotation}")
+            
+                box = cv2.boxPoints(rot_rect) #* ratio
+                box = np.int0(box)
+                self.drawContours(box)
+                self.drawPoint(rot_rect[0], (255,0,0))
+                
+            return np.array([[rot_rect[0][0]],[rot_rect[0][1]]] ), rotation
+        return None
+
+    def getBlockWorld(self):
+        singleBlockCenterPixel, singleBlockRotation =  self.getBlockPixel()
+        # Lets take the block into world Coordinates!!!
+        coordWorld, rotationWorld = self.changeBasisAtoB(self.greenWorldOrigin, self.originTagPixel, self.frameRotation, self.basisWorld,
+                                                singleBlockCenterPixel, singleBlockRotation)
+        
+        # TODO: what does this return if nothing has happened??
+        if self.jengaDebug:
+            #print(f"Block: {singleBlockCenterPixel}, theta: {singleBlockRotation}")
+            print(f"Jenga Block World Coords: {coordWorld}, World Rotation: {rotationWorld}")
+            cv2.imshow("HSV Block", self.drawImg) 
+            cv2.waitKey(0)
+        return coordWorld, rotationWorld
 
     # loop over the contours
     def getPixelCenterSquare(self, cnts):
@@ -234,70 +285,4 @@ class vision:
         bVector = np.matmul(basis, blockCenterImage)
         bVector = bVector + bOffset
         rotation = bRot-fRot
-        return bVector, rotation 
-
-  
-
-if __name__=='__main__':
-
-    # TIME FOR JENGA!!!!!
-    jengaDebug = True
-    jengaImg = resized.copy()
-
-    if jengaDebug:
-        cv2.imshow("HSV Block Mask", blockMask)  # Tag 1
-        cv2.waitKey(0)
-
-    singleBlock = None
-    groupBlock = None   #TODO: Implement search for a group and do cool stuff!
-
-    def getBlockPixel(mask):
-        cnts = getCnts(mask)
-        for c in reversed(cnts): # Start from top of frame since I can't seem to flip the image
-            rot_rect = cv2.minAreaRect(c)
-            rotation = rot_rect[2]
-            # small pixel cutoff
-            pixelCutoff = 10
-            if rot_rect[1][1] < pixelCutoff or rot_rect[1][0] < pixelCutoff: # THIS HANDLES-> or rot_rect[1][1] == 0 or rot_rect[1][0] == 0:
-                continue
-            blockLong = max(rot_rect[1])*ratio
-            blockShort = min(rot_rect[1])*ratio
-            if blockLong > jengaLHigh or blockLong < jengaLLow or blockShort > jengaWHigh or blockShort < jengaWLow:
-                # This isn't a jenga Block
-                continue
-                # TODO: LOOK FOR CLUSTERS HERE!!!
-            
-            # This means the block is in a certain orientation that needs an offset
-            if rot_rect[1][0] <= rot_rect[1][1]:
-                rotation += 90
-            rotation *= -1      # All rotation needs to be adjusted!
-
-            #DEBUG 
-            if jengaDebug:
-                print(f"Center(x,y): {rot_rect[0]}, Width,Height: {rot_rect[1]}, rotation: {rotation}")
-                print(f"ratio:{ratio}, w: {ratio*rot_rect[1][0]}, h: {ratio*rot_rect[1][1]}")
-                print(f"Final rotation: {rotation}")
-            
-                box = cv2.boxPoints(rot_rect) #* ratio
-                box = np.int0(box)
-                drawContours(jengaImg, box)
-                drawPoint(jengaImg, rot_rect[0], (255,0,0))
-                
-            return np.array([[rot_rect[0][0]],[rot_rect[0][1]]] ), rotation
-        return None
-
-    def getBlockWorld(originWorld, originWorldPixel, frameRot, basisW, mask):
-        singleBlockCenterPixel, singleBlockRotation =  getBlockPixel(mask)
-        #print(f"Block: {singleBlockCenterPixel}, theta: {singleBlockRotation}")
-        # Lets take the block into world Coordinates!!!
-        coordWorld, rotationWorld = changeBasisAtoB(originWorld, originWorldPixel, frameRot, basisW,
-                                                singleBlockCenterPixel, singleBlockRotation)
-        #print(f"World Coords: {coordWorld}, World Rotation: {rotationWorld}")
-        # TODO: what does this return if nothing has happened??
-        return coordWorld, rotationWorld
-
-
-    getBlockWorld(greenWorldOrigin, originTagPixel, frameRotation, basisWorld, blockMask)
-
-    cv2.imshow("HSV Block", jengaImg)  # Tag 1
-    cv2.waitKey(0)
+        return bVector, rotation    

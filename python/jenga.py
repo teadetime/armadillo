@@ -11,7 +11,7 @@ if __name__=='__main__':
 
 
     vs.grabImage()
-
+    vs.getBlockWorld()
 
     #####################
     # Test Zero Position#
