@@ -48,7 +48,7 @@ class robot:
         self.J3gearing = 3
 
         # Radian values for the limit switches
-        self.limitJ1 = 0
+        self.limitJ1 = math.pi/2
         self.limitJ2 = math.pi/4
         self.limitJ3 = 4*math.pi/4
 
@@ -169,8 +169,8 @@ class robot:
             step1 = self.radToSteps(jPos[0], self.J1microSteps, self.J1gearing)
             step2 = self.radToSteps(jPos[1], self.J2microSteps, self.J2gearing)
             step3 = self.radToSteps(jPos[2], self.J3microSteps, self.J3gearing)
-            step4 = jPos[3]
-            return (int(step1), int(step2), int(step3), int(step4))
+            eofDegrees = math.degrees(jPos[3])
+            return (int(step1), int(step2), int(step3), int(eofDegrees))
 
     def stepTupleToRadTuple(self, stepPos):
         if len(stepPos) != 4:
@@ -179,7 +179,7 @@ class robot:
         rad1 = self.stepsToRads(stepPos[0], self.J1microSteps, self.J1gearing)
         rad2 = self.stepsToRads(stepPos[1], self.J2microSteps, self.J2gearing)
         rad3 = self.stepsToRads(stepPos[2], self.J3microSteps, self.J3gearing)
-        rad4 = stepPos[3]
+        rad4 = math.radians(stepPos[3])
         return (rad1, rad2, rad3, rad4)
 
     def radToSteps(self, rad, microSteps, gearing, stepsRev = 200):
