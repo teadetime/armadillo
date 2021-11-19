@@ -20,7 +20,7 @@ if __name__=='__main__':
         grabbingFrame = True
         while grabbingFrame:
             grabImageSuccess = vs.grabImage(fromPath=False)
-        
+
             if not grabImageSuccess:
                 print("Please reposition Camera and check masking!")
                 vs.tuneWindow()
@@ -56,8 +56,8 @@ if __name__=='__main__':
 
         arm.waitForArduino()
 
-      
-    
+
+
 
 
         ##############################
@@ -74,7 +74,7 @@ if __name__=='__main__':
         # Go to a position
         jPos = arm.worldToJoint((200,200, 25), 0)
         stepPos = arm.radTupleToStepTuple(jPos)
-        nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
+        nextPoint = arm.createMessage(arm.commands["move"],stepPos,0,40.0)
         arm.serial.write(nextPoint)
         print(f"sent message: {nextPoint}")
         result = arm.waitForResponse()
@@ -113,7 +113,7 @@ if __name__=='__main__':
         # Go to a position
         jPos = arm.worldToJoint((-200, 200, 20), 0)
         stepPos = arm.radTupleToStepTuple(jPos)
-        nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
+        nextPoint = arm.createMessage(arm.commands["move"],stepPos,0,40.0)
         arm.serial.write(nextPoint)
         print(f"sent message: {nextPoint}")
         result = arm.waitForResponse()
@@ -125,7 +125,7 @@ if __name__=='__main__':
         # Go to a position
         jPos = arm.worldToJoint((200,225, 25), 0)
         stepPos = arm.radTupleToStepTuple(jPos)
-        nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
+        nextPoint = arm.createMessage(arm.commands["move"],stepPos,0,40.0)
         arm.serial.write(nextPoint)
         print(f"sent message: {nextPoint}")
         result = arm.waitForResponse()
@@ -136,7 +136,7 @@ if __name__=='__main__':
         # Go to a position
         jPos = arm.worldToJoint((200, 225, 15), 0)
         stepPos = arm.radTupleToStepTuple(jPos)
-        nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
+        nextPoint = arm.createMessage(arm.commands["move"],stepPos,0,40.0)
         arm.serial.write(nextPoint)
         print(f"sent message: {nextPoint}")
         result = arm.waitForResponse()
@@ -263,7 +263,7 @@ if __name__=='__main__':
     # print(result)
 
 
-    
+
 
     # jPos = worldToJoint((100,220, 120), 0)
     # stepPos = radTupleToSteptuple(jPos)
@@ -299,11 +299,11 @@ if __name__=='__main__':
                 # (0,0,0,0),
                 # (1000, 600,0,0),
                 # (0,0,0,0),
-                
+
                 # ]*2
     #for jengaBlock in range(54):
-    
-    #for jPos in jPosList: 
+
+    #for jPos in jPosList:
         # Calculate position
         # layer = jengaBlock // 3 + 1
         # rotation = (layer % 2) * 90
