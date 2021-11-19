@@ -1,12 +1,12 @@
 int limit_switch_1 = 6;
 int limit_switch_2 = 7;
-
-
+int limit_switch_3 = 8;
 
 void setup() {
   Serial.begin(115200);
   pinMode(limit_switch_1, INPUT_PULLUP);
   pinMode(limit_switch_2, INPUT_PULLUP);
+  pinMode(limit_switch_3, INPUT_PULLUP);
 
 
 }
@@ -19,6 +19,11 @@ void loop() {
         }
   else if (digitalRead(limit_switch_2) == LOW) {
           Serial.println("limit 2 HIT");
+
+//          Serial.println(digitalRead(limit_switch_2));
+        }
+  else if (digitalRead(limit_switch_3) == HIGH) {
+          Serial.println("limit 3 HIT");
 
 //          Serial.println(digitalRead(limit_switch_2));
         }

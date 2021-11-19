@@ -4,6 +4,8 @@ import numpy as np
 import cv2
 import math
 from time import sleep
+
+from numpy.core.shape_base import block
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", required=True,
@@ -12,7 +14,7 @@ args = vars(ap.parse_args())
 
 class vision:
     def __init__(self):
-        self.debug = False
+        self.debug = True
         self.jengaDebug = True
 
         # Image Loading and Resizing
@@ -54,15 +56,32 @@ class vision:
         self.jengaWLow = 36
         self.jengaLHigh = 121
         self.jengaLLow = 115
+
+        # Jenga block sizes under dilated image
+        self.jengaWHighDilated = 100
+        self.jengaWLowDilated = 5
+        self.jengaLHighDilated = 190
+        self.jengaLLowDilated = 5
+
         self.singleBlock = None     # Resets after finding a block sets to None if no block found
 
         self.basisWorld = None
         self.basisPixel = None
         self.frameRotation = 0
-        
+
     def testCamera(self):
         # TODO: doesn't actually fail as instructed
         cap = cv2.VideoCapture(self.camIndex)
+        # Check if the webcam is opened correctly
+        # while True:
+        #     ret, frame = cap.read()
+        #     if ret == True:
+        #         cv2.imshow('Frame',frame)
+        #         # Press Q on keyboard to  exit
+        #         if cv2.waitKey(25) & 0xFF == ord('q'):
+        #             break
+
+
         if not cap.isOpened():
             cap.release()
             return False
@@ -84,6 +103,13 @@ class vision:
                 return False
         # Always update the block mask
         self.blockMask = cv2.inRange(self.hsv, self.lowerBlocks, self.upperBlocks)
+
+        kernel = np.ones((4,4), np.uint8)
+        eroded = cv2.erode(self.blockMask, kernel, iterations=3)
+        # cv2.imshow("eroded", eroded)
+        self.blockMask = eroded
+
+
         if self.jengaDebug:
             cv2.imshow("HSV Block Mask", self.blockMask)  # Tag 1
         return True
@@ -98,10 +124,12 @@ class vision:
         greenMask = cv2.inRange(self.hsv, self.lower_green, self.upper_green)
         yellowMask = cv2.inRange(self.hsv, self.lower_yellow, self.upper_yellow)
         redMask = cv2.inRange(self.hsv, self.lower_red, self.upper_red)
-        # if self.debug:
-        #     cv2.imshow("HSV Green", self.greenMask)  # Tag 1
-        #     cv2.imshow("HSV Yellow", self.yellowMask) # Yellow Tag 2
-        #     cv2.imshow("HSV Red", self.redMask) # Red Tag 2
+
+        if self.debug:
+            cv2.imshow("HSV Green", greenMask)  # Tag 1
+            cv2.imshow("HSV Yellow", yellowMask) # Yellow Tag 2
+            cv2.imshow("HSV Red", redMask) # Red Tag 2
+
         cntsYellow = self.getCnts(yellowMask)
         cntsRed = self.getCnts(redMask)
         cntsGreen = self.getCnts(greenMask)
@@ -166,6 +194,7 @@ class vision:
 
     # Wrap some basic OpenCV for Easier Use
     def drawContours(self, box, color=(0, 0, 255), thickness=2):
+        print("drawing contours")
         cv2.drawContours(self.drawImg,[box],0,(0, 0, 255),thickness)
 
     def drawPoint(self, point, color = (0, 255, 255), r = 1):
@@ -173,7 +202,7 @@ class vision:
 
     def drawBasis(self, arrowSize = 20, colorX = (0, 255, 0), colorY = (0, 0, 255)):
         originTuple = (int(self.originTagPixel[0]), int(self.originTagPixel[1]))
-        
+
         basisLarger = arrowSize*self.basisWorld + self.originTagPixel
         endXPosVec = (int(basisLarger[0][0]), int(basisLarger[1][0]))
         endYPosVec = (int(basisLarger[0][1]), int(basisLarger[1][1]))
@@ -187,6 +216,8 @@ class vision:
 
     def getBlockPixel(self):
         cnts = self.getCnts(self.blockMask)
+        print(cnts)
+        blockMask2 = cv2.cvtColor(self.blockMask, cv2.COLOR_GRAY2BGR)  #add this line
         for c in reversed(cnts): # Start from top of frame since I can't seem to flip the image
             rot_rect = cv2.minAreaRect(c)
             rotation = rot_rect[2]
@@ -196,28 +227,43 @@ class vision:
                 continue
             blockLong = max(rot_rect[1])*self.ratio
             blockShort = min(rot_rect[1])*self.ratio
-            if blockLong > self.jengaLHigh or blockLong < self.jengaLLow or blockShort > self.jengaWHigh or blockShort < self.jengaWLow:
+
+            wrongDilatedBlockDimensions = blockLong > self.jengaLHighDilated or blockLong < self.jengaLLowDilated or blockShort > self.jengaWHighDilated or blockShort < self.jengaWLowDilated
+            # correctBlockDimensions = blockLong > self.jengaLHigh or blockLong < self.jengaLLow or blockShort > self.jengaWHigh or blockShort < self.jengaWLow
+            # if blockLong > self.jengaLHigh or blockLong < self.jengaLLow or blockShort > self.jengaWHigh or blockShort < self.jengaWLow:
+            if wrongDilatedBlockDimensions: # or wrongBlockDimensions:
                 # This isn't a jenga Block
+                print("this isn't a jenga block")
+                print(blockLong, blockShort)
                 continue
                 # TODO: LOOK FOR CLUSTERS HERE!!!
-            
+
             # This means the block is in a certain orientation that needs an offset
             if rot_rect[1][0] <= rot_rect[1][1]:
                 rotation += 90
             rotation *= -1      # All rotation needs to be adjusted!
 
-            #DEBUG 
+            #DEBUG
             if self.jengaDebug:
                 print(f"Center(x,y): {rot_rect[0]}, Width,Height: {rot_rect[1]}, rotation: {rotation}")
                 print(f"ratio:{self.ratio}, w: {self.ratio*rot_rect[1][0]}, h: {self.ratio*rot_rect[1][1]}")
                 print(f"Final rotation: {rotation}")
-            
+
                 box = cv2.boxPoints(rot_rect) #* ratio
                 box = np.int0(box)
-                self.drawContours(box)
+                self.drawContours(box, thickness = 6)
                 self.drawPoint(rot_rect[0], (255,0,0))
-                
-            return np.array([[rot_rect[0][0]],[rot_rect[0][1]]] ), rotation
+                print("drawing items")
+                # cv2.drawContours()
+                cv2.drawContours(blockMask2,[box],0,(0, 255, 255), 2)
+                cv2.imshow("With Detection", blockMask2)
+                print("returning anything")
+                print("returning " + str(np.array([[rot_rect[0][0]],[rot_rect[0][1]]] )) + ", " + str(rotation))
+                cv2.waitKey(0)
+                # return np.array([[rot_rect[0][0]],[rot_rect[0][1]]] ), rotation
+
+        print("Didn't detect any Jenga blocks")
+        cv2.waitKey(0)
         return None
 
     def getBlockWorld(self):
@@ -225,12 +271,12 @@ class vision:
         # Lets take the block into world Coordinates!!!
         coordWorld, rotationWorld = self.changeBasisAtoB(self.greenWorldOrigin, self.originTagPixel, self.frameRotation, self.basisWorld,
                                                 singleBlockCenterPixel, singleBlockRotation)
-        
+
         # TODO: what does this return if nothing has happened??
         if self.jengaDebug:
             #print(f"Block: {singleBlockCenterPixel}, theta: {singleBlockRotation}")
             print(f"Jenga Block World Coords: {coordWorld}, World Rotation: {rotationWorld}")
-            cv2.imshow("HSV Block", self.drawImg) 
+            cv2.imshow("HSV Block", self.drawImg)
             cv2.waitKey(0)
         return coordWorld, rotationWorld
 
@@ -244,12 +290,12 @@ class vision:
             # This isn't Valid
             if rot_rect[1][0] == 0 or rot_rect[1][1] == 0:
                 continue
-            
+
             # TODO Get Rid of too Big
             #if rot_rect[1][0] > 1.2 * expectedSize or rot_rect[1][0] < .8 * expectedSize or  rot_rect[1][1] > 1.2 * expectedSize or rot_rect[1][1] < .8 * expectedSize:
             #    continue
 
-            widthHeightRatio = rot_rect[1][0]/rot_rect[1][1] 
+            widthHeightRatio = rot_rect[1][0]/rot_rect[1][1]
             if widthHeightRatio > self.widthHeightHigh or widthHeightRatio < self.widthHeightLow:
                 #Add a check to see if it about the right size!!
                 continue
@@ -269,7 +315,7 @@ class vision:
         distWorld = np.hypot(tagToTagVectorWorld[0], tagToTagVectorWorld[1]) # Calculates hypotenuse!
 
         tagToTagVectorPixel = secondaryTagPixel-baseTagPixel
-        distPixel = np.hypot(tagToTagVectorPixel[0], tagToTagVectorPixel[1]) 
+        distPixel = np.hypot(tagToTagVectorPixel[0], tagToTagVectorPixel[1])
 
         frameRotation = math.atan2(tagToTagVectorPixel[1], tagToTagVectorPixel[0])  # This may need to be adjusted since images use weird coordinates
 
@@ -291,76 +337,4 @@ class vision:
         bVector = np.matmul(basis, blockCenterImage)
         bVector = bVector + bOffset
         rotation = bRot-fRot
-        return bVector, rotation    
-
-    def tuneWindow(self):
-        """
-        Window used to tune HSV values this pops up if we can't find basis Tags
-        """
-        def nothing(x):
-            pass
-        cap = cv2.VideoCapture(self.camIndex)
-        # Create a window
-        cv2.namedWindow('image')
-
-        # create trackbars for color change
-        cv2.createTrackbar('HMin','image',0,179,nothing) # Hue is from 0-179 for Opencv
-        cv2.createTrackbar('SMin','image',0,255,nothing)
-        cv2.createTrackbar('VMin','image',0,255,nothing)
-        cv2.createTrackbar('HMax','image',0,179,nothing)
-        cv2.createTrackbar('SMax','image',0,255,nothing)
-        cv2.createTrackbar('VMax','image',0,255,nothing)
-
-        # Set default value for MAX HSV trackbars.
-        cv2.setTrackbarPos('HMax', 'image', 179)
-        cv2.setTrackbarPos('SMax', 'image', 255)
-        cv2.setTrackbarPos('VMax', 'image', 255)
-
-        # Initialize to check if HSV min/max value changes
-        hMin = sMin = vMin = hMax = sMax = vMax = 0
-        phMin = psMin = pvMin = phMax = psMax = pvMax = 0
-
-        # output = image
-        wait_time = 33
-
-        while True:
-            ret, frame = cap.read()
-            image = imutils.resize(frame, width=400)
-
-
-            # get current positions of all trackbars
-            hMin = cv2.getTrackbarPos('HMin','image')
-            sMin = cv2.getTrackbarPos('SMin','image')
-            vMin = cv2.getTrackbarPos('VMin','image')
-
-            hMax = cv2.getTrackbarPos('HMax','image')
-            sMax = cv2.getTrackbarPos('SMax','image')
-            vMax = cv2.getTrackbarPos('VMax','image')
-
-            # Set minimum and max HSV values to display
-            lower = np.array([hMin, sMin, vMin])
-            upper = np.array([hMax, sMax, vMax])
-
-            # Create HSV Image and threshold into a range.
-            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-            mask = cv2.inRange(hsv, lower, upper)
-            output = cv2.bitwise_and(image,image, mask= mask)
-
-            # Print if there is a change in HSV value
-            if( (phMin != hMin) | (psMin != sMin) | (pvMin != vMin) | (phMax != hMax) | (psMax != sMax) | (pvMax != vMax) ):
-                print("(hMin = %d , sMin = %d, vMin = %d), (hMax = %d , sMax = %d, vMax = %d)" % (hMin , sMin , vMin, hMax, sMax , vMax))
-                phMin = hMin
-                psMin = sMin
-                pvMin = vMin
-                phMax = hMax
-                psMax = sMax
-                pvMax = vMax
-
-            # Display output image
-            cv2.imshow('image',output)
-
-            # Wait longer to prevent freeze for videos.
-            if cv2.waitKey(wait_time) & 0xFF == ord('q'):
-                break
-        cap.release()
-        cv2.destroyAllWindows()
+        return bVector, rotation

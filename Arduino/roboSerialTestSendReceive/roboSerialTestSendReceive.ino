@@ -2,22 +2,31 @@
 //Stepper Setup//
 /////////////////
 #include <AccelStepper.h>
-AccelStepper stepper1(1, 3, 2);
+#include <Servo.h>
+AccelStepper stepper1(1, 3, 2); //Step dir?
 AccelStepper stepper2(1, 5, 4);
 AccelStepper stepper3(1, 9, 8);
-
+Servo servoEOF;
 
 ///////////////////////////
 //Vars for Limit Switches//
 ///////////////////////////
 
-const int j1_limitPin = 6;
-const int j2_limitPin = 7;
-const int j3_limitPin = 8;
+const int j1_limitPin = 10;
+const int j2_limitPin = 6;
+const int j3_limitPin = 7;
+const int servoPin = 11;
+const int vacPin = 13;
 
-bool j1_limitVal = 1;                  // In current config, switch will go low when pressed
+const int servoZero = 90;         // Lets sero the servo at the center of its range
+int servoPos = 0;
+
+bool j1_limitVal = 0;                  // In current config, switch will go low when pressed
 bool j2_limitVal = 1;
 bool j3_limitVal = 1;
+bool j1Homed = false;
+bool j2Homed = false;
+bool j3Homed = false;
 
 ////////////////////////////
 //Vars for Incoming Serial//
@@ -26,7 +35,7 @@ char objectiveType = 'Z';           // Objective type, must be one of messChar**
 const char messCharMove = 'M';      // First Byte in a message sent that has robot state data
 const char messCharInfo = 'I';      // First Byte in data the indicates something about an objective
 const char messCharHome = 'H';          // First Byte for messages regarding homing
-const char messCharTest = 'T'; 
+const char messCharTest = 'T';
 const char messCharOther = 'O';
 const char messCharSuccess = 'Y';
 const char messCharFail = 'N';
@@ -41,7 +50,7 @@ float j1PC = 0.0;
 float j2PC = 0.0;
 float j3PC = 0.0;
 float j4PC = 0.0;
-float vacPC = 0.0;
+bool vacPC = false;
 float speedPC = 0.0;
 boolean newData = false;
 
@@ -50,6 +59,7 @@ boolean objectiveInProgress = false;  // Switches to true when waiting to send a
 boolean debug = true;       // Flag for debuggin data NOT IN USE
 
 byte microStep = 16;
+int stepsRev = 600;
 
 /////////////////////////////////
 //Used for reporting RobotState//
@@ -68,22 +78,24 @@ void setup() {
   pinMode(j1_limitPin, INPUT_PULLUP);
   pinMode(j2_limitPin, INPUT_PULLUP);
   pinMode(j3_limitPin, INPUT_PULLUP);
-  
+  servoEOF.attach(servoPin);
+  readLimitSwitches();
+
   messTime = millis();
-  stepper1.setMaxSpeed(1000);
-  stepper1.setSpeed(1000);
+  stepper1.setMaxSpeed(800);
+  stepper1.setSpeed(700);
   stepper1.setCurrentPosition(0);
-  stepper1.setAcceleration(500);
+  stepper1.setAcceleration(300);
 
   stepper2.setMaxSpeed(1000);
   stepper2.setSpeed(1000);
   stepper2.setCurrentPosition(0);
-  stepper2.setAcceleration(500);
-  
+  stepper2.setAcceleration(280);
+
   stepper3.setMaxSpeed(1000);
   stepper3.setSpeed(1000);
   stepper3.setCurrentPosition(0);
-  stepper3.setAcceleration(500);
+  stepper3.setAcceleration(280);
 
   objectiveStartTime = messTime;    // Set this to the current time
   Serial.begin(115200);     // Fast Baud to send data more quickly!
@@ -136,7 +148,20 @@ void loop() {
         stepper1.moveTo(j1PC);
         stepper2.moveTo(j2PC);
         stepper3.moveTo(j3PC);
+        servoPos = int(j4PC)+servoZero; //This may need to be minus
+        servoEOF.write(servoPos);
 
+      }
+      if (objectiveType == messCharHome) {
+        j1Homed = false;
+        j2Homed = false;
+        j3Homed = false;
+        Serial.println("Sending Moveto");
+        stepper1.moveTo(stepsRev*microStep);
+        stepper2.moveTo(stepsRev*microStep);
+        stepper3.moveTo(stepsRev*microStep);
+        servoPos = servoZero;
+        servoEOF.write(servoPos);
       }
     }
   }
@@ -155,15 +180,14 @@ void loop() {
         }
         break;
       case messCharHome:
-        homingProcedure();
-        resetSteppers(j1PC,j2PC,j3PC,j4PC);
-        sendObjectiveCompleted(objectiveType, messCharSuccess);
-        objectiveInProgress = false;
-        break;
-      case messCharTest:
-        resetSteppers(j1PC,j2PC,j3PC,j4PC);
-        sendObjectiveCompleted(objectiveType, messCharSuccess);
-        objectiveInProgress = false;
+        homingLoop();
+
+        if(j1Homed==1 && j2Homed==1 && j3Homed==1){
+          resetSteppers(j1PC,j2PC,j3PC,j4PC);
+          sendObjectiveCompleted(objectiveType, messCharSuccess);
+          moving = false;
+          objectiveInProgress = false;
+        }
         break;
       case messCharInfo:
         sendRobotState(numMessages);
@@ -256,7 +280,7 @@ void parseData() {      // split the data into its parts
   j4PC = atof(strtokIndx);     // convert this part to a float
 
   strtokIndx = strtok(NULL, ",");
-  vacPC = atof(strtokIndx);     // convert this part to a float
+  vacPC = strtokIndx != "0";     // convert this part to a bool
 
   strtokIndx = strtok(NULL, ",");
   speedPC = atof(strtokIndx);     // convert this part to a float
@@ -300,14 +324,18 @@ void sendRobotState(int message) {
   Serial.print(stepper2.currentPosition());
   Serial.print(sep);
   Serial.print(stepper3.currentPosition());
-  //  Serial.print(sep);
-  //  Serial.print(stepper1.currentPosition());
+  Serial.print(sep);
+  Serial.print(servoEOF.read());
   Serial.println(endMarker);
 }
 
 bool motorsMoving() {
-  return (stepper1.isRunning() || stepper2.isRunning() || stepper3.isRunning() );
+  return (stepper1.isRunning() || stepper2.isRunning() || stepper3.isRunning() || servoEOF.read() != servoPos );
   // return (stepper1.isRunning() || stepper2.isRunning()|| stepper3.isRunning() || servoSPINNING);
+}
+
+void setVac(bool val) {
+  digitalWrite(vacPin, val);
 }
 
 /////////////////////////////
@@ -326,19 +354,44 @@ void readLimitSwitches() {
     j3_limitVal = digitalRead(j3_limitPin);
 }
 
-void homingProcedure() {
+void homingLoop(){
+  readLimitSwitches();
+  if (j1_limitVal == 1 && !j1Homed) {
+      stepper1.stop();
+      //stepper1.moveTo(stepper1.currentPosition());
+      stepper1.setCurrentPosition(j1PC);
+      j1Homed = true;
+    }
+  if (j2_limitVal == 0 && !j2Homed) {
+    //  Serial.println(j2_limitVal);
+      stepper2.stop();
+      stepper2.setCurrentPosition(j2PC);
+      //stepper2.moveTo(stepper2.currentPosition());
+      j2Homed = true;
+  }
+  if (j3_limitVal == 0 && !j3Homed) {
+    //  Serial.println(j3_limitVal);
+      stepper3.stop();
+      stepper3.setCurrentPosition(j3PC);
+      //stepper3.moveTo(stepper3.currentPosition());
+      j3Homed = true;
+  }
+}
+
+void homingProcedureBlocking() {
   // so far this homes each joint individually
-  
-  // homes j1
+
+  //homes j1
   stepper1.moveTo(10000);
   readLimitSwitches();
-  while (digitalRead(j1_limitPin) == 1) {
+  while (digitalRead(j1_limitPin) == 0) {
     stepper1.run();
     readLimitSwitches();
-    Serial.println(j1_limitVal);
-    if (j1_limitVal == 0) {
-      Serial.println(j1_limitVal);
+    //Serial.println(j1_limitVal);
+    if (j1_limitVal == 1) {
+    //  Serial.println(j1_limitVal);
       stepper1.stop();
+      j1Homed = true;
     }
   }
 
@@ -348,10 +401,11 @@ void homingProcedure() {
   while (digitalRead(j2_limitPin) == 1) {
     stepper2.run();
     readLimitSwitches();
-    Serial.println(j2_limitVal);
+    //Serial.println(j2_limitVal);
     if (j2_limitVal == 0) {
-      Serial.println(j2_limitVal);
+    //  Serial.println(j2_limitVal);
       stepper2.stop();
+      j2Homed = true;
     }
   }
 
@@ -361,11 +415,13 @@ void homingProcedure() {
   while (digitalRead(j3_limitPin) == 1) {
     stepper3.run();
     readLimitSwitches();
-    Serial.println(j3_limitVal);
+    //Serial.println(j3_limitVal);
     if (j3_limitVal == 0) {
-      Serial.println(j3_limitVal);
+      //Serial.println(j3_limitVal);
       stepper3.stop();
+
+      j3Homed = true;
     }
   }
- 
+
 }

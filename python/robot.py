@@ -34,19 +34,32 @@ class robot:
         #     quit()
 
         self.stepsPerRev = 200      # Number of steps in 1 rev of the steppers
-        self.P1xyz = (0,0,85)       # Only the Z offset does anything
-        self.L1 = 320               # mm length of first Arm Bearing to bearing
-        self.L2 = 320               # 2nd Arm
-        self.L3 = 0                 # Length of rotating end effector
+        self.P1xyz = (0,0,105)       # Only the Z offset does anything
+        self.L1 = 322               # mm length of first Arm Bearing to bearing
+        self.L2 = 322               # 2nd Arm
+        self.L3 = 20                 # Length of rotating end effector
+
+        # 
+        self.J1microSteps = 16
+        self.J2microSteps = 16
+        self.J3microSteps = 16        
+        self.J1gearing = 3
+        self.J2gearing = 3
+        self.J3gearing = 3
 
         # Radian values for the limit switches
-        self.limitJ1 = 0
-        self.limitJ2 = math.pi/4
-        self.limitJ3 = 3*math.pi/4
+        self.limitJ1 = math.pi/2 + math.radians(5) 
+        self.limitJ2 = math.radians(75.5)#math.pi/4
+        self.limitJ3 = math.pi/2+math.radians(85.73) 
+
+        print(f"j1Limit: {self.limitJ1}\nj2Limit: {self.limitJ2}\nj3Limit: {self.limitJ3}")
+        self.j1ZeroSteps = self.radToSteps(self.limitJ1, self.J1microSteps, self.J1gearing)
+        self.j2ZeroSteps = self.radToSteps(self.limitJ2, self.J2microSteps, self.J2gearing)
+        self.j3ZeroSteps = self.radToSteps(self.limitJ3, self.J3microSteps, self.J3gearing)
 
         # Offsets from Pivot point to servo Horn
-        self.servoArmOffset = 32
-        self.servoZOffset = 15
+        self.servoArmOffset = 55
+        self.servoZOffset = 30
 
         self.suctionOffset = 0 # Also could be droop
 
@@ -78,12 +91,7 @@ class robot:
         self.splitChar = ","
         self.startChar = '<'
         self.endChar = '>'
-        self.J1microSteps = 16
-        self.J2microSteps = 16
-        self.J3microSteps = 16        
-        self.J1gearing = 3
-        self.J2gearing = 3
-        self.J3gearing = 3
+
 
     def worldToJoint(self, coords , thetab):
         '''
@@ -91,7 +99,7 @@ class robot:
         coords: tuple looks like -> (xb,yb,zb) 
         '''
         # First lets assume we are choosing the position of the end effector ie 45*
-        thetabRad = thetab
+        thetabRad = math.radians(thetab)
 
         # Calculate the xyz of arm
         #First work backwords from block to position the end of servo
@@ -113,8 +121,12 @@ class robot:
         # NOTE THETSE ARE BOTH Zero when they point straight out
         theta2 = math.acos((self.L1**2 + b**2 - self.L2**2)/(2*self.L2*b)) + gamma
         theta3 = math.acos((self.L1**2 - b**2 + self.L2**2)/(2*self.L1*self.L2)) + theta2
-        theta1 = math.atan2(ya, xa) - math.pi/2
-        theta4 = thetabRad-theta1
+        theta1 = math.atan2(-xa, ya) # Flip the coordinates since we need to offset by pi/2 this allows us to handle negatives!
+        
+        print(theta1, theta2, theta3)
+        print(thetab)
+        
+        theta4 = -(theta1 - thetabRad)
 
         return (theta1, theta2, theta3, theta4)
 
@@ -162,8 +174,8 @@ class robot:
             step1 = self.radToSteps(jPos[0], self.J1microSteps, self.J1gearing)
             step2 = self.radToSteps(jPos[1], self.J2microSteps, self.J2gearing)
             step3 = self.radToSteps(jPos[2], self.J3microSteps, self.J3gearing)
-            step4 = jPos[3]
-            return (int(step1), int(step2), int(step3), int(step4))
+            eofDegrees = math.degrees(jPos[3])
+            return (int(step1), int(step2), int(step3), int(eofDegrees))
 
     def stepTupleToRadTuple(self, stepPos):
         if len(stepPos) != 4:
@@ -172,7 +184,7 @@ class robot:
         rad1 = self.stepsToRads(stepPos[0], self.J1microSteps, self.J1gearing)
         rad2 = self.stepsToRads(stepPos[1], self.J2microSteps, self.J2gearing)
         rad3 = self.stepsToRads(stepPos[2], self.J3microSteps, self.J3gearing)
-        rad4 = stepPos[3]
+        rad4 = math.radians(stepPos[3])
         return (rad1, rad2, rad3, rad4)
 
     def radToSteps(self, rad, microSteps, gearing, stepsRev = 200):
