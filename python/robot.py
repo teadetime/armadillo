@@ -48,7 +48,7 @@ class robot:
         self.J3gearing = 3
 
         # Radian values for the limit switches
-        self.limitJ1 = math.pi/2 + math.radians(8.9) 
+        self.limitJ1 = math.pi/2 + math.radians(5) 
         self.limitJ2 = math.radians(75.5)#math.pi/4
         self.limitJ3 = math.pi/2+math.radians(85.73) 
 
