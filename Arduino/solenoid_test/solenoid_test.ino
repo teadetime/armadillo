@@ -21,8 +21,8 @@ void loop()
 //  digitalWrite(solenoidPin, HIGH);       //Switch Solenoid OFF
 //  delay(2000);                          //Wait 5 Second
 
-  // digitalWrite(solenoidPin, LOW);      //Switch Solenoid ON
-  // delay(6000);
-  // digitalWrite(solenoidPin, HIGH);       //Switch Solenoid OFF
-  // delay(6000);                          //Wait 1 Second
+  digitalWrite(solenoidPin, LOW);      //Switch Solenoid ON
+  delay(10000);
+  digitalWrite(solenoidPin, HIGH);       //Switch Solenoid OFF
+  delay(10000);                          //Wait 1 Second
 }
