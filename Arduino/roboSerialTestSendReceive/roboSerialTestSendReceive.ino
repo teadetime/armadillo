@@ -50,7 +50,7 @@ float j1PC = 0.0;
 float j2PC = 0.0;
 float j3PC = 0.0;
 float j4PC = 0.0;
-bool vacPC = false;
+float vacPC = 0.0;
 float speedPC = 0.0;
 boolean newData = false;
 
@@ -80,6 +80,8 @@ void setup() {
   pinMode(j3_limitPin, INPUT_PULLUP);
   servoEOF.attach(servoPin);
   readLimitSwitches();
+
+  pinMode(vacPin, OUTPUT);
 
   messTime = millis();
   stepper1.setMaxSpeed(800);
@@ -150,6 +152,7 @@ void loop() {
         stepper3.moveTo(j3PC);
         servoPos = int(j4PC)+servoZero; //This may need to be minus
         servoEOF.write(servoPos);
+        setVac(vacPC);
 
       }
       if (objectiveType == messCharHome) {
@@ -178,6 +181,7 @@ void loop() {
           //TODO CHECK IF START POSITION IS LIKE FINAL POSITION?
           sendObjectiveCompleted(objectiveType, messCharSuccess);
         }
+        setVac(vacPC);
         break;
       case messCharHome:
         homingLoop();
@@ -280,7 +284,7 @@ void parseData() {      // split the data into its parts
   j4PC = atof(strtokIndx);     // convert this part to a float
 
   strtokIndx = strtok(NULL, ",");
-  vacPC = strtokIndx != "0";     // convert this part to a bool
+  vacPC = atof(strtokIndx);     // convert this part to a float
 
   strtokIndx = strtok(NULL, ",");
   speedPC = atof(strtokIndx);     // convert this part to a float
@@ -334,8 +338,9 @@ bool motorsMoving() {
   // return (stepper1.isRunning() || stepper2.isRunning()|| stepper3.isRunning() || servoSPINNING);
 }
 
-void setVac(bool val) {
-  digitalWrite(vacPin, val);
+void setVac(float val) {
+  bool boolVal = val == 1.0;
+  digitalWrite(vacPin, boolVal);
 }
 
 /////////////////////////////
