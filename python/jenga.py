@@ -1,6 +1,7 @@
 import math
 import robot
 import vision
+import time
 
 if __name__=='__main__':
     arm = robot.robot()
@@ -90,17 +91,30 @@ if __name__=='__main__':
         # result = arm.waitForResponse()
         # print(result)
     
-    
-        # # Go home
-        # nextPoint = arm.createMessage(arm.commands["move"],homeTuple,1.0,40.0)
-        # arm.serial.write(nextPoint)
-        # print(f"sent message: {nextPoint}")
-        # result = arm.waitForResponse()
-        # print(result)
+
+        # Go to a position
+        jPos = arm.worldToJoint((200,200, 25), 0)
+        stepPos = arm.radTupleToStepTuple(jPos)
+        nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
+        arm.serial.write(nextPoint)
+        print(f"sent message: {nextPoint}")
+        result = arm.waitForResponse()
+        print(result)
+        time.sleep(1)
 
 
         # Go to a position
-        jPos = arm.worldToJoint((-400,300, 0), 0)
+        jPos = arm.worldToJoint((200, 200, 10), 0)
+        stepPos = arm.radTupleToStepTuple(jPos)
+        nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
+        arm.serial.write(nextPoint)
+        print(f"sent message: {nextPoint}")
+        result = arm.waitForResponse()
+        print(result)
+        time.sleep(2)
+
+        # Go to a position
+        jPos = arm.worldToJoint((200, 200, 20), 0)
         stepPos = arm.radTupleToStepTuple(jPos)
         nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
         arm.serial.write(nextPoint)
@@ -108,6 +122,21 @@ if __name__=='__main__':
         result = arm.waitForResponse()
         print(result)
 
+        # Go to a position
+        jPos = arm.worldToJoint((-200, 200, 30), 0)
+        stepPos = arm.radTupleToStepTuple(jPos)
+        nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
+        arm.serial.write(nextPoint)
+        print(f"sent message: {nextPoint}")
+        result = arm.waitForResponse()
+        print(result)
+        time.sleep(2)
+
+        homingMessage = arm.createMessage(arm.commands["home"],homeTuple,0,0)
+        arm.serial.write(homingMessage)
+        print(f"Homing: {homingMessage}")
+        result = arm.waitForResponse()
+        print(result)
     # # Go to a position
     # jPos = arm.worldToJoint((0,280, 300), 0)
     # stepPos = arm.radTupleToStepTuple(jPos)
