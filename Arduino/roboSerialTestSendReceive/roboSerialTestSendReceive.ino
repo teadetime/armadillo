@@ -16,6 +16,7 @@ const int j1_limitPin = 10;
 const int j2_limitPin = 6;
 const int j3_limitPin = 7;
 const int servoPin = 11;
+const int vacPin = 13;
 
 const int servoZero = 90;         // Lets sero the servo at the center of its range
 int servoPos = 0;
@@ -34,7 +35,7 @@ char objectiveType = 'Z';           // Objective type, must be one of messChar**
 const char messCharMove = 'M';      // First Byte in a message sent that has robot state data
 const char messCharInfo = 'I';      // First Byte in data the indicates something about an objective
 const char messCharHome = 'H';          // First Byte for messages regarding homing
-const char messCharTest = 'T'; 
+const char messCharTest = 'T';
 const char messCharOther = 'O';
 const char messCharSuccess = 'Y';
 const char messCharFail = 'N';
@@ -49,7 +50,7 @@ float j1PC = 0.0;
 float j2PC = 0.0;
 float j3PC = 0.0;
 float j4PC = 0.0;
-float vacPC = 0.0;
+bool vacPC = false;
 float speedPC = 0.0;
 boolean newData = false;
 
@@ -79,7 +80,7 @@ void setup() {
   pinMode(j3_limitPin, INPUT_PULLUP);
   servoEOF.attach(servoPin);
   readLimitSwitches();
-  
+
   messTime = millis();
   stepper1.setMaxSpeed(800);
   stepper1.setSpeed(700);
@@ -90,7 +91,7 @@ void setup() {
   stepper2.setSpeed(1000);
   stepper2.setCurrentPosition(0);
   stepper2.setAcceleration(280);
-  
+
   stepper3.setMaxSpeed(1000);
   stepper3.setSpeed(1000);
   stepper3.setCurrentPosition(0);
@@ -185,7 +186,7 @@ void loop() {
           resetSteppers(j1PC,j2PC,j3PC,j4PC);
           sendObjectiveCompleted(objectiveType, messCharSuccess);
           moving = false;
-          objectiveInProgress = false;    
+          objectiveInProgress = false;
         }
         break;
       case messCharInfo:
@@ -279,7 +280,7 @@ void parseData() {      // split the data into its parts
   j4PC = atof(strtokIndx);     // convert this part to a float
 
   strtokIndx = strtok(NULL, ",");
-  vacPC = atof(strtokIndx);     // convert this part to a float
+  vacPC = strtokIndx != "0";     // convert this part to a bool
 
   strtokIndx = strtok(NULL, ",");
   speedPC = atof(strtokIndx);     // convert this part to a float
@@ -333,6 +334,10 @@ bool motorsMoving() {
   // return (stepper1.isRunning() || stepper2.isRunning()|| stepper3.isRunning() || servoSPINNING);
 }
 
+void setVac(bool val) {
+  digitalWrite(vacPin, val);
+}
+
 /////////////////////////////
 //Used When Homing the steppers//
 /////////////////////////////
@@ -375,7 +380,7 @@ void homingLoop(){
 
 void homingProcedureBlocking() {
   // so far this homes each joint individually
-  
+
   //homes j1
   stepper1.moveTo(10000);
   readLimitSwitches();
@@ -414,9 +419,9 @@ void homingProcedureBlocking() {
     if (j3_limitVal == 0) {
       //Serial.println(j3_limitVal);
       stepper3.stop();
-      
+
       j3Homed = true;
     }
   }
- 
+
 }
