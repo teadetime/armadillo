@@ -1,3 +1,6 @@
+# Call with
+# python3 Ian_vision.py -i C:\dev\git\armadillo\cvTesting\test_frames\frame_7.png
+
 import argparse
 import imutils
 import numpy as np
@@ -102,13 +105,15 @@ class vision:
             if not success:
                 return False
         # Always update the block mask
+
         self.blockMask = cv2.inRange(self.hsv, self.lowerBlocks, self.upperBlocks)
 
         kernel = np.ones((4,4), np.uint8)
         eroded = cv2.erode(self.blockMask, kernel, iterations=3)
-        # cv2.imshow("eroded", eroded)
+        cv2.imshow("eroded", eroded)
         self.blockMask = eroded
 
+        print(self.blockMask)
 
         if self.jengaDebug:
             cv2.imshow("HSV Block Mask", self.blockMask)  # Tag 1
@@ -124,6 +129,20 @@ class vision:
         greenMask = cv2.inRange(self.hsv, self.lower_green, self.upper_green)
         yellowMask = cv2.inRange(self.hsv, self.lower_yellow, self.upper_yellow)
         redMask = cv2.inRange(self.hsv, self.lower_red, self.upper_red)
+
+        if self.debug:
+            cv2.imshow("HSV Green Before", greenMask)  # Tag 1
+            cv2.imshow("HSV Yellow Before", yellowMask) # Yellow Tag 2
+            cv2.imshow("HSV Red Before", redMask) # Red Tag 2
+
+        kernel = np.ones((8,8), np.uint8) * 2
+        yellowMask = cv2.morphologyEx(yellowMask, cv2.MORPH_OPEN, kernel, iterations = 2)
+        redMask = cv2.morphologyEx(redMask, cv2.MORPH_OPEN, kernel, iterations = 2)
+        greenMask = cv2.morphologyEx(greenMask, cv2.MORPH_OPEN, kernel, iterations = 2)
+
+        yellowMask = cv2.morphologyEx(yellowMask, cv2.MORPH_CLOSE, kernel, iterations = 5)
+        redMask = cv2.morphologyEx(redMask, cv2.MORPH_CLOSE, kernel, iterations = 5)
+        greenMask = cv2.morphologyEx(greenMask, cv2.MORPH_CLOSE, kernel, iterations = 5)
 
         if self.debug:
             cv2.imshow("HSV Green", greenMask)  # Tag 1
@@ -222,21 +241,12 @@ class vision:
             rot_rect = cv2.minAreaRect(c)
             rotation = rot_rect[2]
             # small pixel cutoff
-            pixelCutoff = 10
+            pixelCutoff = 1
             if rot_rect[1][1] < pixelCutoff or rot_rect[1][0] < pixelCutoff: # THIS HANDLES-> or rot_rect[1][1] == 0 or rot_rect[1][0] == 0:
                 continue
             blockLong = max(rot_rect[1])*self.ratio
             blockShort = min(rot_rect[1])*self.ratio
 
-            wrongDilatedBlockDimensions = blockLong > self.jengaLHighDilated or blockLong < self.jengaLLowDilated or blockShort > self.jengaWHighDilated or blockShort < self.jengaWLowDilated
-            # correctBlockDimensions = blockLong > self.jengaLHigh or blockLong < self.jengaLLow or blockShort > self.jengaWHigh or blockShort < self.jengaWLow
-            # if blockLong > self.jengaLHigh or blockLong < self.jengaLLow or blockShort > self.jengaWHigh or blockShort < self.jengaWLow:
-            if wrongDilatedBlockDimensions: # or wrongBlockDimensions:
-                # This isn't a jenga Block
-                print("this isn't a jenga block")
-                print(blockLong, blockShort)
-                continue
-                # TODO: LOOK FOR CLUSTERS HERE!!!
 
             # This means the block is in a certain orientation that needs an offset
             if rot_rect[1][0] <= rot_rect[1][1]:
@@ -251,12 +261,32 @@ class vision:
 
                 box = cv2.boxPoints(rot_rect) #* ratio
                 box = np.int0(box)
+
+                criteria1 = blockLong < 110
+                criteria2 = blockLong > 60
+                criteria3 = blockShort < 25
+                criteria4 = blockShort > 10
+
+                if not (criteria1 and criteria2 and criteria3 and criteria4):
+                    # This isn't a jenga Block
+                    print("this isn't a jenga block")
+                    print(blockLong, blockShort)
+                    cv2.drawContours(blockMask2,[box],0,(255, 0, 0), 2)
+                    cv2.imshow("With Detection", blockMask2)
+                    cv2.waitKey(0)
+                    continue
+                    # TODO: LOOK FOR CLUSTERS HERE!!!
+
+
+
                 self.drawContours(box, thickness = 6)
                 self.drawPoint(rot_rect[0], (255,0,0))
                 print("drawing items")
                 # cv2.drawContours()
                 cv2.drawContours(blockMask2,[box],0,(0, 255, 255), 2)
                 cv2.imshow("With Detection", blockMask2)
+                cv2.drawContours(self.drawImg,[box],0,(0, 255, 255), 2)
+                cv2.imshow("Image", self.drawImg)
                 print("returning anything")
                 print("returning " + str(np.array([[rot_rect[0][0]],[rot_rect[0][1]]] )) + ", " + str(rotation))
                 cv2.waitKey(0)
@@ -338,3 +368,33 @@ class vision:
         bVector = bVector + bOffset
         rotation = bRot-fRot
         return bVector, rotation
+
+
+if __name__=='__main__':
+    # arm = robot.robot()
+    vs = vision()
+
+    # testingHomingandWorld = True
+    testingCameras = True
+
+    """
+    COde to Detect basis and camera tags
+    """
+    if testingCameras:
+        if not vs.testCamera():
+            print("Camera Not working")
+
+        grabbingFrame = True
+        # while grabbingFrame:
+        grabImageSuccess = vs.grabImage(fromPath=True)
+
+        if not grabImageSuccess:
+            print("Please reposition Camera and check masking!")
+            vs.tuneWindow()
+            x = input('Retry (R) or Quit (Q): ')
+            if x == 'R':
+                pass
+            else:
+                quit()
+
+        vs.getBlockWorld()
