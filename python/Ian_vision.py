@@ -6,7 +6,9 @@ import imutils
 import numpy as np
 import cv2
 import math
+from ColorPicker import ColorPicker
 from time import sleep
+import json
 
 from numpy.core.shape_base import block
 # construct the argument parse and parse the arguments
@@ -81,7 +83,7 @@ class vision:
         #     if ret == True:
         #         cv2.imshow('Frame',frame)
         #         # Press Q on keyboard to  exit
-        #         if cv2.waitKey(25) & 0xFF == ord('q'):
+        #         if self.checkWaitKey(25) & 0xFF == ord('q'):
         #             break
 
 
@@ -90,6 +92,64 @@ class vision:
             return False
         cap.release()
         return True
+
+    def pickSwatchColors(self, filename = "C:/dev/delme/colorPickerTest.txt"):
+        print("picking swatch colors")
+        # filename contains the default color choices
+
+        f = open(filename, "r+")
+        print("opened file successfully")
+        contents = str(f.read())
+        print(contents)
+        oldSwatches = json.loads(contents)
+        newSwatches = oldSwatches.copy() # initialize using the existing values
+
+        # as defined in ColorPicker, oldSwatches has the following structure:
+        # {
+        # "red": [H, S, V],
+        # "green": [H, S, V],
+        # "yellow": [H, S, V],
+        # }
+
+        cp = ColorPicker(self.drawImg)
+
+        swatchesToPick = ["red", "green", "yellow", "block"]
+        print(swatchesToPick)
+        for swatchColor in swatchesToPick:
+            print(f"Pick the {swatchColor} swatch")
+            myColor = cp.colorPicker()
+            if myColor is not None:
+                newSwatches[swatchColor] = myColor
+            else:
+        # else: it stays the same as the oldSwatches; stop picking any more colors
+                break
+
+        if newSwatches != oldSwatches:
+            print(newSwatches)
+            f.truncate(0) # delete contents
+            f.seek(0) # move cursor to initial position
+            f.write(json.dumps({key: [val2.item() for val2 in val] for key, val in newSwatches.items()}))
+        f.close()
+
+        offset = np.array([40, 40, 40])
+        yellowOffset = np.array([10, 30, 30])
+
+        val_red = np.array(newSwatches["red"])
+        val_green = np.array(newSwatches["green"])
+        val_yellow = np.array(newSwatches["yellow"])
+        val_block = np.array(newSwatches["block"])
+
+        # reset boundary colors
+        self.lower_red = val_red - offset
+        self.upper_red = val_red + offset
+        self.lower_green = val_green - offset
+        self.upper_green = val_green + offset
+        self.lower_yellow = val_yellow - yellowOffset
+        self.upper_yellow = val_yellow + yellowOffset
+
+        self.lowerBlocks = val_block - offset
+        self.upperBlocks = val_block + offset
+
 
     def grabImage(self, delay = 2, fromPath = True):
         if fromPath:
@@ -100,6 +160,9 @@ class vision:
             ret, self.image = cam.read()
         self.resized = imutils.resize(self.image, width=self.resizedSize)
         self.drawImg = self.resized.copy()
+
+        vs.pickSwatchColors() # reset the color basis for the swatches
+
         if self.needsBasis:
             success = self.establishBasis()
             if not success:
@@ -149,9 +212,18 @@ class vision:
             cv2.imshow("HSV Yellow", yellowMask) # Yellow Tag 2
             cv2.imshow("HSV Red", redMask) # Red Tag 2
 
+
+        self.checkWaitKey()
+
         cntsYellow = self.getCnts(yellowMask)
+        # print("cntsYellow: ")
+        # print(cntsYellow)
         cntsRed = self.getCnts(redMask)
+        # print("cntsRed: ")
+        # print(cntsRed)
         cntsGreen = self.getCnts(greenMask)
+        # print("cntsGreen: ")
+        # print(cntsGreen)
 
         if not cntsGreen or not cntsRed:
             return False
@@ -206,14 +278,13 @@ class vision:
                                                     self.basisPixel, testWorldCoords, self.frameRotation  )
                     self.drawPoint(coordPixel, (0,0,255))
             cv2.imshow("Image", self.drawImg)
-            cv2.waitKey(0)
+            self.checkWaitKey(0)
         self.drawImg = self.resized.copy()  # Reset the image for other operations!
         self.needsBasis = False
         return True # This means we were successful
 
     # Wrap some basic OpenCV for Easier Use
     def drawContours(self, box, color=(0, 0, 255), thickness=2):
-        print("drawing contours")
         cv2.drawContours(self.drawImg,[box],0,(0, 0, 255),thickness)
 
     def drawPoint(self, point, color = (0, 255, 255), r = 1):
@@ -273,7 +344,7 @@ class vision:
                     print(blockLong, blockShort)
                     cv2.drawContours(blockMask2,[box],0,(255, 0, 0), 2)
                     cv2.imshow("With Detection", blockMask2)
-                    cv2.waitKey(0)
+                    self.checkWaitKey(0)
                     continue
                     # TODO: LOOK FOR CLUSTERS HERE!!!
 
@@ -281,19 +352,14 @@ class vision:
 
                 self.drawContours(box, thickness = 6)
                 self.drawPoint(rot_rect[0], (255,0,0))
-                print("drawing items")
                 # cv2.drawContours()
                 cv2.drawContours(blockMask2,[box],0,(0, 255, 255), 2)
                 cv2.imshow("With Detection", blockMask2)
                 cv2.drawContours(self.drawImg,[box],0,(0, 255, 255), 2)
                 cv2.imshow("Image", self.drawImg)
-                print("returning anything")
-                print("returning " + str(np.array([[rot_rect[0][0]],[rot_rect[0][1]]] )) + ", " + str(rotation))
-                cv2.waitKey(0)
+                self.checkWaitKey(0)
                 # return np.array([[rot_rect[0][0]],[rot_rect[0][1]]] ), rotation
 
-        print("Didn't detect any Jenga blocks")
-        cv2.waitKey(0)
         return None
 
     def getBlockWorld(self):
@@ -307,7 +373,7 @@ class vision:
             #print(f"Block: {singleBlockCenterPixel}, theta: {singleBlockRotation}")
             print(f"Jenga Block World Coords: {coordWorld}, World Rotation: {rotationWorld}")
             cv2.imshow("HSV Block", self.drawImg)
-            cv2.waitKey(0)
+            self.checkWaitKey(0)
         return coordWorld, rotationWorld
 
     # loop over the contours
@@ -368,6 +434,15 @@ class vision:
         bVector = bVector + bOffset
         rotation = bRot-fRot
         return bVector, rotation
+
+    def checkWaitKey(self, val=0): # val = 0 displays static frame; val = 1 dispays moving frame
+        # perform the waitKey, then check key strokes for special actions
+        key = cv2.waitKey(val) & 0xFF
+        if key == 27: # ESC
+            cv2.destroyAllWindows()
+            exit()
+        if key == 32: # Space
+            print("You pressed space!")
 
 
 if __name__=='__main__':

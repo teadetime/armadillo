@@ -40,11 +40,10 @@ class ColorPicker:
 				self.destroy_color_picker()
 				return None
 			elif k == 32: # space
-				B, G, R = self.extract_color(self.color_selected)
-				self.write_to_file(R,G,B)
-
 				self.destroy_color_picker()
-				return (B, G, R)
+				color_selected_hsv = cv2.cvtColor(self.color_selected, cv2.COLOR_BGR2HSV)
+				H, S, V = self.extract_color(color_selected_hsv)
+				return [H, S, V]
 
 	def destroy_color_picker(self):
 		cv2.destroyWindow("Color Picker")
@@ -57,13 +56,6 @@ class ColorPicker:
 		G = color_grid[10,10][1]
 		R = color_grid[10,10][2]
 		return B, G, R
-
-	#save selected color RGB in file
-	def write_to_file(self, R, G, B, filename = "C:/dev/delme/colorPickerTest.txt"):
-		f = open(filename, "a")
-		RGB_color=str(R) + "," + str(G) + "," + str(B) + str("\n")
-		f.write(RGB_color)
-		f.close()
 
 	#Mouse Callback function - this is triggered every time the mouse moves
 	def show_color(self, event,x,y,flags,param):
@@ -78,9 +70,9 @@ class ColorPicker:
 
 ## Use case:
 #
-# #sample image path
+# # sample image path
 # img_path="C:/Users/ieykamp/Downloads/WIN_20211122_13_44_37_Pro.png"
-#
+
 # #read sample image
 # img = cv2.imread(img_path)
 # cp = ColorPicker(img)
