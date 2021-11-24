@@ -104,13 +104,6 @@ class vision:
         oldSwatches = json.loads(contents)
         newSwatches = oldSwatches.copy() # initialize using the existing values
 
-        # as defined in ColorPicker, oldSwatches has the following structure:
-        # {
-        # "red": [H, S, V],
-        # "green": [H, S, V],
-        # "yellow": [H, S, V],
-        # }
-
         cp = ColorPicker(self.drawImg)
 
         swatchesToPick = ["red", "green", "yellow", "block"]
@@ -120,7 +113,7 @@ class vision:
             myColor = cp.colorPicker()
             if myColor is not None:
                 newSwatches[swatchColor] = myColor
-            else:
+            else: # if the ESC key was pressed
         # else: it stays the same as the oldSwatches; stop picking any more colors
                 break
 
