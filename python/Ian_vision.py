@@ -10,6 +10,8 @@ from ColorPicker import ColorPicker
 from time import sleep
 import json
 from enum import Enum
+from scipy import ndimage
+
 
 from numpy.core.shape_base import block
 # construct the argument parse and parse the arguments
@@ -57,17 +59,7 @@ class vision:
         self.lowerBlocks =  np.array([10,0,140])
         self.upperBlocks = np.array([47,70,255])
 
-        # Jenga block via pixels from our camera
-        # self.jengaWHigh = 42
-        # self.jengaWLow = 36
-        # self.jengaLHigh = 121
-        # self.jengaLLow = 115
-
-        # Jenga block sizes under dilated image
-        # self.jengaWHighDilated = 100
-        # self.jengaWLowDilated = 5
-        # self.jengaLHighDilated = 190
-        # self.jengaLLowDilated = 5
+        self.mlArray = None
 
         self.singleBlock = None     # Resets after finding a block sets to None if no block found
 
@@ -332,13 +324,15 @@ class vision:
 
                 box = cv2.boxPoints(rot_rect) #* ratio
                 box = np.int0(box)
+                # if box is None:
+                #     continue
 
-                if self.checkBlockCriteria(blockShort, blockLong) == self.BlockType.NOT_BLOCK: # may later change to case-switch depending on number of blocks
+                if self.checkBlockCriteria(blockShort, blockLong, box, rotation) == self.BlockType.NOT_BLOCK: # may later change to case-switch depending on number of blocks
                     cv2.drawContours(blockMask2,[box],0,(255, 0, 0), 2) # draw a blue box
                     cv2.imshow("With Detection", blockMask2)
                     self.checkWaitKey(0)
                     continue
-                if self.checkBlockCriteria(blockShort, blockLong) == self.BlockType.CLUSTER: # may later change to case-switch depending on number of blocks
+                if self.checkBlockCriteria(blockShort, blockLong, box, rotation) == self.BlockType.CLUSTER: # may later change to case-switch depending on number of blocks
                     cv2.drawContours(blockMask2,[box],0,(0, 255, 0), 2) # draw a green box
                     cv2.imshow("With Detection", blockMask2)
                     self.checkWaitKey(0)
@@ -364,7 +358,32 @@ class vision:
         EDGE_BLOCK = 3
         END_BLOCK = 4
 
-    def checkBlockCriteria(self, blockShort, blockLong):
+    def checkBlockCriteria(self, blockShort, blockLong, box, rotation):
+
+        print("Box = ")
+        print(box)
+        x1 = min(box, key = lambda x: x[0])[0]
+        x2 = max(box, key = lambda x: x[0])[0]
+        y1 = min(box, key = lambda x: x[1])[1]
+        y2 = max(box, key = lambda x: x[1])[1]
+        print(x1, x2, y1, y2)
+        closeUp = self.blockMask[y1:y2, x1:x2]
+        print("rotation = ", rotation)
+        print(closeUp)
+
+        cv2.imshow("Box Close-Up", closeUp)
+        # self.checkWaitKey(0)
+        #rotation angle in degree
+        rotated = ndimage.rotate(closeUp, -rotation)
+        cv2.imshow("Rotated Close-Up", rotated)
+
+        newDim = (256, 256) # no idea if this is a good dimension to use
+        rotatedResized = self.basicResize(rotated, newDim)
+        cv2.imshow("Scaled Rotated Close-Up", rotatedResized)
+
+
+
+        # self.checkWaitKey(0)
         if self.jengaDebug:
             print(blockLong, blockShort)
 
@@ -460,6 +479,48 @@ class vision:
         bVector = bVector + bOffset
         rotation = bRot-fRot
         return bVector, rotation
+
+    def basicResize(self, image, newDim):
+        oldDim = image.shape
+        image2 = image.copy()
+
+        # First crop the image
+        if newDim[0] < oldDim[0]:
+            x1 =             (oldDim[0] - newDim[0]) / 2
+            x2 = oldDim[0] - (oldDim[0] - newDim[0]) / 2
+        else:
+            x1 = 0
+            x2 = oldDim[0]
+
+        if newDim[1] < oldDim[1]:
+            y1 =             (oldDim[1] - newDim[1]) / 2
+            y2 = oldDim[1] - (oldDim[1] - newDim[1]) / 2
+        else:
+            y1 = 0
+            y2 = oldDim[1]
+
+        image2 = image2[x1:x2, y1:y2] # crop image
+        ##--------##
+
+        # Then add borders as necessary
+        if newDim[0] > oldDim[0]:
+            y1padding = int(np.floor((newDim[0] - oldDim[0]) / 2))
+            y2padding = int( np.ceil((newDim[0] - oldDim[0]) / 2))
+        else:
+            y1padding = 0
+            y2padding = 0
+
+        if newDim[1] > oldDim[1]:
+            x1padding = int(np.floor((newDim[1] - oldDim[1]) / 2))
+            x2padding = int( np.ceil((newDim[1] - oldDim[1]) / 2))
+        else:
+            x1padding = 0
+            x2padding = 0
+
+        print("padding y1, y2, x1, x2 =", y1padding, y2padding, x1padding, x2padding)
+        image2 = cv2.copyMakeBorder(image2, y1padding, y2padding, x1padding, x2padding, cv2.BORDER_CONSTANT, value = 0)
+
+        return image2
 
     def checkWaitKey(self, val=0): # val = 0 displays static frame; val = 1 dispays moving frame
         # perform the waitKey, then check key strokes for special actions
