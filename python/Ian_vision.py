@@ -9,6 +9,7 @@ import math
 from ColorPicker import ColorPicker
 from time import sleep
 import json
+from enum import Enum
 
 from numpy.core.shape_base import block
 # construct the argument parse and parse the arguments
@@ -57,16 +58,16 @@ class vision:
         self.upperBlocks = np.array([47,70,255])
 
         # Jenga block via pixels from our camera
-        self.jengaWHigh = 42
-        self.jengaWLow = 36
-        self.jengaLHigh = 121
-        self.jengaLLow = 115
+        # self.jengaWHigh = 42
+        # self.jengaWLow = 36
+        # self.jengaLHigh = 121
+        # self.jengaLLow = 115
 
         # Jenga block sizes under dilated image
-        self.jengaWHighDilated = 100
-        self.jengaWLowDilated = 5
-        self.jengaLHighDilated = 190
-        self.jengaLLowDilated = 5
+        # self.jengaWHighDilated = 100
+        # self.jengaWLowDilated = 5
+        # self.jengaLHighDilated = 190
+        # self.jengaLLowDilated = 5
 
         self.singleBlock = None     # Resets after finding a block sets to None if no block found
 
@@ -83,7 +84,7 @@ class vision:
         #     if ret == True:
         #         cv2.imshow('Frame',frame)
         #         # Press Q on keyboard to  exit
-        #         if self.checkWaitKey(25) & 0xFF == ord('q'):
+        #         if cv2.waitKey(25) & 0xFF == ord('q'):
         #             break
 
 
@@ -101,7 +102,11 @@ class vision:
         print("opened file successfully")
         contents = str(f.read())
         print(contents)
-        oldSwatches = json.loads(contents)
+        try:
+            oldSwatches = json.loads(contents)
+        except:
+            print("please select all colors manually")
+            oldSwatches = {}
         newSwatches = oldSwatches.copy() # initialize using the existing values
 
         cp = ColorPicker(self.drawImg)
@@ -122,10 +127,13 @@ class vision:
             f.truncate(0) # delete contents
             f.seek(0) # move cursor to initial position
             f.write(json.dumps({key: [val2.item() for val2 in val] for key, val in newSwatches.items()}))
+        else:
+            print("Using swatches previously stored. Thank you!")
         f.close()
 
-        offset = np.array([40, 40, 40])
-        yellowOffset = np.array([10, 30, 30])
+        offset = np.array([60, 60, 60])
+        redOffset = np.array([30, 60, 60])
+        yellowOffset = np.array([50, 30, 10])
 
         val_red = np.array(newSwatches["red"])
         val_green = np.array(newSwatches["green"])
@@ -133,8 +141,8 @@ class vision:
         val_block = np.array(newSwatches["block"])
 
         # reset boundary colors
-        self.lower_red = val_red - offset
-        self.upper_red = val_red + offset
+        self.lower_red = val_red - redOffset
+        self.upper_red = val_red + redOffset
         self.lower_green = val_green - offset
         self.upper_green = val_green + offset
         self.lower_yellow = val_yellow - yellowOffset
@@ -191,14 +199,19 @@ class vision:
             cv2.imshow("HSV Yellow Before", yellowMask) # Yellow Tag 2
             cv2.imshow("HSV Red Before", redMask) # Red Tag 2
 
-        kernel = np.ones((8,8), np.uint8) * 2
-        yellowMask = cv2.morphologyEx(yellowMask, cv2.MORPH_OPEN, kernel, iterations = 2)
-        redMask = cv2.morphologyEx(redMask, cv2.MORPH_OPEN, kernel, iterations = 2)
-        greenMask = cv2.morphologyEx(greenMask, cv2.MORPH_OPEN, kernel, iterations = 2)
+        kernel = np.ones((5,5), np.uint8) * 2
 
-        yellowMask = cv2.morphologyEx(yellowMask, cv2.MORPH_CLOSE, kernel, iterations = 5)
-        redMask = cv2.morphologyEx(redMask, cv2.MORPH_CLOSE, kernel, iterations = 5)
-        greenMask = cv2.morphologyEx(greenMask, cv2.MORPH_CLOSE, kernel, iterations = 5)
+        yellowMask = cv2.morphologyEx(yellowMask, cv2.MORPH_CLOSE, kernel, iterations = 4)
+        redMask = cv2.morphologyEx(redMask, cv2.MORPH_CLOSE, kernel, iterations = 4)
+        greenMask = cv2.morphologyEx(greenMask, cv2.MORPH_CLOSE, kernel, iterations = 4)
+
+        # yellowMask = cv2.morphologyEx(yellowMask, cv2.MORPH_OPEN, kernel, iterations = 4)
+        # redMask = cv2.morphologyEx(redMask, cv2.MORPH_OPEN, kernel, iterations = 4)
+        # greenMask = cv2.morphologyEx(greenMask, cv2.MORPH_OPEN, kernel, iterations = 4)
+
+        # yellowMask = cv2.morphologyEx(yellowMask, cv2.MORPH_CLOSE, kernel, iterations = 4)
+        # redMask = cv2.morphologyEx(redMask, cv2.MORPH_CLOSE, kernel, iterations = 4)
+        # greenMask = cv2.morphologyEx(greenMask, cv2.MORPH_CLOSE, kernel, iterations = 4)
 
         if self.debug:
             cv2.imshow("HSV Green", greenMask)  # Tag 1
@@ -209,14 +222,8 @@ class vision:
         self.checkWaitKey()
 
         cntsYellow = self.getCnts(yellowMask)
-        # print("cntsYellow: ")
-        # print(cntsYellow)
         cntsRed = self.getCnts(redMask)
-        # print("cntsRed: ")
-        # print(cntsRed)
         cntsGreen = self.getCnts(greenMask)
-        # print("cntsGreen: ")
-        # print(cntsGreen)
 
         if not cntsGreen or not cntsRed:
             return False
@@ -326,22 +333,16 @@ class vision:
                 box = cv2.boxPoints(rot_rect) #* ratio
                 box = np.int0(box)
 
-                criteria1 = blockLong < 110
-                criteria2 = blockLong > 60
-                criteria3 = blockShort < 25
-                criteria4 = blockShort > 10
-
-                if not (criteria1 and criteria2 and criteria3 and criteria4):
-                    # This isn't a jenga Block
-                    print("this isn't a jenga block")
-                    print(blockLong, blockShort)
-                    cv2.drawContours(blockMask2,[box],0,(255, 0, 0), 2)
+                if self.checkBlockCriteria(blockShort, blockLong) == self.BlockType.NOT_BLOCK: # may later change to case-switch depending on number of blocks
+                    cv2.drawContours(blockMask2,[box],0,(255, 0, 0), 2) # draw a blue box
                     cv2.imshow("With Detection", blockMask2)
                     self.checkWaitKey(0)
                     continue
-                    # TODO: LOOK FOR CLUSTERS HERE!!!
-
-
+                if self.checkBlockCriteria(blockShort, blockLong) == self.BlockType.CLUSTER: # may later change to case-switch depending on number of blocks
+                    cv2.drawContours(blockMask2,[box],0,(0, 255, 0), 2) # draw a green box
+                    cv2.imshow("With Detection", blockMask2)
+                    self.checkWaitKey(0)
+                    continue
 
                 self.drawContours(box, thickness = 6)
                 self.drawPoint(rot_rect[0], (255,0,0))
@@ -353,7 +354,38 @@ class vision:
                 self.checkWaitKey(0)
                 # return np.array([[rot_rect[0][0]],[rot_rect[0][1]]] ), rotation
 
+
         return None
+
+    class BlockType(Enum):
+        NOT_BLOCK = 0
+        BLOCK = 1
+        CLUSTER = 2
+        EDGE_BLOCK = 3
+        END_BLOCK = 4
+
+    def checkBlockCriteria(self, blockShort, blockLong):
+        if self.jengaDebug:
+            print(blockLong, blockShort)
+
+        inBlockDimensionRange = blockLong  > 60 and blockLong  < 110 and \
+                                blockShort > 10 and blockShort < 25
+
+        if inBlockDimensionRange:
+            return self.BlockType.BLOCK
+
+        # else:
+        if self.jengaDebug:
+            print("this isn't a jenga block")
+        # TODO: LOOK FOR CLUSTERS HERE!!!
+        inClusterDimensionRange = blockLong  > 60 and blockLong  < 150 and \
+                                  blockShort > 20 and blockShort < 100
+
+        if inClusterDimensionRange:
+            # subset the image and pass to machine learning algorithm
+            return self.BlockType.CLUSTER
+
+        return self.BlockType.NOT_BLOCK
 
     def getBlockWorld(self):
         singleBlockCenterPixel, singleBlockRotation =  self.getBlockPixel()
@@ -371,6 +403,7 @@ class vision:
 
     # loop over the contours
     def getPixelCenterSquare(self, cnts):
+        # self.checkWaitKey()
         for c in cnts:
             # compute the center of the contour, then detect the name of the
             # shape using only the contour
@@ -435,7 +468,7 @@ class vision:
             cv2.destroyAllWindows()
             exit()
         if key == 32: # Space
-            print("You pressed space!")
+            pass # could put debugging tools or something here
 
 
 if __name__=='__main__':
