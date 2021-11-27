@@ -11,6 +11,7 @@ from time import sleep
 import json
 from enum import Enum
 from scipy import ndimage
+import pandas as pd
 
 
 from numpy.core.shape_base import block
@@ -59,7 +60,9 @@ class vision:
         self.lowerBlocks =  np.array([10,0,140])
         self.upperBlocks = np.array([47,70,255])
 
-        self.mlArray = None
+        self.mlDim = (100, 100) # machine-learning image size
+        self.mlArray = []
+        self.truthList = []
 
         self.singleBlock = None     # Resets after finding a block sets to None if no block found
 
@@ -327,12 +330,14 @@ class vision:
                 # if box is None:
                 #     continue
 
-                if self.checkBlockCriteria(blockShort, blockLong, box, rotation) == self.BlockType.NOT_BLOCK: # may later change to case-switch depending on number of blocks
+                classification = self.checkBlockCriteria(blockShort, blockLong, box, rotation)
+
+                if classification == self.BlockType.NOT_BLOCK: # may later change to case-switch depending on number of blocks
                     cv2.drawContours(blockMask2,[box],0,(255, 0, 0), 2) # draw a blue box
                     cv2.imshow("With Detection", blockMask2)
                     self.checkWaitKey(0)
                     continue
-                if self.checkBlockCriteria(blockShort, blockLong, box, rotation) == self.BlockType.CLUSTER: # may later change to case-switch depending on number of blocks
+                if classification == self.BlockType.CLUSTER: # may later change to case-switch depending on number of blocks
                     cv2.drawContours(blockMask2,[box],0,(0, 255, 0), 2) # draw a green box
                     cv2.imshow("With Detection", blockMask2)
                     self.checkWaitKey(0)
@@ -348,7 +353,15 @@ class vision:
                 self.checkWaitKey(0)
                 # return np.array([[rot_rect[0][0]],[rot_rect[0][1]]] ), rotation
 
-
+        # pd.DataFrame(np.array(self.mlArray)).to_csv("C:/dev/delme/mlOutput2.csv")
+        print("mlArray[0] =", np.array(self.mlArray)[0].shape)
+        print("mlArray[0] =", self.mlArray[0])
+        print(type(self.mlArray))
+        arrayToDisplay = np.stack(self.mlArray, axis = 0)
+        print("size of mlArray:", arrayToDisplay.shape)
+        # arrayToDisplay.tofile("C:/dev/delme/mlOutput2.csv", format = "%1.2f")
+        np.savetxt("C:/dev/delme/mlOutput.csv", arrayToDisplay, delimiter = ",", fmt='%f')
+        np.savetxt("C:/dev/delme/truthList.csv", self.truthList, delimiter = ",", fmt='%f')
         return None
 
     class BlockType(Enum):
@@ -377,10 +390,14 @@ class vision:
         rotated = ndimage.rotate(closeUp, -rotation)
         cv2.imshow("Rotated Close-Up", rotated)
 
-        newDim = (256, 256) # no idea if this is a good dimension to use
-        rotatedResized = self.basicResize(rotated, newDim)
-        cv2.imshow("Scaled Rotated Close-Up", rotatedResized)
+        resized = self.basicResize(rotated, self.mlDim)
+        cv2.imshow("Scaled Rotated Close-Up", resized)
 
+        print("image variable type =", type(resized))
+        newVector = np.reshape(resized, -1) # convert to a vector
+        print("newVector shape =", newVector.shape)
+
+        self.mlArray.append(newVector)
 
 
         # self.checkWaitKey(0)
@@ -391,6 +408,7 @@ class vision:
                                 blockShort > 10 and blockShort < 25
 
         if inBlockDimensionRange:
+            self.truthList.append(1)
             return self.BlockType.BLOCK
 
         # else:
@@ -402,8 +420,10 @@ class vision:
 
         if inClusterDimensionRange:
             # subset the image and pass to machine learning algorithm
+            self.truthList.append(2)
             return self.BlockType.CLUSTER
 
+        self.truthList.append(0)
         return self.BlockType.NOT_BLOCK
 
     def getBlockWorld(self):
@@ -486,15 +506,15 @@ class vision:
 
         # First crop the image
         if newDim[0] < oldDim[0]:
-            x1 =             (oldDim[0] - newDim[0]) / 2
-            x2 = oldDim[0] - (oldDim[0] - newDim[0]) / 2
+            x1 = int(np.floor(           (oldDim[0] - newDim[0]) / 2))
+            x2 = int(np.floor(oldDim[0] - (oldDim[0] - newDim[0]) / 2)) # off by one error
         else:
             x1 = 0
             x2 = oldDim[0]
 
         if newDim[1] < oldDim[1]:
-            y1 =             (oldDim[1] - newDim[1]) / 2
-            y2 = oldDim[1] - (oldDim[1] - newDim[1]) / 2
+            y1 = int(np.floor(           (oldDim[1] - newDim[1]) / 2))
+            y2 = int(np.floor(oldDim[1] - (oldDim[1] - newDim[1]) / 2))
         else:
             y1 = 0
             y2 = oldDim[1]
