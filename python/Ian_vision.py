@@ -63,6 +63,7 @@ class vision:
         self.mlDim = (100, 100) # machine-learning image size
         self.mlArray = []
         self.truthList = []
+        self.imagePath = None
 
         self.singleBlock = None     # Resets after finding a block sets to None if no block found
 
@@ -147,17 +148,23 @@ class vision:
         self.upperBlocks = val_block + offset
 
 
-    def grabImage(self, delay = 2, fromPath = True):
-        if fromPath:
+    def grabImage(self, delay = 2, fromPath = True, path = None, pickSwatches = True):
+        if path is not None:
+            self.image = cv2.imread(path)
+            self.imagePath = path
+        elif fromPath:
             self.image = cv2.imread(args["image"])
+            self.imagePath = args["image"]
         else:
             cam = cv2.VideoCapture(self.camIndex)
             sleep(delay)
             ret, self.image = cam.read()
+
         self.resized = imutils.resize(self.image, width=self.resizedSize)
         self.drawImg = self.resized.copy()
 
-        vs.pickSwatchColors() # reset the color basis for the swatches
+        if pickSwatches:
+            self.pickSwatchColors() # reset the color basis for the swatches
 
         if self.needsBasis:
             success = self.establishBasis()
@@ -299,7 +306,7 @@ class vision:
         cv2.CHAIN_APPROX_SIMPLE)
         return imutils.grab_contours(cnts)
 
-    def getBlockPixel(self):
+    def getBlockPixel(self, mlFile = "C:/dev/delme/mlOutput.csv", truthFile = "C:/dev/delme/truthList.csv"):
         cnts = self.getCnts(self.blockMask)
         print(cnts)
         blockMask2 = cv2.cvtColor(self.blockMask, cv2.COLOR_GRAY2BGR)  #add this line
@@ -327,31 +334,35 @@ class vision:
 
                 box = cv2.boxPoints(rot_rect) #* ratio
                 box = np.int0(box)
-                # if box is None:
-                #     continue
 
                 classification = self.checkBlockCriteria(blockShort, blockLong, box, rotation)
-
-                if classification == self.BlockType.NOT_BLOCK: # may later change to case-switch depending on number of blocks
-                    cv2.drawContours(blockMask2,[box],0,(255, 0, 0), 2) # draw a blue box
-                    cv2.imshow("With Detection", blockMask2)
-                    self.checkWaitKey(0)
-                    continue
-                if classification == self.BlockType.CLUSTER: # may later change to case-switch depending on number of blocks
-                    cv2.drawContours(blockMask2,[box],0,(0, 255, 0), 2) # draw a green box
-                    cv2.imshow("With Detection", blockMask2)
-                    self.checkWaitKey(0)
+                if classification == self.BlockType.OUT_OF_BOUNDS:
                     continue
 
-                self.drawContours(box, thickness = 6)
-                self.drawPoint(rot_rect[0], (255,0,0))
-                # cv2.drawContours()
-                cv2.drawContours(blockMask2,[box],0,(0, 255, 255), 2)
+                if classification == self.BlockType.NOT_BLOCK:
+                    color = (255, 0, 0)
+                    drawOnOriginalImage = False
+                elif classification == self.BlockType.CLUSTER:
+                    color = (0, 255, 0)
+                    drawOnOriginalImage = False
+                elif classification == self.BlockType.BLOCK:
+                    color = (0, 255, 255)
+                    drawOnOriginalImage = True
+
+                cv2.drawContours(blockMask2,[box], 0, color, 2)
                 cv2.imshow("With Detection", blockMask2)
-                cv2.drawContours(self.drawImg,[box],0,(0, 255, 255), 2)
-                cv2.imshow("Image", self.drawImg)
-                self.checkWaitKey(0)
-                # return np.array([[rot_rect[0][0]],[rot_rect[0][1]]] ), rotation
+
+                if drawOnOriginalImage:
+                    cv2.drawContours(self.drawImg,[box],0,(0, 255, 255), 2)
+                    cv2.imshow("Image", self.drawImg)
+
+                overrideClassification = self.checkWaitKey(0) & 0xFF
+
+                # if the keys 0 through 6 are pressed, it overrides the default classification
+                if overrideClassification in set( ord(str(item.value)) for item in self.BlockType ):
+                    self.truthList.append(overrideClassification - ord('0'))
+                else:
+                    self.truthList.append(classification.value)
 
         # pd.DataFrame(np.array(self.mlArray)).to_csv("C:/dev/delme/mlOutput2.csv")
         print("mlArray[0] =", np.array(self.mlArray)[0].shape)
@@ -359,9 +370,12 @@ class vision:
         print(type(self.mlArray))
         arrayToDisplay = np.stack(self.mlArray, axis = 0)
         print("size of mlArray:", arrayToDisplay.shape)
+        print("truthlist =", self.truthList)
         # arrayToDisplay.tofile("C:/dev/delme/mlOutput2.csv", format = "%1.2f")
-        np.savetxt("C:/dev/delme/mlOutput.csv", arrayToDisplay, delimiter = ",", fmt='%f')
-        np.savetxt("C:/dev/delme/truthList.csv", self.truthList, delimiter = ",", fmt='%f')
+        np.savetxt(mlFile, arrayToDisplay, delimiter = ",", fmt='%f')
+        np.savetxt(truthFile, self.truthList, delimiter = ",", fmt='%f')
+        print("file completed")
+        self.checkWaitKey(0)
         return None
 
     class BlockType(Enum):
@@ -370,6 +384,9 @@ class vision:
         CLUSTER = 2
         EDGE_BLOCK = 3
         END_BLOCK = 4
+        OUT_OF_BOUNDS = 5
+        SWATCH = 6
+        ROBOT = 7
 
     def checkBlockCriteria(self, blockShort, blockLong, box, rotation):
 
@@ -383,6 +400,8 @@ class vision:
         closeUp = self.blockMask[y1:y2, x1:x2]
         print("rotation = ", rotation)
         print(closeUp)
+        if closeUp.size <= 0: # check if the image is empty
+            return self.BlockType.OUT_OF_BOUNDS
 
         cv2.imshow("Box Close-Up", closeUp)
         # self.checkWaitKey(0)
@@ -408,22 +427,14 @@ class vision:
                                 blockShort > 10 and blockShort < 25
 
         if inBlockDimensionRange:
-            self.truthList.append(1)
             return self.BlockType.BLOCK
 
-        # else:
-        if self.jengaDebug:
-            print("this isn't a jenga block")
-        # TODO: LOOK FOR CLUSTERS HERE!!!
         inClusterDimensionRange = blockLong  > 60 and blockLong  < 150 and \
                                   blockShort > 20 and blockShort < 100
 
         if inClusterDimensionRange:
-            # subset the image and pass to machine learning algorithm
-            self.truthList.append(2)
             return self.BlockType.CLUSTER
 
-        self.truthList.append(0)
         return self.BlockType.NOT_BLOCK
 
     def getBlockWorld(self):
@@ -550,6 +561,7 @@ class vision:
             exit()
         if key == 32: # Space
             pass # could put debugging tools or something here
+        return key
 
 
 if __name__=='__main__':
