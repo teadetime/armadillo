@@ -130,10 +130,12 @@ void loop() {
   ///////////////////////////
   if (!objectiveInProgress) {
     recvWithStartEndMarkers();
+    setVac(vacPC);
+
     if (newData == true) {
       strcpy(tempChars, receivedChars);     // Temporary copy needed for parsing
       parseData();
-      //showParsedData();
+      showParsedData();
       newData = false;
       objectiveInProgress = true;
       objectiveStartTime = currTime;
@@ -152,7 +154,6 @@ void loop() {
         stepper3.moveTo(j3PC);
         servoPos = int(j4PC)+servoZero; //This may need to be minus
         servoEOF.write(servoPos);
-        setVac(vacPC);
 
       }
       if (objectiveType == messCharHome) {
@@ -181,7 +182,8 @@ void loop() {
           //TODO CHECK IF START POSITION IS LIKE FINAL POSITION?
           sendObjectiveCompleted(objectiveType, messCharSuccess);
         }
-        setVac(vacPC);
+        // shouldn't need this line
+        // setVac(vacPC);
         break;
       case messCharHome:
         homingLoop();
@@ -339,8 +341,8 @@ bool motorsMoving() {
 }
 
 void setVac(float val) {
-  bool boolVal = val == 1.0;
-  digitalWrite(vacPin, boolVal);
+  // bool boolVal = val == 1.0;
+  digitalWrite(vacPin, val);
 }
 
 /////////////////////////////
