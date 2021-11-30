@@ -16,6 +16,7 @@ const int j1_limitPin = 10;
 const int j2_limitPin = 6;
 const int j3_limitPin = 7;
 const int servoPin = 11;
+const int pumpPin = 12;
 const int vacPin = 13;
 
 const int servoZero = 90;         // Lets sero the servo at the center of its range
@@ -81,6 +82,8 @@ void setup() {
   servoEOF.attach(servoPin);
   readLimitSwitches();
 
+  pinMode(pumpPin, OUTPUT);
+  digitalWrite(pumpPin, HIGH);
   pinMode(vacPin, OUTPUT);
 
   messTime = millis();
