@@ -1,9 +1,18 @@
+# Call with
+# python3 Ian_vision.py -i C:\dev\git\armadillo\cvTesting\test_frames\frame_7.png
+
 import argparse
 import imutils
 import numpy as np
 import cv2
 import math
+from ColorPicker import ColorPicker
 from time import sleep
+import json
+from enum import Enum
+from scipy import ndimage
+import pandas as pd
+
 
 from numpy.core.shape_base import block
 # construct the argument parse and parse the arguments
@@ -51,17 +60,10 @@ class vision:
         self.lowerBlocks =  np.array([10,0,140])
         self.upperBlocks = np.array([47,70,255])
 
-        # Jenga block via pixels from our camera
-        self.jengaWHigh = 42
-        self.jengaWLow = 36
-        self.jengaLHigh = 121
-        self.jengaLLow = 115
-
-        # Jenga block sizes under dilated image
-        self.jengaWHighDilated = 100
-        self.jengaWLowDilated = 5
-        self.jengaLHighDilated = 190
-        self.jengaLLowDilated = 5
+        self.mlDim = (100, 100) # machine-learning image size
+        self.mlArray = []
+        self.truthList = []
+        self.imagePath = None
 
         self.singleBlock = None     # Resets after finding a block sets to None if no block found
 
@@ -88,27 +90,96 @@ class vision:
         cap.release()
         return True
 
-    def grabImage(self, delay = 2, fromPath = True):
-        if fromPath:
+    def pickSwatchColors(self, filename = "C:/dev/delme/colorPickerTest.txt"):
+        print("picking swatch colors")
+        # filename contains the default color choices
+
+        f = open(filename, "r+")
+        print("opened file successfully")
+        contents = str(f.read())
+        print(contents)
+        try:
+            oldSwatches = json.loads(contents)
+        except:
+            print("please select all colors manually")
+            oldSwatches = {}
+        newSwatches = oldSwatches.copy() # initialize using the existing values
+
+        cp = ColorPicker(self.drawImg)
+
+        swatchesToPick = ["red", "green", "yellow", "block"]
+        print(swatchesToPick)
+        for swatchColor in swatchesToPick:
+            print(f"Pick the {swatchColor} swatch")
+            myColor = cp.colorPicker()
+            if myColor is not None:
+                newSwatches[swatchColor] = myColor
+            else: # if the ESC key was pressed
+        # else: it stays the same as the oldSwatches; stop picking any more colors
+                break
+
+        if newSwatches != oldSwatches:
+            print(newSwatches)
+            f.truncate(0) # delete contents
+            f.seek(0) # move cursor to initial position
+            f.write(json.dumps({key: [val2.item() for val2 in val] for key, val in newSwatches.items()}))
+        else:
+            print("Using swatches previously stored. Thank you!")
+        f.close()
+
+        offset = np.array([60, 60, 60])
+        redOffset = np.array([30, 60, 60])
+        yellowOffset = np.array([50, 30, 10])
+
+        val_red = np.array(newSwatches["red"])
+        val_green = np.array(newSwatches["green"])
+        val_yellow = np.array(newSwatches["yellow"])
+        val_block = np.array(newSwatches["block"])
+
+        # reset boundary colors
+        self.lower_red = val_red - redOffset
+        self.upper_red = val_red + redOffset
+        self.lower_green = val_green - offset
+        self.upper_green = val_green + offset
+        self.lower_yellow = val_yellow - yellowOffset
+        self.upper_yellow = val_yellow + yellowOffset
+
+        self.lowerBlocks = val_block - offset
+        self.upperBlocks = val_block + offset
+
+
+    def grabImage(self, delay = 2, fromPath = True, path = None, pickSwatches = True):
+        if path is not None:
+            self.image = cv2.imread(path)
+            self.imagePath = path
+        elif fromPath:
             self.image = cv2.imread(args["image"])
+            self.imagePath = args["image"]
         else:
             cam = cv2.VideoCapture(self.camIndex)
             sleep(delay)
             ret, self.image = cam.read()
+
         self.resized = imutils.resize(self.image, width=self.resizedSize)
         self.drawImg = self.resized.copy()
+
+        if pickSwatches:
+            self.pickSwatchColors() # reset the color basis for the swatches
+
         if self.needsBasis:
             success = self.establishBasis()
             if not success:
                 return False
         # Always update the block mask
+
         self.blockMask = cv2.inRange(self.hsv, self.lowerBlocks, self.upperBlocks)
 
         kernel = np.ones((4,4), np.uint8)
         eroded = cv2.erode(self.blockMask, kernel, iterations=3)
-        # cv2.imshow("eroded", eroded)
+        cv2.imshow("eroded", eroded)
         self.blockMask = eroded
 
+        print(self.blockMask)
 
         if self.jengaDebug:
             cv2.imshow("HSV Block Mask", self.blockMask)  # Tag 1
@@ -126,9 +197,31 @@ class vision:
         redMask = cv2.inRange(self.hsv, self.lower_red, self.upper_red)
 
         if self.debug:
+            cv2.imshow("HSV Green Before", greenMask)  # Tag 1
+            cv2.imshow("HSV Yellow Before", yellowMask) # Yellow Tag 2
+            cv2.imshow("HSV Red Before", redMask) # Red Tag 2
+
+        kernel = np.ones((5,5), np.uint8) * 2
+
+        yellowMask = cv2.morphologyEx(yellowMask, cv2.MORPH_CLOSE, kernel, iterations = 4)
+        redMask = cv2.morphologyEx(redMask, cv2.MORPH_CLOSE, kernel, iterations = 4)
+        greenMask = cv2.morphologyEx(greenMask, cv2.MORPH_CLOSE, kernel, iterations = 4)
+
+        # yellowMask = cv2.morphologyEx(yellowMask, cv2.MORPH_OPEN, kernel, iterations = 4)
+        # redMask = cv2.morphologyEx(redMask, cv2.MORPH_OPEN, kernel, iterations = 4)
+        # greenMask = cv2.morphologyEx(greenMask, cv2.MORPH_OPEN, kernel, iterations = 4)
+
+        # yellowMask = cv2.morphologyEx(yellowMask, cv2.MORPH_CLOSE, kernel, iterations = 4)
+        # redMask = cv2.morphologyEx(redMask, cv2.MORPH_CLOSE, kernel, iterations = 4)
+        # greenMask = cv2.morphologyEx(greenMask, cv2.MORPH_CLOSE, kernel, iterations = 4)
+
+        if self.debug:
             cv2.imshow("HSV Green", greenMask)  # Tag 1
             cv2.imshow("HSV Yellow", yellowMask) # Yellow Tag 2
             cv2.imshow("HSV Red", redMask) # Red Tag 2
+
+
+        self.checkWaitKey()
 
         cntsYellow = self.getCnts(yellowMask)
         cntsRed = self.getCnts(redMask)
@@ -187,14 +280,13 @@ class vision:
                                                     self.basisPixel, testWorldCoords, self.frameRotation  )
                     self.drawPoint(coordPixel, (0,0,255))
             cv2.imshow("Image", self.drawImg)
-            cv2.waitKey(0)
+            self.checkWaitKey(0)
         self.drawImg = self.resized.copy()  # Reset the image for other operations!
         self.needsBasis = False
         return True # This means we were successful
 
     # Wrap some basic OpenCV for Easier Use
     def drawContours(self, box, color=(0, 0, 255), thickness=2):
-        print("drawing contours")
         cv2.drawContours(self.drawImg,[box],0,(0, 0, 255),thickness)
 
     def drawPoint(self, point, color = (0, 255, 255), r = 1):
@@ -214,7 +306,7 @@ class vision:
         cv2.CHAIN_APPROX_SIMPLE)
         return imutils.grab_contours(cnts)
 
-    def getBlockPixel(self):
+    def getBlockPixel(self, mlFile = "C:/dev/delme/mlOutput.csv", truthFile = "C:/dev/delme/truthList.csv"):
         cnts = self.getCnts(self.blockMask)
         print(cnts)
         blockMask2 = cv2.cvtColor(self.blockMask, cv2.COLOR_GRAY2BGR)  #add this line
@@ -222,21 +314,12 @@ class vision:
             rot_rect = cv2.minAreaRect(c)
             rotation = rot_rect[2]
             # small pixel cutoff
-            pixelCutoff = 10
+            pixelCutoff = 1
             if rot_rect[1][1] < pixelCutoff or rot_rect[1][0] < pixelCutoff: # THIS HANDLES-> or rot_rect[1][1] == 0 or rot_rect[1][0] == 0:
                 continue
             blockLong = max(rot_rect[1])*self.ratio
             blockShort = min(rot_rect[1])*self.ratio
 
-            wrongDilatedBlockDimensions = blockLong > self.jengaLHighDilated or blockLong < self.jengaLLowDilated or blockShort > self.jengaWHighDilated or blockShort < self.jengaWLowDilated
-            # correctBlockDimensions = blockLong > self.jengaLHigh or blockLong < self.jengaLLow or blockShort > self.jengaWHigh or blockShort < self.jengaWLow
-            # if blockLong > self.jengaLHigh or blockLong < self.jengaLLow or blockShort > self.jengaWHigh or blockShort < self.jengaWLow:
-            if wrongDilatedBlockDimensions: # or wrongBlockDimensions:
-                # This isn't a jenga Block
-                print("this isn't a jenga block")
-                print(blockLong, blockShort)
-                continue
-                # TODO: LOOK FOR CLUSTERS HERE!!!
 
             # This means the block is in a certain orientation that needs an offset
             if rot_rect[1][0] <= rot_rect[1][1]:
@@ -251,20 +334,108 @@ class vision:
 
                 box = cv2.boxPoints(rot_rect) #* ratio
                 box = np.int0(box)
-                self.drawContours(box, thickness = 6)
-                self.drawPoint(rot_rect[0], (255,0,0))
-                print("drawing items")
-                # cv2.drawContours()
-                cv2.drawContours(blockMask2,[box],0,(0, 255, 255), 2)
-                cv2.imshow("With Detection", blockMask2)
-                print("returning anything")
-                print("returning " + str(np.array([[rot_rect[0][0]],[rot_rect[0][1]]] )) + ", " + str(rotation))
-                cv2.waitKey(0)
-                # return np.array([[rot_rect[0][0]],[rot_rect[0][1]]] ), rotation
 
-        print("Didn't detect any Jenga blocks")
-        cv2.waitKey(0)
+                classification = self.checkBlockCriteria(blockShort, blockLong, box, rotation)
+                if classification == self.BlockType.OUT_OF_BOUNDS:
+                    continue
+
+                if classification == self.BlockType.NOT_BLOCK:
+                    color = (255, 0, 0)
+                    drawOnOriginalImage = False
+                elif classification == self.BlockType.CLUSTER:
+                    color = (0, 255, 0)
+                    drawOnOriginalImage = False
+                elif classification == self.BlockType.BLOCK:
+                    color = (0, 255, 255)
+                    drawOnOriginalImage = True
+
+                cv2.drawContours(blockMask2,[box], 0, color, 2)
+                cv2.imshow("With Detection", blockMask2)
+
+                if drawOnOriginalImage:
+                    cv2.drawContours(self.drawImg,[box],0,(0, 255, 255), 2)
+                    cv2.imshow("Image", self.drawImg)
+
+                overrideClassification = self.checkWaitKey(0) & 0xFF
+
+                # if the keys 0 through 6 are pressed, it overrides the default classification
+                if overrideClassification in set( ord(str(item.value)) for item in self.BlockType ):
+                    self.truthList.append(overrideClassification - ord('0'))
+                else:
+                    self.truthList.append(classification.value)
+
+        # pd.DataFrame(np.array(self.mlArray)).to_csv("C:/dev/delme/mlOutput2.csv")
+        print("mlArray[0] =", np.array(self.mlArray)[0].shape)
+        print("mlArray[0] =", self.mlArray[0])
+        print(type(self.mlArray))
+        arrayToDisplay = np.stack(self.mlArray, axis = 0)
+        print("size of mlArray:", arrayToDisplay.shape)
+        print("truthlist =", self.truthList)
+        # arrayToDisplay.tofile("C:/dev/delme/mlOutput2.csv", format = "%1.2f")
+        np.savetxt(mlFile, arrayToDisplay, delimiter = ",", fmt='%f')
+        np.savetxt(truthFile, self.truthList, delimiter = ",", fmt='%f')
+        print("file completed")
+        self.checkWaitKey(0)
         return None
+
+    class BlockType(Enum):
+        NOT_BLOCK = 0
+        BLOCK = 1
+        CLUSTER = 2
+        EDGE_BLOCK = 3
+        END_BLOCK = 4
+        OUT_OF_BOUNDS = 5
+        SWATCH = 6
+        ROBOT = 7
+
+    def checkBlockCriteria(self, blockShort, blockLong, box, rotation):
+
+        print("Box = ")
+        print(box)
+        x1 = min(box, key = lambda x: x[0])[0]
+        x2 = max(box, key = lambda x: x[0])[0]
+        y1 = min(box, key = lambda x: x[1])[1]
+        y2 = max(box, key = lambda x: x[1])[1]
+        print(x1, x2, y1, y2)
+        closeUp = self.blockMask[y1:y2, x1:x2]
+        print("rotation = ", rotation)
+        print(closeUp)
+        if closeUp.size <= 0: # check if the image is empty
+            return self.BlockType.OUT_OF_BOUNDS
+
+        cv2.imshow("Box Close-Up", closeUp)
+        # self.checkWaitKey(0)
+        #rotation angle in degree
+        rotated = ndimage.rotate(closeUp, -rotation)
+        cv2.imshow("Rotated Close-Up", rotated)
+
+        resized = self.basicResize(rotated, self.mlDim)
+        cv2.imshow("Scaled Rotated Close-Up", resized)
+
+        print("image variable type =", type(resized))
+        newVector = np.reshape(resized, -1) # convert to a vector
+        print("newVector shape =", newVector.shape)
+
+        self.mlArray.append(newVector)
+
+
+        # self.checkWaitKey(0)
+        if self.jengaDebug:
+            print(blockLong, blockShort)
+
+        inBlockDimensionRange = blockLong  > 60 and blockLong  < 110 and \
+                                blockShort > 10 and blockShort < 25
+
+        if inBlockDimensionRange:
+            return self.BlockType.BLOCK
+
+        inClusterDimensionRange = blockLong  > 60 and blockLong  < 150 and \
+                                  blockShort > 20 and blockShort < 100
+
+        if inClusterDimensionRange:
+            return self.BlockType.CLUSTER
+
+        return self.BlockType.NOT_BLOCK
 
     def getBlockWorld(self):
         singleBlockCenterPixel, singleBlockRotation =  self.getBlockPixel()
@@ -277,11 +448,12 @@ class vision:
             #print(f"Block: {singleBlockCenterPixel}, theta: {singleBlockRotation}")
             print(f"Jenga Block World Coords: {coordWorld}, World Rotation: {rotationWorld}")
             cv2.imshow("HSV Block", self.drawImg)
-            cv2.waitKey(0)
+            self.checkWaitKey(0)
         return coordWorld, rotationWorld
 
     # loop over the contours
     def getPixelCenterSquare(self, cnts):
+        # self.checkWaitKey()
         for c in cnts:
             # compute the center of the contour, then detect the name of the
             # shape using only the contour
@@ -338,3 +510,85 @@ class vision:
         bVector = bVector + bOffset
         rotation = bRot-fRot
         return bVector, rotation
+
+    def basicResize(self, image, newDim):
+        oldDim = image.shape
+        image2 = image.copy()
+
+        # First crop the image
+        if newDim[0] < oldDim[0]:
+            x1 = int(np.floor(           (oldDim[0] - newDim[0]) / 2))
+            x2 = int(np.floor(oldDim[0] - (oldDim[0] - newDim[0]) / 2)) # off by one error
+        else:
+            x1 = 0
+            x2 = oldDim[0]
+
+        if newDim[1] < oldDim[1]:
+            y1 = int(np.floor(           (oldDim[1] - newDim[1]) / 2))
+            y2 = int(np.floor(oldDim[1] - (oldDim[1] - newDim[1]) / 2))
+        else:
+            y1 = 0
+            y2 = oldDim[1]
+
+        image2 = image2[x1:x2, y1:y2] # crop image
+        ##--------##
+
+        # Then add borders as necessary
+        if newDim[0] > oldDim[0]:
+            y1padding = int(np.floor((newDim[0] - oldDim[0]) / 2))
+            y2padding = int( np.ceil((newDim[0] - oldDim[0]) / 2))
+        else:
+            y1padding = 0
+            y2padding = 0
+
+        if newDim[1] > oldDim[1]:
+            x1padding = int(np.floor((newDim[1] - oldDim[1]) / 2))
+            x2padding = int( np.ceil((newDim[1] - oldDim[1]) / 2))
+        else:
+            x1padding = 0
+            x2padding = 0
+
+        print("padding y1, y2, x1, x2 =", y1padding, y2padding, x1padding, x2padding)
+        image2 = cv2.copyMakeBorder(image2, y1padding, y2padding, x1padding, x2padding, cv2.BORDER_CONSTANT, value = 0)
+
+        return image2
+
+    def checkWaitKey(self, val=0): # val = 0 displays static frame; val = 1 dispays moving frame
+        # perform the waitKey, then check key strokes for special actions
+        key = cv2.waitKey(val) & 0xFF
+        if key == 27: # ESC
+            cv2.destroyAllWindows()
+            exit()
+        if key == 32: # Space
+            pass # could put debugging tools or something here
+        return key
+
+
+if __name__=='__main__':
+    # arm = robot.robot()
+    vs = vision()
+
+    # testingHomingandWorld = True
+    testingCameras = True
+
+    """
+    COde to Detect basis and camera tags
+    """
+    if testingCameras:
+        if not vs.testCamera():
+            print("Camera Not working")
+
+        grabbingFrame = True
+        # while grabbingFrame:
+        grabImageSuccess = vs.grabImage(fromPath=True)
+
+        if not grabImageSuccess:
+            print("Please reposition Camera and check masking!")
+            vs.tuneWindow()
+            x = input('Retry (R) or Quit (Q): ')
+            if x == 'R':
+                pass
+            else:
+                quit()
+
+        vs.getBlockWorld()
