@@ -90,14 +90,14 @@ void setup() {
   stepper1.setAcceleration(300);
 
   stepper2.setMaxSpeed(1000);
-  stepper2.setSpeed(1000);
+  stepper2.setSpeed(300);
   stepper2.setCurrentPosition(0);
-  stepper2.setAcceleration(280);
+  stepper2.setAcceleration(100);
 
   stepper3.setMaxSpeed(1000);
-  stepper3.setSpeed(1000);
+  stepper3.setSpeed(500);
   stepper3.setCurrentPosition(0);
-  stepper3.setAcceleration(280);
+  stepper3.setAcceleration(200);
 
   objectiveStartTime = messTime;    // Set this to the current time
   Serial.begin(115200);     // Fast Baud to send data more quickly!

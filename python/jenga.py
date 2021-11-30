@@ -72,7 +72,27 @@ if __name__=='__main__':
 
 
         # Go to a position
-        jPos = arm.worldToJoint((-400,400, 25), 0)
+        jPos = arm.worldToJoint((-350,350, 0), 0)
+        stepPos = arm.radTupleToStepTuple(jPos)
+        nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
+        arm.serial.write(nextPoint)
+        print(f"sent message: {nextPoint}")
+        result = arm.waitForResponse()
+        print(result)
+        time.sleep(.5)
+
+        # Go to a position
+        jPos = arm.worldToJoint((0,425, 50), 0)
+        stepPos = arm.radTupleToStepTuple(jPos)
+        nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
+        arm.serial.write(nextPoint)
+        print(f"sent message: {nextPoint}")
+        result = arm.waitForResponse()
+        print(result)
+        time.sleep(.5)
+
+        # Go to a position
+        jPos = arm.worldToJoint((0,425, 0), 0)
         stepPos = arm.radTupleToStepTuple(jPos)
         nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
         arm.serial.write(nextPoint)

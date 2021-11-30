@@ -12,7 +12,7 @@ args = vars(ap.parse_args())
 
 class vision:
     def __init__(self):
-        self.debug = False
+        self.debug = True
         self.jengaDebug = True
 
         # Image Loading and Resizing
@@ -80,6 +80,7 @@ class vision:
         self.drawImg = self.resized.copy()
         if self.needsBasis:
             success = self.establishBasis()
+            print(f"Establish Basis{success}")
             if not success:
                 return False
         # Always update the block mask
@@ -106,9 +107,11 @@ class vision:
         cntsRed = self.getCnts(redMask)
         cntsGreen = self.getCnts(greenMask)
 
-        if not cntsGreen or not cntsRed:
+        if cntsGreen == [] or cntsRed == [] or cntsYellow == []:
             return False
 
+        print(cntsGreen)
+        print(cntsRed)
         # Calculate the centers of each piece
         (greenCenter, greenBox) = self.getPixelCenterSquare(cntsGreen)
         (yellowCenter, yellowBox) = self.getPixelCenterSquare(cntsYellow)
