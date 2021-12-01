@@ -348,12 +348,13 @@ class vision:
 
                 box = cv2.boxPoints(rot_rect) #* ratio
                 box = np.int0(box)
-                self.boxList.append(box)
-                self.boxPolygons.append(Polygon(box))
 
                 classification = self.checkBlockCriteria(blockShort, blockLong, box, rotation)
                 if classification == self.BlockType.OUT_OF_BOUNDS:
                     continue
+
+                self.boxList.append(box)
+                self.boxPolygons.append(Polygon(box))
 
                 # if classification == self.BlockType.NOT_BLOCK:
                 #     color = (255, 0, 0)
@@ -365,7 +366,7 @@ class vision:
                 #     color = (0, 255, 255)
                 #     drawOnOriginalImage = True
 
-                cv2.drawContours(blockMask2,[box], 0, color, 2)
+                cv2.drawContours(blockMask2,[box], 0, self.outlineColorDict[classification.value], 2)
                 cv2.imshow("With Detection", blockMask2)
 
                 # if drawOnOriginalImage:
