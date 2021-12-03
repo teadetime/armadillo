@@ -7,8 +7,8 @@ if __name__=='__main__':
     arm = robot.robot()
     vs = vision.vision()
 
-    testingHomingandWorld = True
-    testingCameras = False
+    testingHomingandWorld = False
+    testingCameras = True
 
     """
     COde to Detect basis and camera tags
@@ -56,17 +56,17 @@ if __name__=='__main__':
 
         arm.waitForArduino()
 
-        ##############################
-        ## Just Calibrate , For Now ##
-        ##############################
-        homeTuple = (arm.j1ZeroSteps ,arm.j2ZeroSteps, arm.j3ZeroSteps, 0)
-        homingMessage = arm.createMessage(arm.commands["calibrate"],(0, 0, 0, 0),0,0)
-        arm.serial.write(homingMessage)
-        print(f"Homing: {homingMessage}")
-        result = arm.waitForResponse()
-        print(result)
-        exit()
-        raise ValueError # stop the program
+        # ##############################
+        # ## Just Calibrate , For Now ##
+        # ##############################
+        # homeTuple = (arm.j1ZeroSteps ,arm.j2ZeroSteps, arm.j3ZeroSteps, 0)
+        # homingMessage = arm.createMessage(arm.commands["calibrate"],(0, 0, 0, 0),0,0)
+        # arm.serial.write(homingMessage)
+        # print(f"Homing: {homingMessage}")
+        # result = arm.waitForResponse()
+        # print(result)
+        # exit()
+        # raise ValueError # stop the program
 
         ##############################
         ##Initiate Homing Proceedure##
@@ -90,7 +90,7 @@ if __name__=='__main__':
         time.sleep(2)
 
          # # Go to a position
-        jPos = arm.worldToJoint((-0,400, 5), 0)
+        jPos = arm.worldToJoint((-0,400, 40), 0)
         stepPos = arm.radTupleToStepTuple(jPos)
         nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
         arm.serial.write(nextPoint)
@@ -101,7 +101,7 @@ if __name__=='__main__':
 
 
         # Go to a position
-        jPos = arm.worldToJoint((300,400, 30), 0)
+        jPos = arm.worldToJoint((0,300, 30), 0)
         stepPos = arm.radTupleToStepTuple(jPos)
         nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
         arm.serial.write(nextPoint)

@@ -120,7 +120,10 @@ void setup() {
   readLimitSwitches();
 
   pinMode(pumpPin, OUTPUT);
+  digitalWrite(pumpPin, LOW);
+  
   pinMode(vacPin, OUTPUT);
+  digitalWrite(vacPin, LOW);
 
   messTime = millis();
   stepper1.setMaxSpeed(800);
@@ -186,13 +189,10 @@ void loop() {
 //        Serial.println("movingSteppers");
         //THESE BREAK EVERYTHING
         //SHOULD REPLACE WITH VARIABLES
-        stepper1.setSpeed(700);
-        stepper2.setSpeed(300);
-        stepper3.setSpeed(500);
-        //          stepper1.setSpeed(speedPC);
-        //          stepper2.setSpeed(speedPC);
-        //          stepper1.setAcceleration(vacPC);
-        //          stepper2.setAcceleration(vacPC);
+//        stepper1.setMaxSpeed(700);
+//        stepper2.setMaxSpeed(300);
+//        stepper3.setMaxSpeed(500);
+        
         stepper1.moveTo(j1PC + j1PC_adjust);
         stepper2.moveTo(j2PC + j2PC_adjust);
         stepper3.moveTo(j3PC + j3PC_adjust);
@@ -204,10 +204,9 @@ void loop() {
         j1Homed = false;
         j2Homed = false;
         j3Homed = false;
-        stepper1.setSpeed(100);
-        stepper2.setSpeed(100);
-        stepper3.setSpeed(100);
-        Serial.println("Sending Moveto");
+//        stepper1.setMaxSpeed(300);
+//        stepper2.setMaxSpeed(300);
+//        stepper3.setMaxSpeed(300);
         stepper1.moveTo(stepsRev*microStep);
         stepper2.moveTo(stepsRev*microStep);
         stepper3.moveTo(stepsRev*microStep);
@@ -226,7 +225,6 @@ void loop() {
           // Send Objective completed message
           objectiveInProgress = false;
           moving = false;
-          //TODO CHECK IF START POSITION IS LIKE FINAL POSITION?
           sendObjectiveCompleted(objectiveType, messCharSuccess);
         }
         // shouldn't need this line
@@ -234,7 +232,6 @@ void loop() {
         break;
       case messCharHome:
         homingLoop();
-
         if(j1Homed==1 && j2Homed==1 && j3Homed==1){
           resetSteppers(j1PC,j2PC,j3PC,j4PC);
           sendObjectiveCompleted(objectiveType, messCharSuccess);
@@ -257,6 +254,7 @@ void loop() {
         if (potButtonVal) {
           break;
         }
+        break;
     }
 
   }
@@ -420,7 +418,6 @@ void homingLoop(){
   readLimitSwitches();
   if (j1_limitVal == 1 && !j1Homed) {
       stepper1.stop();
-      //stepper1.moveTo(stepper1.currentPosition());
       stepper1.setCurrentPosition(j1PC);
       j1Homed = true;
     }
@@ -428,14 +425,12 @@ void homingLoop(){
     //  Serial.println(j2_limitVal);
       stepper2.stop();
       stepper2.setCurrentPosition(j2PC);
-      //stepper2.moveTo(stepper2.currentPosition());
       j2Homed = true;
   }
   if (j3_limitVal == 0 && !j3Homed) {
     //  Serial.println(j3_limitVal);
       stepper3.stop();
       stepper3.setCurrentPosition(j3PC);
-      //stepper3.moveTo(stepper3.currentPosition());
       j3Homed = true;
   }
 }

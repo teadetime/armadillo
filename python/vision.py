@@ -39,9 +39,13 @@ class vision:
 
         # Boundaries for the different  Colors
         self.lower_red = np.array([0,150,180])
-        self.upper_red = np.array([22,240,240])
-        self.lower_green = np.array([66,82,77])
-        self.upper_green = np.array([87,208,190])
+        self.upper_red = np.array([22,240,245])
+        self.lower_green = np.array([40,47,182])
+        self.upper_green = np.array([72,197,255])
+
+        self.lower_blue = np.array([67,38,180])
+        self.upper_blue = np.array([96,114,255])
+
 
         self.lower_yellow = np.array([26,43,240])
         self.upper_yellow = np.array([43,110,255])

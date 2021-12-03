@@ -48,15 +48,9 @@ class robot:
         self.J3gearing = 3
 
         # Radian values for the limit switches
-<<<<<<< Updated upstream
         self.limitJ1 = math.pi/2 + math.radians(10.8) 
         self.limitJ2 = math.radians(87)#math.pi/4
         self.limitJ3 = math.pi/2+math.radians(87.5) 
-=======
-        self.limitJ1 = math.pi/2 + math.radians(9)
-        self.limitJ2 = math.radians(75.5)#math.pi/4
-        self.limitJ3 = math.pi/2+math.radians(85.73)
->>>>>>> Stashed changes
 
         print(f"j1Limit: {self.limitJ1}\nj2Limit: {self.limitJ2}\nj3Limit: {self.limitJ3}")
         self.j1ZeroSteps = self.radToSteps(self.limitJ1, self.J1microSteps, self.J1gearing)
