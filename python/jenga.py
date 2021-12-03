@@ -56,9 +56,17 @@ if __name__=='__main__':
 
         arm.waitForArduino()
 
-
-
-
+        ##############################
+        ## Just Calibrate , For Now ##
+        ##############################
+        homeTuple = (arm.j1ZeroSteps ,arm.j2ZeroSteps, arm.j3ZeroSteps, 0)
+        homingMessage = arm.createMessage(arm.commands["calibrate"],(0, 0, 0, 0),0,0)
+        arm.serial.write(homingMessage)
+        print(f"Homing: {homingMessage}")
+        result = arm.waitForResponse()
+        print(result)
+        exit()
+        raise ValueError # stop the program
 
         ##############################
         ##Initiate Homing Proceedure##
