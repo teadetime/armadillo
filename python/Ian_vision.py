@@ -186,7 +186,7 @@ class vision:
 
         self.blockMask = cv2.inRange(self.hsv, self.lowerBlocks, self.upperBlocks)
 
-        kernel = np.ones((4,4), np.uint8)
+        kernel = np.ones((3,3), np.uint8)
         eroded = cv2.erode(self.blockMask, kernel, iterations=3)
         cv2.imshow("eroded", eroded)
         self.blockMask = eroded
