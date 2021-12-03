@@ -7,8 +7,8 @@ if __name__=='__main__':
     arm = robot.robot()
     vs = vision.vision()
 
-    testingHomingandWorld = False
-    testingCameras = True
+    testingHomingandWorld = True
+    testingCameras = False
 
     """
     COde to Detect basis and camera tags
@@ -80,7 +80,7 @@ if __name__=='__main__':
 
 
         # Go to a position
-        jPos = arm.worldToJoint((-350,350, 0), 0)
+        jPos = arm.worldToJoint((-350,350, 20), 0)
         stepPos = arm.radTupleToStepTuple(jPos)
         nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
         arm.serial.write(nextPoint)
@@ -92,7 +92,7 @@ if __name__=='__main__':
          # # Go to a position
         jPos = arm.worldToJoint((-0,400, 40), 0)
         stepPos = arm.radTupleToStepTuple(jPos)
-        nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
+        nextPoint = arm.createMessage(arm.commands["move"],stepPos,0,40.0)
         arm.serial.write(nextPoint)
         print(f"sent message: {nextPoint}")
         result = arm.waitForResponse()

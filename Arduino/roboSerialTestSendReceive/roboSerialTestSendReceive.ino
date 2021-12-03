@@ -144,7 +144,7 @@ void setup() {
   Serial.begin(115200);     // Fast Baud to send data more quickly!
   establishContact();       // send a byte to establish contact until receiver responds
   digitalWrite(pumpPin, HIGH);
-  digitalWrite(vacPin, LOW);
+  digitalWrite(vacPin, HIGH);
 
 
   Serial.println();
@@ -175,7 +175,7 @@ void loop() {
   ///////////////////////////
   if (!objectiveInProgress) {
     recvWithStartEndMarkers();
-    setVac(vacPC);
+    
 
     if (newData == true) {
       strcpy(tempChars, receivedChars);     // Temporary copy needed for parsing
@@ -184,7 +184,7 @@ void loop() {
       newData = false;
       objectiveInProgress = true;
       objectiveStartTime = currTime;
-
+      setVac(vacPC);
       if (objectiveType == messCharMove) {
         // TODO PUT THIS IN A FUNCTION THAT CALCULATES DEGREES TO STEPS
         moving = true;
