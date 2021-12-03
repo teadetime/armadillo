@@ -8,6 +8,41 @@ AccelStepper stepper2(1, 5, 4);
 AccelStepper stepper3(1, 9, 8);
 Servo servoEOF;
 
+///////////////////////
+//Potentiometer Setup//
+///////////////////////
+#define pot0 A0
+#define pot1 A1
+#define pot2 A2
+#define potButton A3
+
+const bool usePotentiometerAdjust = true;
+
+int pot0val = 0;
+int pot1val = 0;
+int pot2val = 0;
+bool potButtonVal = false;
+
+
+float j1PC_adjust = 0.0;
+float j2PC_adjust = 0.0;
+float j3PC_adjust = 0.0;
+
+float potSensitivity = 60.0 / 1024;
+
+void readPots() {
+  if(usePotentiometerAdjust) {
+    pot0val = analogRead(pot0);
+    pot1val = analogRead(pot1);
+    pot2val = analogRead(pot2);
+
+    j1PC_adjust = (pot0val - 1024 / 2) * potSensitivity;
+    j2PC_adjust = (pot1val - 1024 / 2) * potSensitivity;
+    j3PC_adjust = (pot2val - 1024 / 2) * potSensitivity;
+    potButtonVal = 1 - digitalRead(potButton);
+  }
+}
+
 ///////////////////////////
 //Vars for Limit Switches//
 ///////////////////////////
@@ -19,7 +54,7 @@ const int servoPin = 11;
 const int pumpPin = 12;
 const int vacPin = 13;
 
-const int servoZero = 90;         // Lets sero the servo at the center of its range
+const int servoZero = 74;         // Lets sero the servo at the center of its range
 int servoPos = 0;
 
 bool j1_limitVal = 0;                  // In current config, switch will go low when pressed
@@ -40,6 +75,7 @@ const char messCharTest = 'T';
 const char messCharOther = 'O';
 const char messCharSuccess = 'Y';
 const char messCharFail = 'N';
+const char messCharCalibrate = 'B';
 
 const char startMarker = '<';
 const char endMarker = '>';
@@ -80,10 +116,10 @@ void setup() {
   pinMode(j2_limitPin, INPUT_PULLUP);
   pinMode(j3_limitPin, INPUT_PULLUP);
   servoEOF.attach(servoPin);
+  servoEOF.write(servoZero);
   readLimitSwitches();
 
   pinMode(pumpPin, OUTPUT);
-  digitalWrite(pumpPin, HIGH);
   pinMode(vacPin, OUTPUT);
 
   messTime = millis();
@@ -105,6 +141,7 @@ void setup() {
   objectiveStartTime = messTime;    // Set this to the current time
   Serial.begin(115200);     // Fast Baud to send data more quickly!
   establishContact();       // send a byte to establish contact until receiver responds
+  //digitalWrite(pumpPin, HIGH);
   Serial.println();
   //delay(50);
 }
@@ -148,13 +185,17 @@ void loop() {
         moving = true;
 //        Serial.println("movingSteppers");
         //THESE BREAK EVERYTHING
+        //SHOULD REPLACE WITH VARIABLES
+        stepper1.setSpeed(700);
+        stepper2.setSpeed(300);
+        stepper3.setSpeed(500);
         //          stepper1.setSpeed(speedPC);
         //          stepper2.setSpeed(speedPC);
         //          stepper1.setAcceleration(vacPC);
         //          stepper2.setAcceleration(vacPC);
-        stepper1.moveTo(j1PC);
-        stepper2.moveTo(j2PC);
-        stepper3.moveTo(j3PC);
+        stepper1.moveTo(j1PC + j1PC_adjust);
+        stepper2.moveTo(j2PC + j2PC_adjust);
+        stepper3.moveTo(j3PC + j3PC_adjust);
         servoPos = int(j4PC)+servoZero; //This may need to be minus
         servoEOF.write(servoPos);
 
@@ -163,6 +204,9 @@ void loop() {
         j1Homed = false;
         j2Homed = false;
         j3Homed = false;
+        stepper1.setSpeed(100);
+        stepper2.setSpeed(100);
+        stepper3.setSpeed(100);
         Serial.println("Sending Moveto");
         stepper1.moveTo(stepsRev*microStep);
         stepper2.moveTo(stepsRev*microStep);
@@ -205,6 +249,14 @@ void loop() {
         break;
       default:
         break;
+      case messCharCalibrate:
+        readPots();
+        stepper1.moveTo(j1PC + j1PC_adjust);
+        stepper2.moveTo(j2PC + j2PC_adjust);
+        stepper3.moveTo(j3PC + j3PC_adjust);
+        if (potButtonVal) {
+          break;
+        }
     }
 
   }
