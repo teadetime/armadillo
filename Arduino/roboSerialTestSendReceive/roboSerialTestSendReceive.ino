@@ -19,7 +19,7 @@ const int servoPin = 11;
 const int pumpPin = 12;
 const int vacPin = 13;
 
-const int servoZero = 90;         // Lets sero the servo at the center of its range
+const int servoZero = 74;         // Lets sero the servo at the center of its range
 int servoPos = 0;
 
 bool j1_limitVal = 0;                  // In current config, switch will go low when pressed
@@ -80,10 +80,10 @@ void setup() {
   pinMode(j2_limitPin, INPUT_PULLUP);
   pinMode(j3_limitPin, INPUT_PULLUP);
   servoEOF.attach(servoPin);
+  servoEOF.write(servoZero);
   readLimitSwitches();
 
   pinMode(pumpPin, OUTPUT);
-  digitalWrite(pumpPin, HIGH);
   pinMode(vacPin, OUTPUT);
 
   messTime = millis();
@@ -105,6 +105,7 @@ void setup() {
   objectiveStartTime = messTime;    // Set this to the current time
   Serial.begin(115200);     // Fast Baud to send data more quickly!
   establishContact();       // send a byte to establish contact until receiver responds
+  //digitalWrite(pumpPin, HIGH);
   Serial.println();
   //delay(50);
 }
@@ -148,6 +149,10 @@ void loop() {
         moving = true;
 //        Serial.println("movingSteppers");
         //THESE BREAK EVERYTHING
+        //SHOULD REPLACE WITH VARIABLES
+        stepper1.setSpeed(700);
+        stepper2.setSpeed(300);
+        stepper3.setSpeed(500);
         //          stepper1.setSpeed(speedPC);
         //          stepper2.setSpeed(speedPC);
         //          stepper1.setAcceleration(vacPC);
@@ -163,6 +168,9 @@ void loop() {
         j1Homed = false;
         j2Homed = false;
         j3Homed = false;
+        stepper1.setSpeed(100);
+        stepper2.setSpeed(100);
+        stepper3.setSpeed(100);
         Serial.println("Sending Moveto");
         stepper1.moveTo(stepsRev*microStep);
         stepper2.moveTo(stepsRev*microStep);
