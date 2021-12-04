@@ -39,18 +39,18 @@ class robot:
         self.L2 = 320               # 2nd Arm
         self.L3 = 20                 # Length of rotating end effector
 
-        # 
+        #
         self.J1microSteps = 16
         self.J2microSteps = 16
-        self.J3microSteps = 16        
+        self.J3microSteps = 16
         self.J1gearing = 3
         self.J2gearing = 3
         self.J3gearing = 3
 
         # Radian values for the limit switches
-        self.limitJ1 = math.pi/2 + math.radians(10.8) 
+        self.limitJ1 = math.pi/2 + math.radians(10.8)
         self.limitJ2 = math.radians(87)#math.pi/4
-        self.limitJ3 = math.pi/2+math.radians(87.5) 
+        self.limitJ3 = math.pi/2+math.radians(87.5)
 
         print(f"j1Limit: {self.limitJ1}\nj2Limit: {self.limitJ2}\nj3Limit: {self.limitJ3}")
         self.j1ZeroSteps = self.radToSteps(self.limitJ1, self.J1microSteps, self.J1gearing)
@@ -96,7 +96,7 @@ class robot:
     def worldToJoint(self, coords , thetab):
         '''
         Takes True world frame coordinates of the block! thetab is relative to block
-        coords: tuple looks like -> (xb,yb,zb) 
+        coords: tuple looks like -> (xb,yb,zb)
         '''
         # First lets assume we are choosing the position of the end effector ie 45*
         thetabRad = math.radians(thetab)
@@ -115,17 +115,17 @@ class robot:
         zextra = (za-self.P1xyz[2]) # bottom of law of cosines trinagle
 
         b = math.sqrt(zextra**2 + effectiveArmShadow**2)
-        
+
         gamma = math.atan2(zextra, effectiveArmShadow)
 
         # NOTE THETSE ARE BOTH Zero when they point straight out
         theta2 = math.acos((self.L1**2 + b**2 - self.L2**2)/(2*self.L2*b)) + gamma
         theta3 = math.acos((self.L1**2 - b**2 + self.L2**2)/(2*self.L1*self.L2)) + theta2
         theta1 = math.atan2(-xa, ya) # Flip the coordinates since we need to offset by pi/2 this allows us to handle negatives!
-        
+
         print(theta1, theta2, theta3)
         print(thetab)
-        
+
         theta4 = -(theta1 - thetabRad)
 
         return (theta1, theta2, theta3, theta4)
@@ -147,7 +147,7 @@ class robot:
         # Now lets offset to servo, Please lets design this so the horn is in line
         servoZ = middleJointZ - self.servoZOffset
         servoArm = middleJointArm + self.servoArmOffset
-        
+
         # Now lets decompose the arm
         servoHornX = servoArm * math.sin(-1*theta1)
         servoHornY = servoArm * math.cos(theta1)
@@ -159,11 +159,11 @@ class robot:
         eofRot = theta1 + theta4
         eofX = self.L3 * math.sin(eofRot)
         eofY = self.L3 * math.cos(eofRot)
-        
+
         # Apply EOF Z adjustment
         finalX = self.P1xyz[0] + servoHornX - eofX
         finalY = self.P1xyz[1] + servoHornY + eofY
-        finalZ = self.P1xyz[2] + servoZ - self.suctionOffset 
+        finalZ = self.P1xyz[2] + servoZ - self.suctionOffset
         return (finalX,finalY,finalZ)
 
     def radTupleToStepTuple(self, jPos):
@@ -189,14 +189,14 @@ class robot:
 
     def radToSteps(self, rad, microSteps, gearing, stepsRev = 200):
         '''
-        Conversion from radians to a number of steps 
+        Conversion from radians to a number of steps
         given ceratin steps per revolution and microstepping
         '''
         return rad/(2*math.pi) * stepsRev * microSteps * gearing
 
     def stepsToRads(self, steps, microSteps, gearing, stepsRev = 200):
         return steps/(stepsRev * microSteps * gearing) * (2*math.pi)
-        
+
     def waitForResponse(self):
         while 1:
             if(self.serial.dev.in_waiting > 0):
@@ -212,7 +212,7 @@ class robot:
                         print(data[2:])
                         return data[2:]
                         break
-                
+
                 if(data[0] == self.lastObjective):
                     resultChar = data.split(self.splitChar)[-1]
                     return(resultChar == self.successChar)
