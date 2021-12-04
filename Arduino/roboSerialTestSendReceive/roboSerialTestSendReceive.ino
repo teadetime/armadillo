@@ -365,6 +365,12 @@ void showParsedData() {
   Serial.println(vacPC);
   Serial.print("speed: ");
   Serial.println(speedPC);
+  Serial.print("J1 offset (from potentiometer): ");
+  Serial.println(j1PC_adjust);
+  Serial.print("J2 offset (from potentiometer): ");
+  Serial.println(j2PC_adjust);
+  Serial.print("J3 offset (from potentiometer): ");
+  Serial.println(j3PC_adjust);
 }
 
 void sendObjectiveCompleted(char objective, char success) {
