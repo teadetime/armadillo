@@ -12,6 +12,7 @@ import json
 from enum import Enum
 from scipy import ndimage
 import pandas as pd
+from shapely.geometry import Polygon, Point
 
 
 from numpy.core.shape_base import block
@@ -59,6 +60,17 @@ class vision:
 
         self.lowerBlocks =  np.array([10,0,140])
         self.upperBlocks = np.array([47,70,255])
+
+        self.outlineColorDict = { # BGR
+            self.BlockType.NOT_BLOCK.value: (140, 0, 0), # dark blue
+            self.BlockType.BLOCK.value: (0, 255, 255), # yellow
+            self.BlockType.CLUSTER.value: (0, 255, 0), # green
+            self.BlockType.EDGE_BLOCK.value: (0, 180, 180), # dark yellow
+            self.BlockType.END_BLOCK.value: (0, 128, 128), # darker yellow
+            self.BlockType.OUT_OF_BOUNDS.value: (0, 0, 0), # black
+            self.BlockType.SWATCH.value: (0, 0, 255), # red
+            self.BlockType.ROBOT.value: (0, 0, 170), # dark red
+        }
 
         self.mlDim = (100, 100) # machine-learning image size
         self.mlArray = []
@@ -174,7 +186,7 @@ class vision:
 
         self.blockMask = cv2.inRange(self.hsv, self.lowerBlocks, self.upperBlocks)
 
-        kernel = np.ones((4,4), np.uint8)
+        kernel = np.ones((3,3), np.uint8)
         eroded = cv2.erode(self.blockMask, kernel, iterations=3)
         cv2.imshow("eroded", eroded)
         self.blockMask = eroded
@@ -309,6 +321,8 @@ class vision:
     def getBlockPixel(self, mlFile = "C:/dev/delme/mlOutput.csv", truthFile = "C:/dev/delme/truthList.csv"):
         cnts = self.getCnts(self.blockMask)
         print(cnts)
+        self.boxList = []
+        self.boxPolygons = []
         blockMask2 = cv2.cvtColor(self.blockMask, cv2.COLOR_GRAY2BGR)  #add this line
         for c in reversed(cnts): # Start from top of frame since I can't seem to flip the image
             rot_rect = cv2.minAreaRect(c)
@@ -339,31 +353,31 @@ class vision:
                 if classification == self.BlockType.OUT_OF_BOUNDS:
                     continue
 
-                if classification == self.BlockType.NOT_BLOCK:
-                    color = (255, 0, 0)
-                    drawOnOriginalImage = False
-                elif classification == self.BlockType.CLUSTER:
-                    color = (0, 255, 0)
-                    drawOnOriginalImage = False
-                elif classification == self.BlockType.BLOCK:
-                    color = (0, 255, 255)
-                    drawOnOriginalImage = True
+                self.boxList.append(box)
+                self.boxPolygons.append(Polygon(box))
 
-                cv2.drawContours(blockMask2,[box], 0, color, 2)
+                # if classification == self.BlockType.NOT_BLOCK:
+                #     color = (255, 0, 0)
+                #     drawOnOriginalImage = False
+                # elif classification == self.BlockType.CLUSTER:
+                #     color = (0, 255, 0)
+                #     drawOnOriginalImage = False
+                # elif classification == self.BlockType.BLOCK:
+                #     color = (0, 255, 255)
+                #     drawOnOriginalImage = True
+
+                cv2.drawContours(blockMask2,[box], 0, self.outlineColorDict[classification.value], 2)
                 cv2.imshow("With Detection", blockMask2)
 
-                if drawOnOriginalImage:
-                    cv2.drawContours(self.drawImg,[box],0,(0, 255, 255), 2)
-                    cv2.imshow("Image", self.drawImg)
+                # if drawOnOriginalImage:
+                cv2.drawContours(self.drawImg,[box],0,self.outlineColorDict[classification.value], 2)
+                cv2.imshow("Image", self.drawImg)
 
-                overrideClassification = self.checkWaitKey(0) & 0xFF
+                # newClassification = self.receiveClassificationInput(default = classification)
+                # self.truthList.append(newClassification)
+                self.truthList.append(classification.value)
 
-                # if the keys 0 through 6 are pressed, it overrides the default classification
-                if overrideClassification in set( ord(str(item.value)) for item in self.BlockType ):
-                    self.truthList.append(overrideClassification - ord('0'))
-                else:
-                    self.truthList.append(classification.value)
-
+        self.pickBox(imgName = "Image")
         # pd.DataFrame(np.array(self.mlArray)).to_csv("C:/dev/delme/mlOutput2.csv")
         print("mlArray[0] =", np.array(self.mlArray)[0].shape)
         print("mlArray[0] =", self.mlArray[0])
@@ -378,6 +392,13 @@ class vision:
         self.checkWaitKey(0)
         return None
 
+    def receiveClassificationInput(self, default = None):
+        newClassification = self.checkWaitKey(0) & 0xFF
+        if newClassification in set( ord(str(item.value)) for item in self.BlockType ):
+            return newClassification - ord('0')
+        else:
+            return default
+
     class BlockType(Enum):
         NOT_BLOCK = 0
         BLOCK = 1
@@ -387,6 +408,38 @@ class vision:
         OUT_OF_BOUNDS = 5
         SWATCH = 6
         ROBOT = 7
+
+    def pickBox(self, imgName):
+        self.boxPickImgName = imgName
+        cv2.namedWindow(imgName)
+
+        #mouse call back function declaration
+        cv2.setMouseCallback(imgName, self.selectBox)
+
+        print("Left click to choose a color, spacebar to save and exit")
+
+        #while loop to live update
+        while (1):
+            cv2.imshow(imgName, self.drawImg)
+            if self.checkWaitKey(1) == ord(' '):
+                break
+
+# Mouse Callback function - this is triggered every time the mouse moves
+    def selectBox(self, event, x, y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            for i, boxPolygon in enumerate(self.boxPolygons):
+                if boxPolygon.contains(Point(x, y)):
+                    cv2.drawContours(self.drawImg,[self.boxList[i]],0,(255, 255, 0), 2) # modifying color: cyan
+                    cv2.imshow(self.boxPickImgName, self.drawImg)
+                    classification = self.receiveClassificationInput()
+                    print("classification = ", classification)
+                    if classification is not None: # if the default value None was not returned:
+                        print("truthList =", self.truthList)
+                        print("len =", len(self.truthList))
+                        print("i =", i)
+                        self.truthList[i] = classification
+                        cv2.drawContours(self.drawImg, [self.boxList[i]], 0, self.outlineColorDict[classification], 2) # modified color: magenta
+                        cv2.imshow(self.boxPickImgName, self.drawImg)
 
     def checkBlockCriteria(self, blockShort, blockLong, box, rotation):
 
@@ -418,8 +471,6 @@ class vision:
 
         self.mlArray.append(newVector)
 
-
-        # self.checkWaitKey(0)
         if self.jengaDebug:
             print(blockLong, blockShort)
 
