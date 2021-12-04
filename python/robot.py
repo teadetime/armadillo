@@ -36,8 +36,8 @@ class robot:
         self.stepsPerRev = 200      # Number of steps in 1 rev of the steppers
         self.P1xyz = (0,0,105)       # Only the Z offset does anything
         self.L1 = 322               # mm length of first Arm Bearing to bearing
-        self.L2 = 320               # 2nd Arm
-        self.L3 = 20                 # Length of rotating end effector
+        self.L2 = 322               # 2nd Arm
+        self.L3 = 18                 # Length of rotating end effector
 
         #
         self.J1microSteps = 16
@@ -58,7 +58,7 @@ class robot:
         self.j3ZeroSteps = self.radToSteps(self.limitJ3, self.J3microSteps, self.J3gearing)
 
         # Offsets from Pivot point to servo Horn
-        self.servoArmOffset = 55
+        self.servoArmOffset = 33
         self.servoZOffset = 30
 
         self.suctionOffset = 0 # Also could be droop
