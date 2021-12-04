@@ -120,7 +120,7 @@ void setup() {
 
   pinMode(pumpPin, OUTPUT);
   digitalWrite(pumpPin, LOW);
-  
+
   pinMode(vacPin, OUTPUT);
   digitalWrite(vacPin, LOW);
 
@@ -175,7 +175,7 @@ void loop() {
   ///////////////////////////
   if (!objectiveInProgress) {
     recvWithStartEndMarkers();
-    
+
 
     if (newData == true) {
       strcpy(tempChars, receivedChars);     // Temporary copy needed for parsing
@@ -194,7 +194,7 @@ void loop() {
 //        stepper1.setMaxSpeed(700);
 //        stepper2.setMaxSpeed(300);
 //        stepper3.setMaxSpeed(500);
-        
+
         stepper1.moveTo(j1PC + j1PC_adjust);
         stepper2.moveTo(j2PC + j2PC_adjust);
         stepper3.moveTo(j3PC + j3PC_adjust);
