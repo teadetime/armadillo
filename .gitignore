@@ -1,3 +1,4 @@
 
 .vscode/arduino.json
 cvTesting/cvParameterTesting.py
+*.npy
