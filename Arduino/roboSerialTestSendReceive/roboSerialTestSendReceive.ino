@@ -347,7 +347,7 @@ void parseData() {      // split the data into its parts
   char * strtokIndx; // this is used by strtok() as an index
 
   objectiveType = tempChars[0]; // char(strtokIndx);     // convert this part to a float
-  if (!(objectiveType == messCharHome || objectiveType == messCharCalibrate || objectiveType == messCharVacuum)) {
+  if (!(objectiveType == messCharCalibrate || objectiveType == messCharVacuum)) {
     finishParsingDataWithoutUpdating();
     return
   }
