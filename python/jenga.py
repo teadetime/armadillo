@@ -1,14 +1,15 @@
 import math
+from numpy.core.numeric import ones
+
+from numpy.core.shape_base import block
 import robot
-import vision
+import Ian_vision as vision
 import time
 
-if __name__=='__main__':
-    arm = robot.robot()
-    vs = vision.vision()
+def main():
 
     testingHomingandWorld = True
-    testingCameras = False
+    testingCameras = True
 
     """
     COde to Detect basis and camera tags
@@ -18,8 +19,9 @@ if __name__=='__main__':
             print("Camera Not working")
 
         grabbingFrame = True
-        while grabbingFrame:
-            grabImageSuccess = vs.grabImage(fromPath=False)
+        if grabbingFrame:
+            print("grabbing Frame")
+            grabImageSuccess = vs.grabImage(fromPath=True)
 
             if not grabImageSuccess:
                 print("Please reposition Camera and check masking!")
@@ -29,25 +31,26 @@ if __name__=='__main__':
                     pass
                 else:
                     quit()
-        vs.getBlockWorld()
+            blockCoords = list(vs.getBlockWorld())
+            print(blockCoords)
 
     if testingHomingandWorld:
         #####################
         # Test Zero Position#
         #####################
-        theta1ZeroSteps = arm.radToSteps(arm.limitJ1, arm.J1microSteps, arm.J1gearing)
-        theta2ZeroSteps = arm.radToSteps(arm.limitJ2, arm.J2microSteps, arm.J2gearing)
-        theta3ZeroSteps = arm.radToSteps(arm.limitJ3, arm.J3microSteps, arm.J3gearing)
-        angle = 0
-        block_angle = 0 + angle
-        homeTuple = (theta1ZeroSteps,theta2ZeroSteps, theta3ZeroSteps, angle)
+        # theta1ZeroSteps = arm.radToSteps(arm.limitJ1, arm.J1microSteps, arm.J1gearing)
+        # theta2ZeroSteps = arm.radToSteps(arm.limitJ2, arm.J2microSteps, arm.J2gearing)
+        # theta3ZeroSteps = arm.radToSteps(arm.limitJ3, arm.J3microSteps, arm.J3gearing)
+        # angle = 0
+        # block_angle = 0 + angle
+        # homeTuple = (theta1ZeroSteps,theta2ZeroSteps, theta3ZeroSteps, angle)
 
-        # Test Main conversion
-        print(f"HomeJointTuple: {homeTuple}")
-        xyz = arm.jointToWorld(homeTuple)
-        print(f"World: {xyz}")
-        jPos = arm.worldToJoint(xyz, block_angle)
-        print(f"Reconvert: {arm.radTupleToStepTuple(jPos)}")
+        # # Test Main conversion
+        # print(f"HomeJointTuple: {homeTuple}")
+        # xyz = arm.jointToWorld(homeTuple)
+        # print(f"World: {xyz}")
+        # jPos = arm.worldToJoint(xyz, block_angle)
+        # print(f"Reconvert: {arm.radTupleToStepTuple(jPos)}")
 
         # Check for Arduinio
         if not arm.serial.connected:
@@ -56,13 +59,41 @@ if __name__=='__main__':
 
         arm.waitForArduino()
 
-        # ##############################
-        # ## Just Calibrate , For Now ##
-        # ##############################
-        # homeTuple = (arm.j1ZeroSteps ,arm.j2ZeroSteps, arm.j3ZeroSteps, 0)
-        # homingMessage = arm.createMessage(arm.commands["calibrate"],(0, 0, 0, 0),0,0)
-        # arm.serial.write(homingMessage)
-        # print(f"Homing: {homingMessage}")
+        # ORDER OF OPERATIONS:
+        # 1. Home
+        # 2. For each block, stackPosition in zip(blockList, stackPosition):
+        #     a. go to midpoint
+        #         suction off
+        #     b. go to block
+        #         suction on
+        #     c. go to midpoint
+        #         suction on
+        #     d. go to stackPosition (maybe with some special finangling to avoid disturbing prior blocks)
+        #         suction on
+        #         suction off
+        # 3. Home
+
+
+        midpoint = (200, 200, 200, 0) # the neutral position to go to between each move
+        # stackCoords = stackPosition() # a generator function telling where the next block should be placed
+        stackCoords = [(300, 300, 50, 0)] * 100
+        arm.home()
+        for blockPosition, stackPosition in zip(blockCoords, stackCoords):
+            arm.moveTo(*midpoint, suction = 0)
+            arm.moveTo(*blockPosition, suction = 1)
+            arm.moveTo(*midpoint, suction = 1)
+            arm.moveTo(*stackPosition, suction = 1)
+            arm.moveTo(*stackPosition, suction = 0)
+        arm.home()
+        exit()
+        raise ValueError
+
+        # #########################
+        # ##Calibration Procedure##
+        # #########################
+        # calibratingMessage = arm.createMessage(arm.commands["calibrate"],(0, 0, 0, 0),0,0)
+        # arm.serial.write(calibratingMessage)
+        # print(f"Calibrating: {calibratingMessage}")
         # result = arm.waitForResponse()
         # print(result)
         # exit()
@@ -187,3 +218,35 @@ if __name__=='__main__':
         # print(f"sent message: {nextPoint}")
         # result = waitForResponse()
         #time.sleep(1)
+
+def home():
+    homeTuple = (arm.j1ZeroSteps ,arm.j2ZeroSteps, arm.j3ZeroSteps, 0)
+    homingMessage = arm.createMessage(arm.commands["home"],homeTuple,0,0)
+    arm.serial.write(homingMessage)
+    print(f"Homing: {homingMessage}")
+    result = arm.waitForResponse()
+    print(result)
+
+def moveTo(x, y, z, theta, suction):
+    # Go to a position
+    jPos = arm.worldToJoint((x, y, z), theta)
+    stepPos = arm.radTupleToStepTuple(jPos)
+    nextPoint = arm.createMessage(arm.commands["move"], stepPos, vac = float(suction), speed = 40.0)
+    arm.serial.write(nextPoint)
+    print(f"sent message: {nextPoint}")
+    result = arm.waitForResponse()
+    print(result)
+    time.sleep(.5)
+
+def stackPosition():
+    i = -300
+    while True:
+        yield (300, i, 50, 0) # send to 5cm off ground to avoid other errors
+        i += 100
+
+
+if __name__=='__main__':
+    arm = robot.robot()
+    vs = vision.vision()
+    main()
+

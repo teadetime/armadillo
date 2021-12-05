@@ -77,6 +77,7 @@ class robot:
         self.commands["home"] = 'H'
         self.commands["other"] = 'O'
         self.commands["control"] = 'C'
+        self.commands["suction"] = 'V'
 
         # self.infoChar = 'I'
         # self.move = "M"
@@ -244,3 +245,29 @@ class robot:
                     +self.splitChar+str(jPos[2])+self.splitChar+str(jPos[3])
                     +self.splitChar+str(vac)+self.splitChar+str(speed)+self.endChar)
         return message
+
+    def moveTo(self, x, y, z, theta, suction):
+        # Go to a position
+        jPos = self.worldToJoint((x, y, z), theta)
+        stepPos = self.radTupleToStepTuple(jPos)
+        nextPoint = self.createMessage(self.commands["move"], stepPos, vac = float(suction), speed = 40.0)
+        self.serial.write(nextPoint)
+        print(f"sent message: {nextPoint}")
+        result = self.waitForResponse()
+        print(result)
+        time.sleep(.5)
+
+    def home(self):
+        homeTuple = (self.j1ZeroSteps ,self.j2ZeroSteps, self.j3ZeroSteps, 0)
+        homingMessage = self.createMessage(self.commands["home"],homeTuple,0,0)
+        self.serial.write(homingMessage)
+        print(f"Homing: {homingMessage}")
+        result = self.waitForResponse()
+        print(result)
+
+    def calibrate(self):
+        calibratingMessage = self.createMessage(self.commands["calibrate"],(0, 0, 0, 0),0,0)
+        self.serial.write(calibratingMessage)
+        print(f"Calibrating: {calibratingMessage}")
+        result = self.waitForResponse()
+        print(result)

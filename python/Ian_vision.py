@@ -323,6 +323,8 @@ class vision:
         print(cnts)
         self.boxList = []
         self.boxPolygons = []
+        rot_rectList = []
+        rotationList = []
         blockMask2 = cv2.cvtColor(self.blockMask, cv2.COLOR_GRAY2BGR)  #add this line
         for c in reversed(cnts): # Start from top of frame since I can't seem to flip the image
             rot_rect = cv2.minAreaRect(c)
@@ -339,6 +341,9 @@ class vision:
             if rot_rect[1][0] <= rot_rect[1][1]:
                 rotation += 90
             rotation *= -1      # All rotation needs to be adjusted!
+
+            rot_rectList.append(rot_rect)
+            rotationList.append(rotation)
 
             #DEBUG
             if self.jengaDebug:
@@ -390,7 +395,14 @@ class vision:
         np.savetxt(truthFile, self.truthList, delimiter = ",", fmt='%f')
         print("file completed")
         self.checkWaitKey(0)
-        return None
+
+    # return np.array([[rot_rect[0][0]],[rot_rect[0][1]]] ), rotation
+
+
+        for this_classification, this_rot_rect, this_rotation in zip(self.truthList, rot_rectList, rotationList):
+            if this_classification == 1:
+                yield np.array([[this_rot_rect[0][0]],[rot_rect[0][1]]] ), this_rotation
+        # return None
 
     def receiveClassificationInput(self, default = None):
         newClassification = self.checkWaitKey(0) & 0xFF
@@ -489,7 +501,9 @@ class vision:
         return self.BlockType.NOT_BLOCK
 
     def getBlockWorld(self):
-        singleBlockCenterPixel, singleBlockRotation =  self.getBlockPixel()
+      for singleBlockCenterPixel, singleBlockRotation in self.getBlockPixel(): # reorder this code once it works i.e. don't call the change basis function on every iteration
+        # singleBlockCenterPixel, singleBlockRotation = next(self.getBlockPixel())
+
         # Lets take the block into world Coordinates!!!
         coordWorld, rotationWorld = self.changeBasisAtoB(self.greenWorldOrigin, self.originTagPixel, self.frameRotation, self.basisWorld,
                                                 singleBlockCenterPixel, singleBlockRotation)
@@ -500,7 +514,8 @@ class vision:
             print(f"Jenga Block World Coords: {coordWorld}, World Rotation: {rotationWorld}")
             cv2.imshow("HSV Block", self.drawImg)
             self.checkWaitKey(0)
-        return coordWorld, rotationWorld
+        # return coordWorld, rotationWorld
+        yield coordWorld, rotationWorld
 
     # loop over the contours
     def getPixelCenterSquare(self, cnts):
@@ -612,6 +627,7 @@ class vision:
             exit()
         if key == 32: # Space
             pass # could put debugging tools or something here
+            # TODO: toggle calibration flag and/or send calibration signal
         return key
 
 
