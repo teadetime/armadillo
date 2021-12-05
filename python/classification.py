@@ -22,18 +22,16 @@ class classification:
             yield completeFileName
 
     def updateTrainingDataset(self):
-        # self.dataMatrix = np.zeros((100 * 100, numFiles))
-        # self.truthList = np.zeros(numFiles)
         self.dataMatrix = np.array([])
         self.truthList = np.array([])
 
-        for i, file in enumerate(self.fileWalker(self.mlFileDir)):
-            newCols = np.genfromtxt(file, delimiter = ',').astype(int)
-            if i == 0:
-                self.dataMatrix = newCols
-            else:
-                print(np.shape(self.dataMatrix))
-                self.dataMatrix = np.vstack((self.dataMatrix, newCols))
+        # for i, file in enumerate(self.fileWalker(self.mlFileDir)):
+        #     newCols = np.genfromtxt(file, delimiter = ',').astype(int)
+        #     if i == 0:
+        #         self.dataMatrix = newCols
+        #     else:
+        #         print(np.shape(self.dataMatrix))
+        #         self.dataMatrix = np.vstack((self.dataMatrix, newCols))
 
         for i, file in enumerate(self.fileWalker(self.mlTruthDir)):
             newVals = np.genfromtxt(file, delimiter=',').astype(int)
@@ -43,8 +41,12 @@ class classification:
                 print(newVals)
                 self.truthList = np.append(self.truthList, newVals)
 
-        np.save(self.trainingDataFile, self.dataMatrix)
+        # np.save(self.trainingDataFile, self.dataMatrix)
         np.save(self.truthFile, self.truthList)
 
     def loadTrainingData(self):
         self.dataMatrix = np.load(self.trainingDataFile)
+        self.truthList = np.load(self.truthFile)
+
+    def computeEigenvectors():
+        pass
