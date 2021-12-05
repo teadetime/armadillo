@@ -76,6 +76,7 @@ const char messCharOther = 'O';
 const char messCharSuccess = 'Y';
 const char messCharFail = 'N';
 const char messCharCalibrate = 'B';
+const char messCharVacuum = 'V';
 
 const char startMarker = '<';
 const char endMarker = '>';
@@ -320,13 +321,37 @@ void recvWithStartEndMarkers() {
   }
 }
 
+void finishParsingDataWithoutUpdating() {
+  strtokIndx = strtok(tempChars, ",");     // get the first part - the string we already put this into a char
+  strtokIndx = strtok(NULL, ","); // this continues where the previous call left off
+  // j1PC = atof(strtokIndx);     // convert this part to a float
+
+  strtokIndx = strtok(NULL, ","); // this continues where the previous call left off
+  // j2PC = atof(strtokIndx);     // convert this part to an float
+
+  strtokIndx = strtok(NULL, ",");
+  // j3PC = atof(strtokIndx);     // convert this part to a float
+
+  strtokIndx = strtok(NULL, ",");
+  // j4PC = atof(strtokIndx);     // convert this part to a float
+
+  strtokIndx = strtok(NULL, ",");
+  vacPC = atof(strtokIndx);     // convert this part to a float
+
+  strtokIndx = strtok(NULL, ",");
+  speedPC = atof(strtokIndx);     // convert this part to a float
+}
 
 void parseData() {      // split the data into its parts
   //Example <M,0,0,0,0,1,50>
   char * strtokIndx; // this is used by strtok() as an index
 
-
   objectiveType = tempChars[0]; // char(strtokIndx);     // convert this part to a float
+  if (!(objectiveType == messCharHome || objectiveType == messCharCalibrate || objectiveType == messCharVacuum)) {
+    finishParsingDataWithoutUpdating();
+    return
+  }
+
   strtokIndx = strtok(tempChars, ",");     // get the first part - the string we already put this into a char
   strtokIndx = strtok(NULL, ","); // this continues where the previous call left off
   j1PC = atof(strtokIndx);     // convert this part to a float
