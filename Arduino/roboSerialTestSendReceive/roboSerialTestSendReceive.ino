@@ -322,6 +322,7 @@ void recvWithStartEndMarkers() {
 }
 
 void finishParsingDataWithoutUpdating() {
+  char * strtokIndx;
   strtokIndx = strtok(tempChars, ",");     // get the first part - the string we already put this into a char
   strtokIndx = strtok(NULL, ","); // this continues where the previous call left off
   // j1PC = atof(strtokIndx);     // convert this part to a float
@@ -434,7 +435,7 @@ void setVac(float val) {
 /////////////////////////////
 //Used When Homing the steppers//
 /////////////////////////////
-void resetSteppers(float theta1,float theta2,float theta3, float theta4) {
+void resetSteppers(float theta1, float theta2, float theta3, float theta4) {
   stepper1.setCurrentPosition(theta1);
   stepper2.setCurrentPosition(theta2);
   stepper3.setCurrentPosition(theta3);
