@@ -199,6 +199,18 @@ void loop() {
         servoPos = int(j4PC)+servoZero; //This may need to be minus
         servoEOF.write(servoPos);
 
+         // checking for limit switch hit during general movement - this should happen multiple times in the main loop???
+        readLimitSwitches();
+        if(j1_limitVal == 0) {
+          stepper1.stop();
+        }
+        if(j1_limitVal == 1) {
+          stepper2.stop();
+        }
+        if(j1_limitVal == 1) {
+          stepper3.stop();
+        }
+
       }
       if (objectiveType == messCharHome) {
         j1Homed = false;
@@ -222,6 +234,8 @@ void loop() {
   if (objectiveInProgress) {
     switch (objectiveType) {
       case messCharMove:
+      
+         
         if (!motorsMoving()) {
           // Send Objective completed message
           objectiveInProgress = false;
