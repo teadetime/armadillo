@@ -7,8 +7,8 @@ if __name__=='__main__':
     arm = robot.robot()
     vs = vision.vision()
 
-    testingHomingandWorld = True
-    testingCameras = False
+    testingHomingandWorld = False
+    testingCameras = True
 
     """
     COde to Detect basis and camera tags
@@ -19,8 +19,7 @@ if __name__=='__main__':
 
         grabbingFrame = True
         while grabbingFrame:
-            grabImageSuccess = vs.grabImage(fromPath=False)
-
+            grabImageSuccess = vs.grabImage(fromPath=True)
             if not grabImageSuccess:
                 print("Please reposition Camera and check masking!")
                 vs.tuneWindow()
@@ -29,8 +28,11 @@ if __name__=='__main__':
                     pass
                 else:
                     quit()
-        vs.getBlockWorld()
-
+            else:
+                grabbingFrame = False
+        (coords, rotation) = vs.getBlockWorld()
+        print(coords)
+        print(rotation)
     if testingHomingandWorld:
         #####################
         # Test Zero Position#
