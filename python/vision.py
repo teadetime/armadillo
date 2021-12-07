@@ -17,7 +17,7 @@ class vision:
 
         # Image Loading and Resizing
         self.needsBasis = True  # Run ceratin calculations if they haven't been run before
-        self.camIndex = 2       # 0 is internal webcam
+        self.camIndex = 3       # 0 is internal webcam
         self.image = None
         self.resized = None     #imutils.resize(image, width=self.resizedSize)
         self.drawImg = None
@@ -38,20 +38,20 @@ class vision:
         self.expectedSize = 31   # TODO Change This in Pixels
 
         # Boundaries for the different  Colors
-        self.lower_red = np.array([0,111,160])
-        self.upper_red = np.array([22,255,255])
+        self.lower_red = np.array([113,102,162])
+        self.upper_red = np.array([179,228,255])
         self.lower_green = np.array([28,38,144])
         self.upper_green = np.array([65,90,255])
 
-        self.lower_blue = np.array([76,33,174])
-        self.upper_blue = np.array([116,85,255])
+        self.lower_blue = np.array([45,83,199])
+        self.upper_blue = np.array([111,163,255])
 
 
         self.lower_yellow = np.array([26,43,240])
         self.upper_yellow = np.array([43,110,255])
 
-        self.lowerBlocks =  np.array([10,0,140])
-        self.upperBlocks = np.array([47,45,255])
+        self.lowerBlocks =  np.array([10,0,171])
+        self.upperBlocks = np.array([78,48,237])
 
         # Jenga block via pixels from our camera
         self.jengaWHigh = 60
