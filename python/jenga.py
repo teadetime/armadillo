@@ -7,8 +7,8 @@ if __name__=='__main__':
     arm = robot.robot()
     vs = vision.vision()
 
-    testingHomingandWorld = True
-    testingCameras = False
+    testingHomingandWorld = False
+    testingCameras = True
 
     """
     COde to Detect basis and camera tags
@@ -45,11 +45,11 @@ if __name__=='__main__':
         homeTuple = (theta1ZeroSteps,theta2ZeroSteps, theta3ZeroSteps, angle)
 
         # Test Main conversion
-        print(f"HomeJointTuple: {homeTuple}")
-        xyz = arm.jointToWorld(homeTuple)
-        print(f"World: {xyz}")
-        jPos = arm.worldToJoint(xyz, block_angle)
-        print(f"Reconvert: {arm.radTupleToStepTuple(jPos)}")
+        # print(f"HomeJointTuple: {homeTuple}")
+        # xyz = arm.jointToWorld(homeTuple)
+        # print(f"World: {xyz}")
+        # jPos = arm.worldToJoint(xyz, block_angle)
+        # print(f"Reconvert: {arm.radTupleToStepTuple(jPos)}")
 
         # Check for Arduinio
         if not arm.serial.connected:
@@ -88,7 +88,7 @@ if __name__=='__main__':
                     #TODO: CHECK TO SEE IF BAD POSITION!!
                     #continue
                     print(dx, dy)
-                    testPoint = (newX, newY, z+(dy-yMin), r) 
+                    testPoint = (newX, newY, z, r) 
                     
                     if not arm.moveTo(*testPoint, suction = 0):
                         continue
@@ -100,7 +100,8 @@ if __name__=='__main__':
                     #TODO: CHECK TO SEE IF BAD POSITION!!
                     #continue
                     testPoint = (dx, dy, z, r) 
-                    arm.moveTo(*testPoint, suction = 0)
+                    if not arm.moveTo(*testPoint, suction = 0):
+                        continue
                     time.sleep(pause)
 
         testGridPts()
