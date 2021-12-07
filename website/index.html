@@ -54,10 +54,10 @@ FACEBOOK: https://www.facebook.com/themefisher
 
 </head>
 
-<body class="body-wrapper" data-spy="scroll" data-target=".privacy-nav">
+<body class="body-wrapper" data-spy="scroll" data-target=".navbar">
 
-
-<nav class="navbar main-nav navbar-expand-lg px-2 px-sm-0 py-2 py-lg-0">
+<!--
+<nav class="navbar main-nav navbar-expand-lg sticky-top px-2 px-sm-0 py-2 py-lg-0">
   <div class="container">
     <a class="navbar-brand" href="index.html"><img src="images/logo.png" alt="logo"></a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
@@ -66,11 +66,11 @@ FACEBOOK: https://www.facebook.com/themefisher
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ml-auto">
-		  <li class="nav-item active @@home">
-			  <a class="nav-link" href="about.html">Home</a>
+		  <li class="nav-item">
+			  <a class="nav-link" href="#Home">Home</a>
 		  </li>
 		  <li class="nav-item @@gallery">
-			  <a class="nav-link" href="contact.html">Gallery</a>
+			  <a class="nav-link" href="#Gallery">Gallery</a>
 		  </li>
 		<li class="nav-item @@technical">
 		  <a class="nav-link" href="about.html">Technical Overview</a>
@@ -79,17 +79,46 @@ FACEBOOK: https://www.facebook.com/themefisher
 			  <a class="nav-link" href="about.html">Budget Breakdown</a>
 		  </li>
 		  <li class="nav-item @@team">
-			  <a class="nav-link" href="about.html">The Team</a>
+			  <a class="nav-link" href="#Team">The Team</a>
 		  </li>
       </ul>
     </div>
   </div>
 </nav>
+-->
 
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark fixed-top px-2 px-sm-0 py-2 py-lg-0">
+	<div class="container-fluid">
+		<a class="navbar-brand" href="index.html"><img src="images/logo.png" alt="logo"></a>
+		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+				aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="ti-menu"></span>
+		</button>
+		<div class="collapse navbar-collapse" id="navbarNav">
+			<ul class="navbar-nav ml-auto">
+				<li class="nav-item">
+					<a class="nav-link" href="#Home">Home</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="#Gallery">Gallery</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="about.html">Technical Overview</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="about.html">Budget Breakdown</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="#Team">The Team</a>
+				</li>
+			</ul>
+		</div>
+	</div>
+</nav>
 <!--====================================
 =            Hero Section            =
 =====================================-->
-<section class="section gradient-banner">
+<section id="Home" class="section gradient-banner">
 	<div class="shapes-container">
 		<div class="shape" data-aos="fade-down-left" data-aos-duration="1500" data-aos-delay="100"></div>
 		<div class="shape" data-aos="fade-down" data-aos-duration="1000" data-aos-delay="100"></div>
@@ -110,13 +139,13 @@ FACEBOOK: https://www.facebook.com/themefisher
 	</div>
 	<div class="container">
 		<div class="row align-items-center">
-			<div class="col-md-6 order-2 order-md-1 text-center text-md-left">
+			<div class="col-md-4 order-2 order-md-1 text-center text-md-left">
 				<h1 class="text-white font-weight-bold mb-4">Armadillo</h1>
 				<p class="text-white mb-5">The robot arm that stacks jenga for you</p>
 				<a href="FAQ.html" class="btn btn-main-md">Watch the Video</a>
 			</div>
-			<div class="col-md-6 text-center order-1 order-md-2">
-				<img class="img-fluid" src="images/mobile.png" alt="screenshot">
+			<div class="col-md-8 text-center order-1 order-md-2">
+				<img class="img-fluid" src="images/background/CADOverview2.png" alt="screenshot">
 			</div>
 		</div>
 	</div>
@@ -128,22 +157,22 @@ FACEBOOK: https://www.facebook.com/themefisher
 		<div class="rounded shadow p-5 bg-dark">
 			<div class="row">
 				<div class="col-lg-4 col-md-6 mt-5 mt-md-0 text-center">
-					<i class="ti-paint-bucket text-primary h1"></i>
-					<h3 class="mt-4 text-capitalize h5 ">themes made easy</h3>
-					<p class="regular text-muted">Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquam non, recusandae
-						tempore ipsam dignissimos molestias.</p>
+					<i class="ti-settings text-primary h1"></i>
+					<h3 class="mt-4 text-capitalize h5 ">Lightweight and Powerful</h3>
+					<p class="regular text-muted">Armadillo uses carbon fiber and high torque servos in a palletizing robot
+					package to move quickly and pick up heavy objects.</p>
 				</div>
 				<div class="col-lg-4 col-md-6 mt-5 mt-md-0 text-center">
-					<i class="ti-shine text-primary h1"></i>
-					<h3 class="mt-4 text-capitalize h5 ">powerful design</h3>
-					<p class="regular text-muted">Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquam non, recusandae
-						tempore ipsam dignissimos molestias.</p>
+					<i class="ti-target text-primary h1"></i>
+					<h3 class="mt-4 text-capitalize h5 ">Precision Pick and Place</h3>
+					<p class="regular text-muted">Using a vacuum end effector, Armadillo can pick up and place objects quickly
+					and precisely.</p>
 				</div>
 				<div class="col-lg-4 col-md-12 mt-5 mt-lg-0 text-center">
-					<i class="ti-thought text-primary h1"></i>
-					<h3 class="mt-4 text-capitalize h5 ">creative content</h3>
-					<p class="regular text-muted">Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquam non, recusandae
-						tempore ipsam dignissimos molestias.</p>
+					<i class="ti-camera text-primary h1"></i>
+					<h3 class="mt-4 text-capitalize h5 ">Jenga Recognition</h3>
+					<p class="regular text-muted">Armadillo identifies Jenga blocks with computer vision
+					before picking them up.</p>
 					</p>
 				</div>
 			</div>
@@ -154,38 +183,25 @@ FACEBOOK: https://www.facebook.com/themefisher
 <!--==================================
 =            Feature Grid            =
 ===================================-->
-<section class="feature section pt-0">
+<section id="Gallery" class="feature section pt-0">
 	<div class="container">
 		<div class="row">
 			<div class="col-lg-6 ml-auto justify-content-center">
 				<!-- Feature Mockup -->
 				<div class="image-content" data-aos="fade-right">
-					<img class="img-fluid" src="images/feature/feature-new-01.jpg" alt="iphone">
+					<img class="img-fluid" src="images/background/CADOverview4.png" alt="jenga">
 				</div>
 			</div>
 			<div class="col-lg-6 mr-auto align-self-center">
 				<div class="feature-content">
 					<!-- Feature Title -->
-					<h2>Increase your productivity with <a
-							href="https://themefisher.com/products/small-apps-free-app-landing-page-template/">Small Apps</a></h2>
+					<h2>Stack Jenga faster and more efficiently than ever</h2>
 					<!-- Feature Description -->
 					<p class="desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
 						labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
 						aliquip ex ea commodo consequat.</p>
 				</div>
-				<!-- Testimonial Quote -->
-				<div class="testimonial">
-					<p>
-						"InVision is a window into everything that's being designed at Twitter. It gets all of our best work in one
-						place."
-					</p>
-					<ul class="list-inline meta">
-						<li class="list-inline-item">
-							<img src="images/testimonial/feature-testimonial-thumb.jpg" alt="">
-						</li>
-						<li class="list-inline-item">Jonathon Andrew , Themefisher.com</li>
-					</ul>
-				</div>
+
 			</div>
 		</div>
 	</div>
@@ -418,37 +434,143 @@ FACEBOOK: https://www.facebook.com/themefisher
 </section>
 <!--====  End of Testimonial  ====-->
 
-<section class="call-to-action-app section bg-blue">
+<!--=================================
+=            The Team               =
+==================================-->
+<section id = "Team" class="design-team section pt-0">
 	<div class="container">
 		<div class="row">
 			<div class="col-lg-12">
-				<h2>It's time to change your mind</h2>
-				<p>Download over 2 million humans .Get <a href="https://themefisher.com/products/small-apps-free-app-landing-page-template/">Small Apps</a> free forever!
-					<br>We say you won’t look back.</p>
-				<ul class="list-inline">
-					<li class="list-inline-item">
-						<a href="" class="btn btn-rounded-icon">
-							<i class="ti-apple"></i>
-							Iphone
-						</a>
-					</li>
-					<li class="list-inline-item">
-						<a href="" class="btn btn-rounded-icon">
-							<i class="ti-android"></i>
-							Android
-						</a>
-					</li>
-					<li class="list-inline-item">
-						<a href="" class="btn btn-rounded-icon">
-							<i class="ti-microsoft-alt"></i>
-							Windows
-						</a>
-					</li>
-				</ul>
+				<div class="section-title">
+					<h2>The Team</h2>
+					<p></p>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-lg-4 col-md-6">
+				<!-- Team -->
+				<div class="team-sm">
+					<!-- Team Member Image -->
+					<div class="image">
+						<img class="w-100" src="images/team/tigey.jpg" alt="member-image">
+						<!-- Social Contacts -->
+						<div class="social-links">
+							<ul class="list-inline">
+								<li class="list-inline-item"><a href="http://tigeysky.com/"><i class="ti-world"></i></a></li>
+								<li class="list-inline-item"><a href="https://www.linkedin.com/in/tiger-jewell-alibhai-aa22a316a/"><i class="ti-linkedin"></i></a></li>
+								<li class="list-inline-item"><a href="https://github.com/TigeyJewellAlibhai"><i class="ti-github"></i></a></li>
+							</ul>
+						</div>
+					</div>
+					<!-- Name -->
+					<h3>Tigey Jewell-Alibhai</h3>
+					<!-- Position -->
+					<cite>Mechanical Design</cite>
+					<!-- Description -->
+					<p> Tigey thinks he is a robotics engineer but </p>
+				</div>
+			</div>
+			<div class="col-lg-4 col-md-6">
+				<!-- Team -->
+				<div class="team-sm">
+					<!-- Team Member Image -->
+					<div class="image">
+						<img class="w-100" src="images/team/" alt="member-image">
+						<!-- Social Contacts -->
+						<div class="social-links">
+							<ul class="list-inline">
+								<li class="list-inline-item"><a href="https://themefisher.com/"><i class="ti-facebook"></i></a></li>
+								<li class="list-inline-item"><a href="https://themefisher.com/"><i class="ti-twitter"></i></a></li>
+								<li class="list-inline-item"><a href="https://themefisher.com/"><i class="ti-instagram"></i></a></li>
+								<li class="list-inline-item"><a href="https://themefisher.com/"><i class="ti-dribbble"></i></a></li>
+							</ul>
+						</div>
+					</div>
+					<!-- Name -->
+					<h3>Nathan Faber</h3>
+					<!-- Position -->
+					<cite>Software Design</cite>
+					<!-- Description -->
+					<p>Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus. Vestibulum ac diam sit amet quam vehicula elementum sed sit amet dui. Vivamus suscipit tortor eget felis porttitor volutpat.</p>
+				</div>
+			</div>
+			<div class="col-lg-4 col-md-6">
+				<!-- Team -->
+				<div class="team-sm">
+					<!-- Team Member Image -->
+					<div class="image">
+						<img class="w-100" src="images/team/" alt="member-image">
+						<!-- Social Contacts -->
+						<div class="social-links">
+							<ul class="list-inline">
+								<li class="list-inline-item"><a href="https://themefisher.com/"><i class="ti-facebook"></i></a></li>
+								<li class="list-inline-item"><a href="https://themefisher.com/"><i class="ti-twitter"></i></a></li>
+								<li class="list-inline-item"><a href="https://themefisher.com/"><i class="ti-instagram"></i></a></li>
+								<li class="list-inline-item"><a href="https://themefisher.com/"><i class="ti-dribbble"></i></a></li>
+							</ul>
+						</div>
+					</div>
+					<!-- Name -->
+					<h3>Ian Eykamp</h3>
+					<!-- Position -->
+					<cite>Electrical and Software</cite>
+					<!-- Description -->
+					<p>Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus. Vestibulum ac diam sit amet quam vehicula elementum sed sit amet dui. Vivamus suscipit tortor eget felis porttitor volutpat.</p>
+				</div>
+			</div>
+			<div class="col-lg-4 col-md-6">
+				<!-- Team -->
+				<div class="team-sm">
+					<!-- Team Member Image -->
+					<div class="image">
+						<img class="w-100" src="images/team/" alt="member-image">
+						<!-- Social Contacts -->
+						<div class="social-links">
+							<ul class="list-inline">
+								<li class="list-inline-item"><a href="https://themefisher.com/"><i class="ti-facebook"></i></a></li>
+								<li class="list-inline-item"><a href="https://themefisher.com/"><i class="ti-twitter"></i></a></li>
+								<li class="list-inline-item"><a href="https://themefisher.com/"><i class="ti-instagram"></i></a></li>
+								<li class="list-inline-item"><a href="https://themefisher.com/"><i class="ti-dribbble"></i></a></li>
+							</ul>
+						</div>
+					</div>
+					<!-- Name -->
+					<h3>Sam Kaplan</h3>
+					<!-- Position -->
+					<cite>Electrical Design</cite>
+					<!-- Description -->
+					<p>Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus. Vestibulum ac diam sit amet quam vehicula elementum sed sit amet dui. Vivamus suscipit tortor eget felis porttitor volutpat.</p>
+				</div>
+			</div>
+			<div class="col-lg-4 col-md-6">
+				<!-- Team -->
+				<div class="team-sm">
+					<!-- Team Member Image -->
+					<div class="image">
+						<img class="w-100" src="images/team/zach.jpg" alt="member-image">
+						<!-- Social Contacts -->
+						<div class="social-links">
+							<ul class="list-inline">
+								<li class="list-inline-item"><a href="https://themefisher.com/"><i class="ti-facebook"></i></a></li>
+								<li class="list-inline-item"><a href="https://themefisher.com/"><i class="ti-twitter"></i></a></li>
+								<li class="list-inline-item"><a href="https://themefisher.com/"><i class="ti-instagram"></i></a></li>
+								<li class="list-inline-item"><a href="https://themefisher.com/"><i class="ti-dribbble"></i></a></li>
+							</ul>
+						</div>
+					</div>
+					<!-- Name -->
+					<h3>Zachary Sherman</h3>
+					<!-- Position -->
+					<cite>Mechanical Design</cite>
+					<!-- Description -->
+					<p>Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus. Vestibulum ac diam sit amet quam vehicula elementum sed sit amet dui. Vivamus suscipit tortor eget felis porttitor volutpat.</p>
+				</div>
 			</div>
 		</div>
 	</div>
 </section>
+<!--====  End of Design Team  ====-->
 
 <!--============================
 =            Footer            =

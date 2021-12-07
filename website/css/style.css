@@ -417,7 +417,7 @@ button:focus,
 .main-nav .navbar-nav .nav-item .nav-link span i {
   font-size: 11px;
 }
-.main-nav .navbar-nav .nav-item.active .nav-link {
+.main-nav .navbar-nav .nav-item .active .nav-link {
   color: var(--primary);
 }
 .main-nav .navbar-nav .nav-item.active .nav-link:before {
