@@ -49,8 +49,10 @@ class robot:
 
         # Radian values for the limit switches
         self.limitJ1 = math.pi/2 + math.radians(10.8)
-        self.limitJ2 = math.radians(87)#math.pi/4
-        self.limitJ3 = math.pi/2+math.radians(87.5)
+        self.limitJ2 = math.radians(91)
+        self.limitJ2min = math.radians(0)
+        self.limitJ3 = math.pi/2+math.radians(88)
+        self.limitJ3min = math.radians(85)
 
         print(f"j1Limit: {self.limitJ1}\nj2Limit: {self.limitJ2}\nj3Limit: {self.limitJ3}")
         self.j1ZeroSteps = self.radToSteps(self.limitJ1, self.J1microSteps, self.J1gearing)
@@ -59,7 +61,7 @@ class robot:
 
         # Offsets from Pivot point to servo Horn
         self.servoArmOffset = 33
-        self.servoZOffset = 30
+        self.servoZOffset = 35
 
         self.suctionOffset = 0 # Also could be droop
 
@@ -124,6 +126,12 @@ class robot:
         theta1 = math.atan2(-xa, ya) # Flip the coordinates since we need to offset by pi/2 this allows us to handle negatives!
 
         print(theta1, theta2, theta3)
+
+        if theta2 > self.limitJ2 or theta2 < self.limitJ2min:
+            return None
+        if theta3 > self.limitJ3 or theta3 < self.limitJ3min:
+            return None
+
         print(thetab)
 
         theta4 = -(theta1 - thetabRad)
@@ -244,3 +252,33 @@ class robot:
                     +self.splitChar+str(jPos[2])+self.splitChar+str(jPos[3])
                     +self.splitChar+str(vac)+self.splitChar+str(speed)+self.endChar)
         return message
+
+
+    def moveTo(self, x, y, z, theta, suction):
+        # Go to a position
+        jPos = self.worldToJoint((x, y, z), theta)
+        if not jPos:
+            print("Arm is unable to get to reach this position!")
+            return False
+        stepPos = self.radTupleToStepTuple(jPos)
+        nextPoint = self.createMessage(self.commands["move"], stepPos, vac = float(suction), speed = 40.0)
+        self.serial.write(nextPoint)
+        print(f"sent message: {nextPoint}")
+        result = self.waitForResponse()
+        print(result)
+        return True
+
+    def home(self):
+        homeTuple = (self.j1ZeroSteps ,self.j2ZeroSteps, self.j3ZeroSteps, 0)
+        homingMessage = self.createMessage(self.commands["home"],homeTuple,0,0)
+        self.serial.write(homingMessage)
+        print(f"Homing: {homingMessage}")
+        result = self.waitForResponse()
+        print(result)
+
+    def calibrate(self):
+        calibratingMessage = self.createMessage(self.commands["calibrate"],(0, 0, 0, 0),0,0)
+        self.serial.write(calibratingMessage)
+        print(f"Calibrating: {calibratingMessage}")
+        result = self.waitForResponse()
+        print(result)

@@ -12,8 +12,8 @@ args = vars(ap.parse_args())
 
 class vision:
     def __init__(self):
-        self.debug = False
-        self.jengaDebug = False
+        self.debug = True
+        self.jengaDebug = True
 
         # Image Loading and Resizing
         self.needsBasis = True  # Run ceratin calculations if they haven't been run before
@@ -38,26 +38,26 @@ class vision:
         self.expectedSize = 31   # TODO Change This in Pixels
 
         # Boundaries for the different  Colors
-        self.lower_red = np.array([0,134,180])
+        self.lower_red = np.array([0,111,160])
         self.upper_red = np.array([22,255,255])
         self.lower_green = np.array([28,38,144])
         self.upper_green = np.array([65,90,255])
 
-        self.lower_blue = np.array([67,23,190])
-        self.upper_blue = np.array([98,80,255])
+        self.lower_blue = np.array([76,33,174])
+        self.upper_blue = np.array([116,85,255])
 
 
         self.lower_yellow = np.array([26,43,240])
         self.upper_yellow = np.array([43,110,255])
 
         self.lowerBlocks =  np.array([10,0,140])
-        self.upperBlocks = np.array([47,70,255])
+        self.upperBlocks = np.array([47,45,255])
 
         # Jenga block via pixels from our camera
-        self.jengaWHigh = 42
-        self.jengaWLow = 36
-        self.jengaLHigh = 121
-        self.jengaLLow = 115
+        self.jengaWHigh = 60
+        self.jengaWLow = 40
+        self.jengaLHigh = 163
+        self.jengaLLow = 140
         self.singleBlock = None     # Resets after finding a block sets to None if no block found
 
         self.basisWorld = None
@@ -84,7 +84,7 @@ class vision:
         self.drawImg = self.resized.copy()
         if self.needsBasis:
             success = self.establishBasis()
-            #print(f"Establish : {success}")
+            print(f"Establish Basis Status? : {success}")
             if not success:
                 return False
         # Always update the block mask
@@ -119,6 +119,12 @@ class vision:
         
         (blueCenter, blueBox) = self.getPixelCenterSquare(cntsBlue)
         (redCenter, redBox) = self.getPixelCenterSquare(cntsRed)
+
+        if blueCenter is None:
+            print("Couldn't find center of blue Tag!")
+            return False
+        if redCenter is None:
+            return False
         #(greenCenter, greenBox) = self.getPixelCenterSquare(cntsGreen)
 
         # if greenBox is not None:
@@ -202,6 +208,10 @@ class vision:
                 continue
             blockLong = max(rot_rect[1])*self.ratio
             blockShort = min(rot_rect[1])*self.ratio
+
+            # use these for making sure block is right size!
+            print(blockLong)
+            print(blockShort)
             if blockLong > self.jengaLHigh or blockLong < self.jengaLLow or blockShort > self.jengaWHigh or blockShort < self.jengaWLow:
                 # This isn't a jenga Block
                 continue
@@ -249,10 +259,12 @@ class vision:
 
             # This isn't Valid
             if rot_rect[1][0] == 0 or rot_rect[1][1] == 0:
+                print("there")
                 continue
             
             # TODO Get Rid of too Big
-            if rot_rect[1][0] > 1.2 * expectedSize or rot_rect[1][0] < .8 * expectedSize or  rot_rect[1][1] > 1.2 * expectedSize or rot_rect[1][1] < .8 * expectedSize:
+            if rot_rect[1][0] < .8 * expectedSize or  rot_rect[1][1] < .8 * expectedSize:
+                print("Here")
                 continue
 
             widthHeightRatio = rot_rect[1][0]/rot_rect[1][1] 
@@ -270,6 +282,7 @@ class vision:
             box = np.int0(box)
 
             return (rot_rect[0], box) # Returns the center in pixels and also the box
+        return (None, None) # Return empty tuple for recognition of a failure
 
     def calcBasis(self, baseTagWorld, secondaryTagWorld, baseTagPixel, secondaryTagPixel):
         """ np.array 2x1, np.array 2x1, np.array 2x1, np.array 2x1 """
