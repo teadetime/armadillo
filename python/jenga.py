@@ -2,6 +2,7 @@ import math
 import robot
 import vision
 import time
+import numpy as np
 
 if __name__=='__main__':
     arm = robot.robot()
@@ -58,7 +59,7 @@ if __name__=='__main__':
 
         arm.waitForArduino()
 
-        arm.home()
+        # arm.home()
         # ORDER OF OPERATIONS:
         # 1. Home
         # 2. For each block, stackPosition in zip(blockList, stackPosition):
@@ -73,10 +74,10 @@ if __name__=='__main__':
         #         suction off
         # 3. Home
 
-        #######Points (X ,  Y ,  Z , R)       
-        ##testPoint = (0, 400, 10, 0) 
-        
-        # testPoint = (0, 400, 10, 0) 
+        #######Points (X ,  Y ,  Z , R)
+        ##testPoint = (0, 400, 10, 0)
+
+        # testPoint = (0, 400, 10, 0)
         # arm.moveTo(*testPoint, suction = 0)
         # time.sleep(5)
         # exit()
@@ -88,8 +89,8 @@ if __name__=='__main__':
                     #TODO: CHECK TO SEE IF BAD POSITION!!
                     #continue
                     print(dx, dy)
-                    testPoint = (newX, newY, z, r) 
-                    
+                    testPoint = (newX, newY, z, r)
+
                     if not arm.moveTo(*testPoint, suction = 0):
                         continue
                     time.sleep(pause)
@@ -99,21 +100,46 @@ if __name__=='__main__':
                 for dy in range(yMin,y, spacing):
                     #TODO: CHECK TO SEE IF BAD POSITION!!
                     #continue
-                    testPoint = (dx, dy, z, r) 
+                    testPoint = (dx, dy, z, r)
                     if not arm.moveTo(*testPoint, suction = 0):
                         continue
                     time.sleep(pause)
 
-        testGridPts()
-        
-        
 
+        arm.moveTo(0, 350, 30, 0, 0)
+        # testGridPts()
+        # exit()
 
+        def towerPts(x0 = 0, y0 = 350, theta0 = 0, nLayers = 18):
+            blockWidth = 20
+            blockHeight = 15
+            thetaOffset = -20
+            theta = theta0 + thetaOffset
+
+            for layer in range(nLayers):
+                if layer % 2 == 0:
+                    yield (x0 - blockWidth, y0, blockHeight * layer, theta)
+                    yield (x0,              y0, blockHeight * layer, theta)
+                    yield (x0 + blockWidth, y0, blockHeight * layer, theta)
+
+                if layer % 2 == 1:
+                    yield (x0, y0 - blockWidth, blockHeight * layer, theta + 90)
+                    yield (x0, y0,              blockHeight * layer, theta + 90)
+                    yield (x0, y0 + blockWidth, blockHeight * layer, theta + 90)
+
+        # for towerPt in towerPts():
+        #     arm.moveTo(*towerPt, 0)
+        #     arm.moveTo(*towerPt, 0) # we need to test the function that just turns suction off
+
+        for i in range(-45, 45, 15):
+            arm.moveTo(0, 350, 30, i, 0)
+        arm.moveTo(0, 350, 30, 0, 0)
 
         arm.home()
+        exit()
 
-        
-        
+
+
         # ##############################
         # ## Just Calibrate , For Now ##
         # ##############################
