@@ -20,6 +20,7 @@ if __name__=='__main__':
 
         grabbingFrame = True
         while grabbingFrame:
+            print("grabbing image")
             grabImageSuccess = vs.grabImage(fromPath=False)
             if not grabImageSuccess:
                 print("Please reposition Camera and check masking!")
