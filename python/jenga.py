@@ -113,7 +113,7 @@ if __name__=='__main__':
         def towerPts(x0 = 0, y0 = 350, theta0 = 0, nLayers = 18):
             blockWidth = 20
             blockHeight = 15
-            thetaOffset = -20
+            thetaOffset = 0 # -20
             theta = theta0 + thetaOffset
 
             for layer in range(nLayers):
