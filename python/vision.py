@@ -41,7 +41,7 @@ class vision:
         # Offsets to use for all parts Only Using Two Squares RN
         self.blueWorldOrigin = np.array([[300],[400]])
         self.originTagPixel = None
-        self.redWorld = np.array([[-300],[400]])
+        self.greenWorld = np.array([[-300],[400]])
         self.widthHeightLow = 0.8
         self.widthHeightHigh = 1.2
         self.expectedSize = 31   # TODO Change This in Pixels
@@ -50,8 +50,8 @@ class vision:
         #LINUX
         if(os.name == 'posix'):
             print("Running on Linux")
-            self.lower_red = np.array([132,109,116])
-            self.upper_red = np.array([179,255,255])
+            self.lower_red = np.array([0,109,116])
+            self.upper_red = np.array([27,255,255])
 
             self.lower_blue = np.array([66,87,115])
             self.upper_blue = np.array([130,198,255])
@@ -147,12 +147,12 @@ class vision:
         # Calculate the centers of each piece
 
         (blueCenter, blueBox) = self.getPixelCenterSquare(cntsBlue)
-        (redCenter, redBox) = self.getPixelCenterSquare(cntsRed)
+        (greenCenter, greenBox) = self.getPixelCenterSquare(cntsGreen)
 
         if blueCenter is None:
             print("Couldn't find center of blue Tag!")
             return False
-        if redCenter is None:
+        if greenCenter is None:
             return False
         #(greenCenter, greenBox) = self.getPixelCenterSquare(cntsGreen)
 
@@ -162,15 +162,15 @@ class vision:
         if blueBox is not None:
             self.drawContours(blueBox)
             self.drawPoint(blueCenter)
-        if redBox is not None:
-            self.drawContours(redBox)
-            self.drawPoint(redCenter)
+        if greenBox is not None:
+            self.drawContours(greenBox)
+            self.drawPoint(greenCenter)
 
         # Image coords pixels
         self.originTagPixel = np.array([[blueCenter[0]], [blueCenter[1]]])
-        secondaryTag = np.array([[redCenter[0]], [redCenter[1]]])
+        secondaryTag = np.array([[greenCenter[0]], [greenCenter[1]]])
 
-        self.basisWorld, self.basisPixel, self.frameRotation = self.calcBasis(self.blueWorldOrigin, self.redWorld, self.originTagPixel, secondaryTag)
+        self.basisWorld, self.basisPixel, self.frameRotation = self.calcBasis(self.blueWorldOrigin, self.greenWorld, self.originTagPixel, secondaryTag)
 
         self.drawBasis()
 
