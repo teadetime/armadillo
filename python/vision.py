@@ -17,7 +17,7 @@ class vision:
 
         # Image Loading and Resizing
         self.needsBasis = True  # Run ceratin calculations if they haven't been run before
-        self.camIndex = 0       # 0 is internal webcam
+        self.camIndex = 2       # 0 is internal webcam
         self.image = None
         self.resized = None     #imutils.resize(image, width=self.resizedSize)
         self.drawImg = None
@@ -38,26 +38,26 @@ class vision:
         self.expectedSize = 31   # TODO Change This in Pixels
 
         # Boundaries for the different  Colors
-        self.lower_red = np.array([113,102,162])
-        self.upper_red = np.array([179,228,255])
+        self.lower_red = np.array([0,205,213])
+        self.upper_red = np.array([56,255,255])
         self.lower_green = np.array([28,38,144])
         self.upper_green = np.array([65,90,255])
 
-        self.lower_blue = np.array([45,83,199])
-        self.upper_blue = np.array([111,163,255])
+        self.lower_blue = np.array([48,0,184])
+        self.upper_blue = np.array([175,255,255])
 
 
         self.lower_yellow = np.array([26,43,240])
         self.upper_yellow = np.array([43,110,255])
 
-        self.lowerBlocks =  np.array([10,0,171])
-        self.upperBlocks = np.array([78,48,237])
+        self.lowerBlocks =  np.array([0,0,61])
+        self.upperBlocks = np.array([68,161,239])
 
         # Jenga block via pixels from our camera
-        self.jengaWHigh = 60
-        self.jengaWLow = 40
-        self.jengaLHigh = 163
-        self.jengaLLow = 140
+        self.jengaWHigh = 42
+        self.jengaWLow = 35
+        self.jengaLHigh = 130
+        self.jengaLLow = 120
         self.singleBlock = None     # Resets after finding a block sets to None if no block found
 
         self.basisWorld = None
@@ -104,11 +104,13 @@ class vision:
         greenMask = cv2.inRange(self.hsv, self.lower_green, self.upper_green)
         blueMask = cv2.inRange(self.hsv, self.lower_blue, self.upper_blue)
         redMask = cv2.inRange(self.hsv, self.lower_red, self.upper_red)
+        blockMask = cv2.inRange(self.hsv, self.lowerBlocks, self.upperBlocks)
         if self.debug:
             cv2.imshow("HSV Green", greenMask)  # Tag 1
             cv2.imshow("HSV Blue", blueMask) # Yellow Tag 2
             cv2.imshow("HSV Red", redMask) # Red Tag 2
-
+            cv2.imshow("HSV Block", blockMask) # Red Tag 2
+           
         cntsBlue = self.getCnts(blueMask)
         cntsRed = self.getCnts(redMask)
         cntsGreen = self.getCnts(greenMask)

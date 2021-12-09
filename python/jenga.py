@@ -8,33 +8,9 @@ if __name__=='__main__':
     arm = robot.robot()
     vs = vision.vision()
 
-    testingHomingandWorld = False
+    testingHomingandWorld = True
     testingCameras = True
 
-    """
-    COde to Detect basis and camera tags
-    """
-    if testingCameras:
-        if not vs.testCamera():
-            print("Camera Not working")
-
-        grabbingFrame = True
-        while grabbingFrame:
-            print("grabbing image")
-            grabImageSuccess = vs.grabImage(fromPath=False)
-            if not grabImageSuccess:
-                print("Please reposition Camera and check masking!")
-                vs.tuneWindow()
-                x = input('Retry (R) or Quit (Q): ')
-                if x == 'R':
-                    pass
-                else:
-                    quit()
-            else:
-                grabbingFrame = False
-        (coords, rotation) = vs.getBlockWorld()
-        print(coords)
-        print(rotation)
     if testingHomingandWorld:
         #####################
         # Test Zero Position#
@@ -60,7 +36,55 @@ if __name__=='__main__':
 
         arm.waitForArduino()
 
+        ##############################
+        ##Initiate Homing Proceedure##
+        ##############################
+        arm.home()
+
+
+        if testingCameras:
+            if not vs.testCamera():
+                print("Camera Not working")
+
+            grabbingFrame = True
+            while grabbingFrame:
+                grabImageSuccess = vs.grabImage(fromPath=False)
+                if not grabImageSuccess:
+                    print("Please reposition Camera and check masking!")
+                    vs.tuneWindow()
+                    x = input('Retry (R) or Quit (Q): ')
+                    if x == 'R':
+                        pass
+                    else:
+                        quit()
+                else:
+                    grabbingFrame = False
+            (coords, rotation) = vs.getBlockWorld()
+            print(coords)
+            print(rotation)
+
+
+
+        # testPoint = (-300, 400, 15, 0) 
+        # arm.moveTo(*testPoint, suction = 0)
+        # time.sleep(5)
+        # testPoint = (-300, 400, 45, 0) 
+        # arm.moveTo(*testPoint, suction = 0)
+
+        # testPoint = (0, 400, 15, 0) 
+        # arm.moveTo(*testPoint, suction = 0)
+        # time.sleep(5)
+        # testPoint = (0, 400, 45, 0) 
+        # arm.moveTo(*testPoint, suction = 0)
+
+        # testPoint = (300, 400, 15, 0) 
+        # arm.moveTo(*testPoint, suction = 0)
+        # time.sleep(5)
+        # testPoint = (300, 400, 45, 0) 
+        # arm.moveTo(*testPoint, suction = 0)
         # arm.home()
+        # quit()
+        
         # ORDER OF OPERATIONS:
         # 1. Home
         # 2. For each block, stackPosition in zip(blockList, stackPosition):
@@ -153,16 +177,6 @@ if __name__=='__main__':
         # exit()
         # raise ValueError # stop the program
 
-        ##############################
-        ##Initiate Homing Proceedure##
-        ##############################
-        homeTuple = (arm.j1ZeroSteps ,arm.j2ZeroSteps, arm.j3ZeroSteps, 0)
-        homingMessage = arm.createMessage(arm.commands["home"],homeTuple,0,0)
-        arm.serial.write(homingMessage)
-        print(f"Homing: {homingMessage}")
-        result = arm.waitForResponse()
-        print(result)
-
         # jPos = arm.worldToJoint((0,350, 5), 0)
         # stepPos = arm.radTupleToStepTuple(jPos)
         # nextPoint = arm.createMessage(arm.commands["move"],stepPos,0.0,40.0)
@@ -173,7 +187,7 @@ if __name__=='__main__':
         # time.sleep(.5)
 
         # Go to a position
-        jPos = arm.worldToJoint((coords[0],coords[1], 20), rotation)
+        jPos = arm.worldToJoint((coords[0],coords[1], 18), rotation)
         stepPos = arm.radTupleToStepTuple(jPos)
         nextPoint = arm.createMessage(arm.commands["move"],stepPos,0.0,40.0)
         arm.serial.write(nextPoint)
@@ -182,7 +196,7 @@ if __name__=='__main__':
         print(result)
         time.sleep(.5)
 
-        jPos = arm.worldToJoint((coords[0],coords[1], 10), rotation)
+        jPos = arm.worldToJoint((coords[0],coords[1], 5), rotation)
         stepPos = arm.radTupleToStepTuple(jPos)
         nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
         arm.serial.write(nextPoint)
@@ -210,7 +224,7 @@ if __name__=='__main__':
         time.sleep(.5)
 
 
-        jPos = arm.worldToJoint((-300,300, 5), 0)
+        jPos = arm.worldToJoint((-300,300, 10), 0)
         stepPos = arm.radTupleToStepTuple(jPos)
         nextPoint = arm.createMessage(arm.commands["move"],stepPos,1.0,40.0)
         arm.serial.write(nextPoint)
@@ -219,7 +233,7 @@ if __name__=='__main__':
         print(result)
         time.sleep(.5)
 
-        jPos = arm.worldToJoint((-300,300, 20), 0)
+        jPos = arm.worldToJoint((-300,300, 40), 0)
         stepPos = arm.radTupleToStepTuple(jPos)
         nextPoint = arm.createMessage(arm.commands["move"],stepPos,0,40.0)
         arm.serial.write(nextPoint)

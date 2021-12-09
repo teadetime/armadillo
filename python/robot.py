@@ -34,10 +34,10 @@ class robot:
         #     quit()
 
         self.stepsPerRev = 200      # Number of steps in 1 rev of the steppers
-        self.P1xyz = (0,0,105)       # Only the Z offset does anything
+        self.P1xyz = (0,0,110)       # Only the Z offset does anything
         self.L1 = 322               # mm length of first Arm Bearing to bearing
         self.L2 = 322               # 2nd Arm
-        self.L3 = 18                 # Length of rotating end effector
+        self.L3 = 17.5                 # Length of rotating end effector
 
         #
         self.J1microSteps = 16
@@ -48,10 +48,10 @@ class robot:
         self.J3gearing = 3
 
         # Radian values for the limit switches
-        self.limitJ1 = math.pi/2 + math.radians(10.8)
-        self.limitJ2 = math.radians(91)
+        self.limitJ1 = math.pi/2 + math.radians(13.8)
+        self.limitJ2 = math.radians(90.5)
         self.limitJ2min = math.radians(0)
-        self.limitJ3 = math.pi/2+math.radians(88)
+        self.limitJ3 = math.pi/2+math.radians(92)
         self.limitJ3min = math.radians(85)
 
         print(f"j1Limit: {self.limitJ1}\nj2Limit: {self.limitJ2}\nj3Limit: {self.limitJ3}")
@@ -60,7 +60,7 @@ class robot:
         self.j3ZeroSteps = self.radToSteps(self.limitJ3, self.J3microSteps, self.J3gearing)
 
         # Offsets from Pivot point to servo Horn
-        self.servoArmOffset = 33
+        self.servoArmOffset = 32.5
         self.servoZOffset = 35
 
         self.suctionOffset = 0 # Also could be droop
