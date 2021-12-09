@@ -29,17 +29,17 @@ if __name__=='__main__':
         # jPos = arm.worldToJoint(xyz, block_angle)
         # print(f"Reconvert: {arm.radTupleToStepTuple(jPos)}")
 
-        # Check for Arduinio
-        if not arm.serial.connected:
-            print("Please Connect Arduino")
-            quit()
+        # # Check for Arduinio
+        # if not arm.serial.connected:
+        #     print("Please Connect Arduino")
+        #     quit()
 
-        arm.waitForArduino()
+        # arm.waitForArduino()
 
-        ##############################
-        ##Initiate Homing Proceedure##
-        ##############################
-        arm.home()
+        # ##############################
+        # ##Initiate Homing Proceedure##
+        # ##############################
+        # arm.home()
 
 
         if testingCameras:
@@ -65,49 +65,49 @@ if __name__=='__main__':
 
 
             #Go to a position
-            testPoint = (coords[0],coords[1], 15, rotation) 
+            testPoint = (coords[0],coords[1], 15, rotation)
             arm.moveTo(*testPoint, suction = 0)
-            testPoint = (coords[0],coords[1], 5, rotation) 
+            testPoint = (coords[0],coords[1], 5, rotation)
             arm.moveTo(*testPoint, suction = 1)
 
-            testPoint = (coords[0],coords[1], 40, rotation) 
+            testPoint = (coords[0],coords[1], 40, rotation)
             arm.moveTo(*testPoint, suction = 1)
 
-            testPoint = (-coords[0],coords[1], 40, 0) 
+            testPoint = (-coords[0],coords[1], 40, 0)
             arm.moveTo(*testPoint, suction = 1)
 
-            testPoint = (-coords[0],coords[1], 12, 0) 
+            testPoint = (-coords[0],coords[1], 12, 0)
             arm.moveTo(*testPoint, suction = 1)
-            
-            testPoint = (-coords[0],coords[1], 8, 0) 
+
+            testPoint = (-coords[0],coords[1], 8, 0)
             arm.moveTo(*testPoint, suction = 0)
 
-            testPoint = (-coords[0],coords[1], 20, 0) 
+            testPoint = (-coords[0],coords[1], 20, 0)
             arm.moveTo(*testPoint, suction = 0)
 
-            testPoint = (0,300, 40, 0) 
+            testPoint = (0,300, 40, 0)
             arm.moveTo(*testPoint, suction = 0)
 
-        # testPoint = (-300, 400, 15, 0) 
+        # testPoint = (-300, 400, 15, 0)
         # arm.moveTo(*testPoint, suction = 0)
         # time.sleep(5)
-        # testPoint = (-300, 400, 45, 0) 
+        # testPoint = (-300, 400, 45, 0)
         # arm.moveTo(*testPoint, suction = 0)
 
-        # testPoint = (0, 400, 15, 0) 
+        # testPoint = (0, 400, 15, 0)
         # arm.moveTo(*testPoint, suction = 0)
         # time.sleep(5)
-        # testPoint = (0, 400, 45, 0) 
+        # testPoint = (0, 400, 45, 0)
         # arm.moveTo(*testPoint, suction = 0)
 
-        # testPoint = (300, 400, 15, 0) 
+        # testPoint = (300, 400, 15, 0)
         # arm.moveTo(*testPoint, suction = 0)
         # time.sleep(5)
-        # testPoint = (300, 400, 45, 0) 
+        # testPoint = (300, 400, 45, 0)
         # arm.moveTo(*testPoint, suction = 0)
         # arm.home()
         # quit()
-        
+
         # ORDER OF OPERATIONS:
         # 1. Home
         # 2. For each block, stackPosition in zip(blockList, stackPosition):
