@@ -64,6 +64,29 @@ if __name__=='__main__':
             print(rotation)
 
 
+            #Go to a position
+            testPoint = (coords[0],coords[1], 25, rotation) 
+            arm.moveTo(*testPoint, suction = 0)
+            testPoint = (coords[0],coords[1], 18, rotation) 
+            arm.moveTo(*testPoint, suction = 1)
+
+            testPoint = (coords[0],coords[1], 40, rotation) 
+            arm.moveTo(*testPoint, suction = 1)
+
+            testPoint = (-coords[0],coords[1], 40, 0) 
+            arm.moveTo(*testPoint, suction = 1)
+
+            testPoint = (-coords[0],coords[1], 21, 0) 
+            arm.moveTo(*testPoint, suction = 1)
+            
+            testPoint = (-coords[0],coords[1], 21, 0) 
+            arm.moveTo(*testPoint, suction = 0)
+
+            testPoint = (-coords[0],coords[1], 25, 0) 
+            arm.moveTo(*testPoint, suction = 0)
+
+            testPoint = (0,300, 40, 0) 
+            arm.moveTo(*testPoint, suction = 0)
 
         # testPoint = (-300, 400, 15, 0) 
         # arm.moveTo(*testPoint, suction = 0)
@@ -131,7 +154,7 @@ if __name__=='__main__':
                     time.sleep(pause)
 
 
-        arm.moveTo(0, 350, 30, 0, 0)
+        #arm.moveTo(0, 350, 30, 0, 0)
         # testGridPts()
         # exit()
 

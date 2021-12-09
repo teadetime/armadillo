@@ -15,6 +15,14 @@ class vision:
         self.debug = True
         self.jengaDebug = True
 
+        # Nathan Values for qt2
+        # Exposure = 72
+        #Brightness = 74
+        #Contrast = 32
+        # Saturation = 42
+        # Gain = 50
+
+
         # Image Loading and Resizing
         self.needsBasis = True  # Run ceratin calculations if they haven't been run before
         self.camIndex = 2       # 0 is internal webcam
@@ -38,20 +46,21 @@ class vision:
         self.expectedSize = 31   # TODO Change This in Pixels
 
         # Boundaries for the different  Colors
-        self.lower_red = np.array([0,205,213])
-        self.upper_red = np.array([56,255,255])
+        self.lower_red = np.array([139,140,116])
+        self.upper_red = np.array([179,255,255])
+
         self.lower_green = np.array([28,38,144])
         self.upper_green = np.array([65,90,255])
 
-        self.lower_blue = np.array([48,0,184])
-        self.upper_blue = np.array([175,255,255])
+        self.lower_blue = np.array([24,67,140])
+        self.upper_blue = np.array([119,227,255])
 
 
         self.lower_yellow = np.array([26,43,240])
         self.upper_yellow = np.array([43,110,255])
 
-        self.lowerBlocks =  np.array([0,0,61])
-        self.upperBlocks = np.array([68,161,239])
+        self.lowerBlocks =  np.array([0,0,79])
+        self.upperBlocks = np.array([75,108,205])
 
         # Jenga block via pixels from our camera
         self.jengaWHigh = 42
