@@ -65,9 +65,9 @@ if __name__=='__main__':
 
 
             #Go to a position
-            testPoint = (coords[0],coords[1], 25, rotation) 
+            testPoint = (coords[0],coords[1], 15, rotation) 
             arm.moveTo(*testPoint, suction = 0)
-            testPoint = (coords[0],coords[1], 18, rotation) 
+            testPoint = (coords[0],coords[1], 5, rotation) 
             arm.moveTo(*testPoint, suction = 1)
 
             testPoint = (coords[0],coords[1], 40, rotation) 
@@ -76,13 +76,13 @@ if __name__=='__main__':
             testPoint = (-coords[0],coords[1], 40, 0) 
             arm.moveTo(*testPoint, suction = 1)
 
-            testPoint = (-coords[0],coords[1], 21, 0) 
+            testPoint = (-coords[0],coords[1], 12, 0) 
             arm.moveTo(*testPoint, suction = 1)
             
-            testPoint = (-coords[0],coords[1], 21, 0) 
+            testPoint = (-coords[0],coords[1], 8, 0) 
             arm.moveTo(*testPoint, suction = 0)
 
-            testPoint = (-coords[0],coords[1], 25, 0) 
+            testPoint = (-coords[0],coords[1], 20, 0) 
             arm.moveTo(*testPoint, suction = 0)
 
             testPoint = (0,300, 40, 0) 

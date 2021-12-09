@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 import math
 from time import sleep
+import os
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", required=True,
@@ -46,22 +47,38 @@ class vision:
         self.expectedSize = 31   # TODO Change This in Pixels
 
         # Boundaries for the different  Colors
-        self.lower_red = np.array([139,140,116])
-        self.upper_red = np.array([179,255,255])
+        #LINUX
+        if(os.name == 'posix'):
+            print("Running on Linux")
+            self.lower_red = np.array([132,109,116])
+            self.upper_red = np.array([179,255,255])
 
-        self.lower_green = np.array([28,38,144])
-        self.upper_green = np.array([65,90,255])
+            self.lower_blue = np.array([66,87,115])
+            self.upper_blue = np.array([130,198,255])
 
-        self.lower_blue = np.array([24,67,140])
-        self.upper_blue = np.array([119,227,255])
+            self.lowerBlocks =  np.array([0,0,79])
+            self.upperBlocks = np.array([75,108,205])
 
+            self.lower_green = np.array([28,38,144])
+            self.upper_green = np.array([65,90,255])
+            self.lower_yellow = np.array([26,43,240])
+            self.upper_yellow = np.array([43,110,255])
+        # WINDOWS
+        else:
+            print("Running on Windows!")
+            self.lower_red = np.array([0,0,0])
+            self.upper_red = np.array([179,255,255])
 
-        self.lower_yellow = np.array([26,43,240])
-        self.upper_yellow = np.array([43,110,255])
+            self.lower_blue = np.array([0,0,0])
+            self.upper_blue = np.array([130,198,255])
 
-        self.lowerBlocks =  np.array([0,0,79])
-        self.upperBlocks = np.array([75,108,205])
+            self.lowerBlocks =  np.array([0,0,79])
+            self.upperBlocks = np.array([75,108,205])
 
+            self.lower_green = np.array([28,38,144])
+            self.upper_green = np.array([65,90,255])
+            self.lower_yellow = np.array([26,43,240])
+            self.upper_yellow = np.array([43,110,255])
         # Jenga block via pixels from our camera
         self.jengaWHigh = 42
         self.jengaWLow = 35

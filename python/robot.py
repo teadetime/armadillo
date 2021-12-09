@@ -49,9 +49,9 @@ class robot:
 
         # Radian values for the limit switches
         self.limitJ1 = math.pi/2 + math.radians(13.8)
-        self.limitJ2 = math.radians(90.5)
+        self.limitJ2 = math.radians(90)
         self.limitJ2min = math.radians(0)
-        self.limitJ3 = math.pi/2+math.radians(92)
+        self.limitJ3 = math.pi/2+math.radians(91.5)
         self.limitJ3min = math.radians(85)
 
         print(f"j1Limit: {self.limitJ1}\nj2Limit: {self.limitJ2}\nj3Limit: {self.limitJ3}")
