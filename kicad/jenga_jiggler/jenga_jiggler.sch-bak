@@ -16,21 +16,21 @@ $EndDescr
 $Comp
 L Driver_Motor:Pololu_Breakout_DRV8825 A1
 U 1 1 6194633E
-P 1700 1700
-F 0 "A1" H 1700 2481 50  0000 C CNN
-F 1 "Pololu_Breakout_DRV8825" H 1700 2390 50  0000 C CNN
-F 2 "Module:Pololu_Breakout-16_15.2x20.3mm" H 1900 900 50  0001 L CNN
-F 3 "https://www.pololu.com/product/2982" H 1800 1400 50  0001 C CNN
-	1    1700 1700
+P 3150 2000
+F 0 "A1" H 3150 2781 50  0000 C CNN
+F 1 "Pololu_Breakout_DRV8825" H 3150 2690 50  0000 C CNN
+F 2 "Module:Pololu_Breakout-16_15.2x20.3mm" H 3350 1200 50  0001 L CNN
+F 3 "https://www.pololu.com/product/2982" H 3250 1700 50  0001 C CNN
+	1    3150 2000
 	1    0    0    -1  
 $EndComp
-Text GLabel 1300 1800 0    50   Input ~ 0
+Text GLabel 2750 2100 0    50   Input ~ 0
 j1_STEP
-Text GLabel 1300 1900 0    50   Input ~ 0
+Text GLabel 2750 2200 0    50   Input ~ 0
 j1_DIR
-Text GLabel 1300 1700 0    50   Input ~ 0
+Text GLabel 2750 2000 0    50   Input ~ 0
 j1_EN
-NoConn ~ 1300 1300
+NoConn ~ 2750 1600
 $Comp
 L power:+5V #PWR04
 U 1 1 6194A3C5
@@ -63,225 +63,225 @@ Wire Wire Line
 	5700 2500 5650 2500
 Wire Wire Line
 	5650 2500 5650 2600
-Text GLabel 1150 1450 0    50   Input ~ 0
+Text GLabel 2600 1750 0    50   Input ~ 0
 +5V
 Wire Wire Line
-	1150 1450 1250 1450
+	2600 1750 2700 1750
 Wire Wire Line
-	1250 1450 1250 1400
+	2700 1750 2700 1700
 Wire Wire Line
-	1250 1400 1300 1400
+	2700 1700 2750 1700
 Wire Wire Line
-	1250 1450 1250 1500
+	2700 1750 2700 1800
 Wire Wire Line
-	1250 1500 1300 1500
-Connection ~ 1250 1450
+	2700 1800 2750 1800
+Connection ~ 2700 1750
 $Comp
 L Device:C C1
 U 1 1 61948B8F
-P 2650 1750
-F 0 "C1" H 2765 1796 50  0000 L CNN
-F 1 "C" H 2765 1705 50  0000 L CNN
-F 2 "" H 2688 1600 50  0001 C CNN
-F 3 "~" H 2650 1750 50  0001 C CNN
-	1    2650 1750
+P 4100 2050
+F 0 "C1" H 4215 2096 50  0000 L CNN
+F 1 "C" H 4215 2005 50  0000 L CNN
+F 2 "" H 4138 1900 50  0001 C CNN
+F 3 "~" H 4100 2050 50  0001 C CNN
+	1    4100 2050
 	1    0    0    -1  
 $EndComp
-Text GLabel 2100 2000 2    50   Input ~ 0
+Text GLabel 3550 2300 2    50   Input ~ 0
 j1_B2
-Text GLabel 2100 1900 2    50   Input ~ 0
+Text GLabel 3550 2200 2    50   Input ~ 0
 j1_B1
-Text GLabel 2100 1700 2    50   Input ~ 0
+Text GLabel 3550 2000 2    50   Input ~ 0
 j1_A2
-Text GLabel 2100 1600 2    50   Input ~ 0
+Text GLabel 3550 1900 2    50   Input ~ 0
 j1_A1
 Wire Wire Line
-	2650 1100 2650 1600
+	4100 1400 4100 1900
 Wire Wire Line
-	2650 1100 1700 1100
+	4100 1400 3150 1400
 Wire Wire Line
-	2650 1900 2650 2500
+	4100 2200 4100 2800
 Wire Wire Line
-	2650 2500 1800 2500
+	4100 2800 3250 2800
 $Comp
 L power:GND #PWR01
 U 1 1 6194A862
-P 1750 2600
-F 0 "#PWR01" H 1750 2350 50  0001 C CNN
-F 1 "GND" H 1755 2427 50  0000 C CNN
-F 2 "" H 1750 2600 50  0001 C CNN
-F 3 "" H 1750 2600 50  0001 C CNN
-	1    1750 2600
+P 3200 2900
+F 0 "#PWR01" H 3200 2650 50  0001 C CNN
+F 1 "GND" H 3205 2727 50  0000 C CNN
+F 2 "" H 3200 2900 50  0001 C CNN
+F 3 "" H 3200 2900 50  0001 C CNN
+	1    3200 2900
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	1750 2600 1700 2600
+	3200 2900 3150 2900
 Wire Wire Line
-	1700 2600 1700 2500
+	3150 2900 3150 2800
 Wire Wire Line
-	1750 2600 1800 2600
+	3200 2900 3250 2900
 Wire Wire Line
-	1800 2600 1800 2500
-Connection ~ 1750 2600
-Connection ~ 1800 2500
+	3250 2900 3250 2800
+Connection ~ 3200 2900
+Connection ~ 3250 2800
 $Comp
 L Driver_Motor:Pololu_Breakout_DRV8825 A2
 U 1 1 6194DBDC
-P 1700 3850
-F 0 "A2" H 1700 4631 50  0000 C CNN
-F 1 "Pololu_Breakout_DRV8825" H 1700 4540 50  0000 C CNN
-F 2 "Module:Pololu_Breakout-16_15.2x20.3mm" H 1900 3050 50  0001 L CNN
-F 3 "https://www.pololu.com/product/2982" H 1800 3550 50  0001 C CNN
-	1    1700 3850
+P 3150 4150
+F 0 "A2" H 3150 4931 50  0000 C CNN
+F 1 "Pololu_Breakout_DRV8825" H 3150 4840 50  0000 C CNN
+F 2 "Module:Pololu_Breakout-16_15.2x20.3mm" H 3350 3350 50  0001 L CNN
+F 3 "https://www.pololu.com/product/2982" H 3250 3850 50  0001 C CNN
+	1    3150 4150
 	1    0    0    -1  
 $EndComp
-Text GLabel 1300 3950 0    50   Input ~ 0
+Text GLabel 2750 4250 0    50   Input ~ 0
 j2_STEP
-Text GLabel 1300 4050 0    50   Input ~ 0
+Text GLabel 2750 4350 0    50   Input ~ 0
 j2_DIR
-Text GLabel 1300 3850 0    50   Input ~ 0
+Text GLabel 2750 4150 0    50   Input ~ 0
 j2_EN
-NoConn ~ 1300 3450
-Text GLabel 1150 3600 0    50   Input ~ 0
+NoConn ~ 2750 3750
+Text GLabel 2600 3900 0    50   Input ~ 0
 +5V
 Wire Wire Line
-	1150 3600 1250 3600
+	2600 3900 2700 3900
 Wire Wire Line
-	1250 3600 1250 3550
+	2700 3900 2700 3850
 Wire Wire Line
-	1250 3550 1300 3550
+	2700 3850 2750 3850
 Wire Wire Line
-	1250 3600 1250 3650
+	2700 3900 2700 3950
 Wire Wire Line
-	1250 3650 1300 3650
-Connection ~ 1250 3600
+	2700 3950 2750 3950
+Connection ~ 2700 3900
 $Comp
 L Device:C C2
 U 1 1 6194DBED
-P 2650 3900
-F 0 "C2" H 2765 3946 50  0000 L CNN
-F 1 "C" H 2765 3855 50  0000 L CNN
-F 2 "" H 2688 3750 50  0001 C CNN
-F 3 "~" H 2650 3900 50  0001 C CNN
-	1    2650 3900
+P 4100 4200
+F 0 "C2" H 4215 4246 50  0000 L CNN
+F 1 "C" H 4215 4155 50  0000 L CNN
+F 2 "" H 4138 4050 50  0001 C CNN
+F 3 "~" H 4100 4200 50  0001 C CNN
+	1    4100 4200
 	1    0    0    -1  
 $EndComp
-Text GLabel 2100 4150 2    50   Input ~ 0
+Text GLabel 3550 4450 2    50   Input ~ 0
 j2_B2
-Text GLabel 2100 4050 2    50   Input ~ 0
+Text GLabel 3550 4350 2    50   Input ~ 0
 j2_B1
-Text GLabel 2100 3850 2    50   Input ~ 0
+Text GLabel 3550 4150 2    50   Input ~ 0
 j2_A2
-Text GLabel 2100 3750 2    50   Input ~ 0
+Text GLabel 3550 4050 2    50   Input ~ 0
 j2_A1
 Wire Wire Line
-	2650 3250 2650 3750
+	4100 3550 4100 4050
 Wire Wire Line
-	2650 3250 1700 3250
+	4100 3550 3150 3550
 Wire Wire Line
-	2650 4050 2650 4650
+	4100 4350 4100 4950
 Wire Wire Line
-	2650 4650 1800 4650
+	4100 4950 3250 4950
 $Comp
 L power:GND #PWR02
 U 1 1 6194DBFB
-P 1750 4750
-F 0 "#PWR02" H 1750 4500 50  0001 C CNN
-F 1 "GND" H 1755 4577 50  0000 C CNN
-F 2 "" H 1750 4750 50  0001 C CNN
-F 3 "" H 1750 4750 50  0001 C CNN
-	1    1750 4750
+P 3200 5050
+F 0 "#PWR02" H 3200 4800 50  0001 C CNN
+F 1 "GND" H 3205 4877 50  0000 C CNN
+F 2 "" H 3200 5050 50  0001 C CNN
+F 3 "" H 3200 5050 50  0001 C CNN
+	1    3200 5050
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	1750 4750 1700 4750
+	3200 5050 3150 5050
 Wire Wire Line
-	1700 4750 1700 4650
+	3150 5050 3150 4950
 Wire Wire Line
-	1750 4750 1800 4750
+	3200 5050 3250 5050
 Wire Wire Line
-	1800 4750 1800 4650
-Connection ~ 1750 4750
-Connection ~ 1800 4650
+	3250 5050 3250 4950
+Connection ~ 3200 5050
+Connection ~ 3250 4950
 $Comp
 L Driver_Motor:Pololu_Breakout_DRV8825 A3
 U 1 1 6194EE93
-P 1750 5900
-F 0 "A3" H 1750 6681 50  0000 C CNN
-F 1 "Pololu_Breakout_DRV8825" H 1750 6590 50  0000 C CNN
-F 2 "Module:Pololu_Breakout-16_15.2x20.3mm" H 1950 5100 50  0001 L CNN
-F 3 "https://www.pololu.com/product/2982" H 1850 5600 50  0001 C CNN
-	1    1750 5900
+P 3200 6200
+F 0 "A3" H 3200 6981 50  0000 C CNN
+F 1 "Pololu_Breakout_DRV8825" H 3200 6890 50  0000 C CNN
+F 2 "Module:Pololu_Breakout-16_15.2x20.3mm" H 3400 5400 50  0001 L CNN
+F 3 "https://www.pololu.com/product/2982" H 3300 5900 50  0001 C CNN
+	1    3200 6200
 	1    0    0    -1  
 $EndComp
-Text GLabel 1350 6000 0    50   Input ~ 0
+Text GLabel 2800 6300 0    50   Input ~ 0
 j3_STEP
-Text GLabel 1350 6100 0    50   Input ~ 0
+Text GLabel 2800 6400 0    50   Input ~ 0
 j3_DIR
-Text GLabel 1350 5900 0    50   Input ~ 0
+Text GLabel 2800 6200 0    50   Input ~ 0
 j3_EN
-NoConn ~ 1350 5500
-Text GLabel 1200 5650 0    50   Input ~ 0
+NoConn ~ 2800 5800
+Text GLabel 2650 5950 0    50   Input ~ 0
 +5V
 Wire Wire Line
-	1200 5650 1300 5650
+	2650 5950 2750 5950
 Wire Wire Line
-	1300 5650 1300 5600
+	2750 5950 2750 5900
 Wire Wire Line
-	1300 5600 1350 5600
+	2750 5900 2800 5900
 Wire Wire Line
-	1300 5650 1300 5700
+	2750 5950 2750 6000
 Wire Wire Line
-	1300 5700 1350 5700
-Connection ~ 1300 5650
+	2750 6000 2800 6000
+Connection ~ 2750 5950
 $Comp
 L Device:C C3
 U 1 1 6194EEA4
-P 2700 5950
-F 0 "C3" H 2815 5996 50  0000 L CNN
-F 1 "C" H 2815 5905 50  0000 L CNN
-F 2 "" H 2738 5800 50  0001 C CNN
-F 3 "~" H 2700 5950 50  0001 C CNN
-	1    2700 5950
+P 4150 6250
+F 0 "C3" H 4265 6296 50  0000 L CNN
+F 1 "C" H 4265 6205 50  0000 L CNN
+F 2 "" H 4188 6100 50  0001 C CNN
+F 3 "~" H 4150 6250 50  0001 C CNN
+	1    4150 6250
 	1    0    0    -1  
 $EndComp
-Text GLabel 2150 6200 2    50   Input ~ 0
+Text GLabel 3600 6500 2    50   Input ~ 0
 j3_B2
-Text GLabel 2150 6100 2    50   Input ~ 0
+Text GLabel 3600 6400 2    50   Input ~ 0
 j3_B1
-Text GLabel 2150 5900 2    50   Input ~ 0
+Text GLabel 3600 6200 2    50   Input ~ 0
 j3_A2
-Text GLabel 2150 5800 2    50   Input ~ 0
+Text GLabel 3600 6100 2    50   Input ~ 0
 j3_A1
 Wire Wire Line
-	2700 5300 2700 5800
+	4150 5600 4150 6100
 Wire Wire Line
-	2700 5300 1750 5300
+	4150 5600 3200 5600
 Wire Wire Line
-	2700 6100 2700 6700
+	4150 6400 4150 7000
 Wire Wire Line
-	2700 6700 1850 6700
+	4150 7000 3300 7000
 $Comp
 L power:GND #PWR03
 U 1 1 6194EEB2
-P 1800 6800
-F 0 "#PWR03" H 1800 6550 50  0001 C CNN
-F 1 "GND" H 1805 6627 50  0000 C CNN
-F 2 "" H 1800 6800 50  0001 C CNN
-F 3 "" H 1800 6800 50  0001 C CNN
-	1    1800 6800
+P 3250 7100
+F 0 "#PWR03" H 3250 6850 50  0001 C CNN
+F 1 "GND" H 3255 6927 50  0000 C CNN
+F 2 "" H 3250 7100 50  0001 C CNN
+F 3 "" H 3250 7100 50  0001 C CNN
+	1    3250 7100
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	1800 6800 1750 6800
+	3250 7100 3200 7100
 Wire Wire Line
-	1750 6800 1750 6700
+	3200 7100 3200 7000
 Wire Wire Line
-	1800 6800 1850 6800
+	3250 7100 3300 7100
 Wire Wire Line
-	1850 6800 1850 6700
-Connection ~ 1800 6800
-Connection ~ 1850 6700
+	3300 7100 3300 7000
+Connection ~ 3250 7100
+Connection ~ 3300 7000
 $Comp
 L FQP30N06L:FQP30N06L Q?
 U 1 1 6195AB1B
@@ -484,4 +484,76 @@ Wire Wire Line
 Wire Wire Line
 	8750 2300 9050 2300
 Connection ~ 8450 2400
+$Comp
+L Connector_Generic:Conn_02x03_Row_Letter_First J?
+U 1 1 6198FDB2
+P 2450 2500
+F 0 "J?" H 2100 2100 50  0000 C CNN
+F 1 "Conn_02x03_Row_Letter_First" H 2100 2250 50  0000 C CNN
+F 2 "" H 2450 2500 50  0001 C CNN
+F 3 "~" H 2450 2500 50  0001 C CNN
+	1    2450 2500
+	1    0    0    -1  
+$EndComp
+Text GLabel 2050 2500 0    50   Input ~ 0
++5V
+Wire Wire Line
+	2050 2500 2050 2400
+Wire Wire Line
+	2050 2400 2250 2400
+Wire Wire Line
+	2050 2500 2250 2500
+Wire Wire Line
+	2050 2500 2050 2600
+Wire Wire Line
+	2050 2600 2250 2600
+Connection ~ 2050 2500
+$Comp
+L Connector_Generic:Conn_02x03_Row_Letter_First J?
+U 1 1 61997893
+P 2450 4650
+F 0 "J?" H 2100 4250 50  0000 C CNN
+F 1 "Conn_02x03_Row_Letter_First" H 2100 4400 50  0000 C CNN
+F 2 "" H 2450 4650 50  0001 C CNN
+F 3 "~" H 2450 4650 50  0001 C CNN
+	1    2450 4650
+	1    0    0    -1  
+$EndComp
+Text GLabel 2050 4650 0    50   Input ~ 0
++5V
+Wire Wire Line
+	2050 4650 2050 4550
+Wire Wire Line
+	2050 4550 2250 4550
+Wire Wire Line
+	2050 4650 2250 4650
+Wire Wire Line
+	2050 4650 2050 4750
+Wire Wire Line
+	2050 4750 2250 4750
+Connection ~ 2050 4650
+$Comp
+L Connector_Generic:Conn_02x03_Row_Letter_First J?
+U 1 1 6199DEE2
+P 2500 6700
+F 0 "J?" H 2150 6300 50  0000 C CNN
+F 1 "Conn_02x03_Row_Letter_First" H 2150 6450 50  0000 C CNN
+F 2 "" H 2500 6700 50  0001 C CNN
+F 3 "~" H 2500 6700 50  0001 C CNN
+	1    2500 6700
+	1    0    0    -1  
+$EndComp
+Text GLabel 2100 6700 0    50   Input ~ 0
++5V
+Wire Wire Line
+	2100 6700 2100 6600
+Wire Wire Line
+	2100 6600 2300 6600
+Wire Wire Line
+	2100 6700 2300 6700
+Wire Wire Line
+	2100 6700 2100 6800
+Wire Wire Line
+	2100 6800 2300 6800
+Connection ~ 2100 6700
 $EndSCHEMATC
