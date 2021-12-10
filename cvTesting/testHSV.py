@@ -15,7 +15,7 @@ def nothing(x):
 
 # Load in image
 image = cv2.imread(args["image"])
-image = imutils.resize(image, width=900)
+image = imutils.resize(image, width=600)
 # Create a window
 cv2.namedWindow('image')
 

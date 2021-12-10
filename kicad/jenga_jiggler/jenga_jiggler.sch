@@ -45,24 +45,24 @@ $EndComp
 $Comp
 L MCU_Module:Arduino_Nano_v3.x A4
 U 1 1 61944401
-P 5450 3600
-F 0 "A4" H 5450 2511 50  0000 C CNN
-F 1 "Arduino_Nano_v3.x" H 5450 2420 50  0000 C CNN
-F 2 "Module:Arduino_Nano" H 5450 3600 50  0001 C CIN
-F 3 "http://www.mouser.com/pdfdocs/Gravitech_Arduino_Nano3_0.pdf" H 5450 3600 50  0001 C CNN
-	1    5450 3600
+P 5700 3800
+F 0 "A4" H 5150 2650 50  0000 C CNN
+F 1 "Arduino_Nano_v3.x" H 5200 2750 50  0000 C CNN
+F 2 "Module:Arduino_Nano" H 5700 3800 50  0001 C CIN
+F 3 "http://www.mouser.com/pdfdocs/Gravitech_Arduino_Nano3_0.pdf" H 5700 3800 50  0001 C CNN
+	1    5700 3800
 	1    0    0    -1  
 $EndComp
 Text GLabel 6100 2200 0    50   Input ~ 0
 +5V
 Wire Wire Line
 	6100 2200 6100 2150
-Text GLabel 5700 2500 2    50   Input ~ 0
+Text GLabel 5950 2700 2    50   Input ~ 0
 +5V
 Wire Wire Line
-	5700 2500 5650 2500
+	5950 2700 5900 2700
 Wire Wire Line
-	5650 2500 5650 2600
+	5900 2700 5900 2800
 Text GLabel 2600 1750 0    50   Input ~ 0
 +5V
 Wire Wire Line
@@ -81,7 +81,7 @@ L Device:C C1
 U 1 1 61948B8F
 P 4100 2050
 F 0 "C1" H 4215 2096 50  0000 L CNN
-F 1 "C" H 4215 2005 50  0000 L CNN
+F 1 "100 uF" H 4215 2005 50  0000 L CNN
 F 2 "" H 4138 1900 50  0001 C CNN
 F 3 "~" H 4100 2050 50  0001 C CNN
 	1    4100 2050
@@ -160,7 +160,7 @@ L Device:C C2
 U 1 1 6194DBED
 P 4100 4200
 F 0 "C2" H 4215 4246 50  0000 L CNN
-F 1 "C" H 4215 4155 50  0000 L CNN
+F 1 "100 uF" H 4215 4155 50  0000 L CNN
 F 2 "" H 4138 4050 50  0001 C CNN
 F 3 "~" H 4100 4200 50  0001 C CNN
 	1    4100 4200
@@ -239,7 +239,7 @@ L Device:C C3
 U 1 1 6194EEA4
 P 4150 6250
 F 0 "C3" H 4265 6296 50  0000 L CNN
-F 1 "C" H 4265 6205 50  0000 L CNN
+F 1 "100 uF" H 4265 6205 50  0000 L CNN
 F 2 "" H 4188 6100 50  0001 C CNN
 F 3 "~" H 4150 6250 50  0001 C CNN
 	1    4150 6250
@@ -300,7 +300,7 @@ L Device:R R?
 U 1 1 6196248E
 P 7150 3950
 F 0 "R?" H 7220 3996 50  0000 L CNN
-F 1 "R" H 7220 3905 50  0000 L CNN
+F 1 "1K" H 7220 3905 50  0000 L CNN
 F 2 "" V 7080 3950 50  0001 C CNN
 F 3 "~" H 7150 3950 50  0001 C CNN
 	1    7150 3950
@@ -381,13 +381,13 @@ F 3 "" H 7350 3050 50  0001 L BNN
 	1    0    0    1   
 $EndComp
 Text GLabel 7100 2950 0    50   Input ~ 0
-vacuum_signal
+solenoid_signal
 $Comp
 L Device:R R?
 U 1 1 61979858
 P 7150 3100
 F 0 "R?" H 7220 3146 50  0000 L CNN
-F 1 "R" H 7220 3055 50  0000 L CNN
+F 1 "1K" H 7220 3055 50  0000 L CNN
 F 2 "" V 7080 3100 50  0001 C CNN
 F 3 "~" H 7150 3100 50  0001 C CNN
 	1    7150 3100
@@ -556,4 +556,46 @@ Wire Wire Line
 Wire Wire Line
 	2100 6800 2300 6800
 Connection ~ 2100 6700
+Text GLabel 5200 3500 0    50   Input ~ 0
+j1_STEP
+Text GLabel 5200 3400 0    50   Input ~ 0
+j1_DIR
+Text GLabel 5200 3700 0    50   Input ~ 0
+j2_STEP
+Text GLabel 5200 3600 0    50   Input ~ 0
+j2_DIR
+Text GLabel 5200 4100 0    50   Input ~ 0
+j3_STEP
+Text GLabel 5200 4000 0    50   Input ~ 0
+j3_DIR
+$Comp
+L power:GND #PWR?
+U 1 1 619A13FB
+P 5750 4900
+F 0 "#PWR?" H 5750 4650 50  0001 C CNN
+F 1 "GND" H 5755 4727 50  0000 C CNN
+F 2 "" H 5750 4900 50  0001 C CNN
+F 3 "" H 5750 4900 50  0001 C CNN
+	1    5750 4900
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5750 4900 5700 4900
+Wire Wire Line
+	5700 4900 5700 4800
+Wire Wire Line
+	5750 4900 5800 4900
+Wire Wire Line
+	5800 4900 5800 4800
+Connection ~ 5750 4900
+Text GLabel 5200 4200 0    50   Input ~ 0
+j1_limit_signal
+Text GLabel 5200 3800 0    50   Input ~ 0
+j2_limit_signal
+Text GLabel 5200 3900 0    50   Input ~ 0
+j3_limit_signal
+Text GLabel 5200 4500 0    50   Input ~ 0
+vacuum_signal
+Text GLabel 5200 4400 0    50   Input ~ 0
+solenoid_signal
 $EndSCHEMATC
