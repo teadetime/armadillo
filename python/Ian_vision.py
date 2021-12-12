@@ -42,9 +42,9 @@ class vision:
 
         # CONSTANTS
         # Offsets to use for all parts Only Using Two Squares RN
-        self.greenWorldOrigin = np.array([[200],[525]])
+        self.greenWorldOrigin = np.array([[300],[400]])
         self.originTagPixel = None
-        self.redWorld = np.array([[-200],[525]])
+        self.redWorld = np.array([[-300],[400]])
         self.widthHeightLow = 0.9
         self.widthHeightHigh = 1.1
         self.expectedSize = 31   # TODO Change This in Pixels
@@ -185,14 +185,20 @@ class vision:
                 return False
         # Always update the block mask
 
-        self.blockMask = cv2.inRange(self.hsv, self.lowerBlocks, self.upperBlocks)
+        gray = cv2.cvtColor(self.drawImg, cv2.COLOR_BGR2GRAY)
+        # gray_filtered = cv2.inRange(gray, 190, 255)
+        gray_filtered = cv2.inRange(gray, 190, 255)
 
-        kernel = np.ones((3,3), np.uint8)
-        eroded = cv2.erode(self.blockMask, kernel, iterations=3)
-        cv2.imshow("eroded", eroded)
-        self.blockMask = eroded
+        # self.hsv = cv2.cvtColor(self.resized, cv2.COLOR_BGR2HSV)
+        # self.blockMask = cv2.inRange(self.hsv, self.lowerBlocks, self.upperBlocks)
+        self.blockMask = gray_filtered
 
-        print(self.blockMask)
+        # kernel = np.ones((3,3), np.uint8)
+        # eroded = cv2.erode(self.blockMask, kernel, iterations=3)
+        # cv2.imshow("eroded", eroded)
+        # self.blockMask = eroded
+
+        # print(self.blockMask)
 
         if self.jengaDebug:
             cv2.imshow("HSV Block Mask", self.blockMask)  # Tag 1
@@ -203,14 +209,17 @@ class vision:
     def establishBasisAruco(self):
         self.ratio = self.image.shape[0] / float(self.resized.shape[0])
 
-        cv2.imshow("testing 1", self.drawImg)
-        self.checkWaitKey()
+        if self.jengaDebug:
+            cv2.imshow("testing 1", self.drawImg)
+            self.checkWaitKey()
 
         gray = cv2.cvtColor(self.drawImg, cv2.COLOR_BGR2GRAY)
         # gray_filtered = cv2.inRange(gray, 190, 255)
         gray_filtered = cv2.inRange(gray, 0, 190)
-        cv2.imshow("testing gray 1", gray_filtered)
-        self.checkWaitKey()
+
+        if self.jengaDebug:
+            cv2.imshow("testing gray 1", gray_filtered)
+            self.checkWaitKey()
 
         arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_250)
         arucoParams = cv2.aruco.DetectorParameters_create()
@@ -323,7 +332,7 @@ class vision:
             cv2.imshow("HSV Red", redMask) # Red Tag 2
 
 
-        self.checkWaitKey()
+            self.checkWaitKey()
 
         cntsYellow = self.getCnts(yellowMask)
         cntsRed = self.getCnts(redMask)
