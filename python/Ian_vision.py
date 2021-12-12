@@ -176,8 +176,17 @@ class vision:
         self.resized = imutils.resize(self.image, width=self.resizedSize)
         self.drawImg = self.resized.copy()
 
-        if pickSwatches:
-            self.pickSwatchColors() # reset the color basis for the swatches
+        arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
+        arucoParams = cv2.aruco.DetectorParameters_create()
+        (corners, ids, rejected) = cv2.aruco.detectMarkers(self.image, arucoDict, parameters = arucoParams)
+
+        print(corners, ids, rejected)
+        exit()
+
+
+
+        # if pickSwatches:
+        #     self.pickSwatchColors() # reset the color basis for the swatches
 
         if self.needsBasis:
             success = self.establishBasis()
