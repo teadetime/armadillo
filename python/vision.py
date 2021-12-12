@@ -124,47 +124,33 @@ class vision:
 
     def establishBasis(self):
         self.ratio = self.image.shape[0] / float(self.resized.shape[0])
-        self.hsv = cv2.cvtColor(self.resized, cv2.COLOR_BGR2HSV)
+        # self.hsv = cv2.cvtColor(self.resized, cv2.COLOR_BGR2HSV)
+        if self.jengaDebug:
+            cv2.imshow("testing 1", self.drawImg)
+            self.checkWaitKey()
 
-        # Create Masks Based on the Bounds
-        greenMask = cv2.inRange(self.hsv, self.lower_green, self.upper_green)
-        blueMask = cv2.inRange(self.hsv, self.lower_blue, self.upper_blue)
-        redMask = cv2.inRange(self.hsv, self.lower_red, self.upper_red)
-        blockMask = cv2.inRange(self.hsv, self.lowerBlocks, self.upperBlocks)
-        if self.debug:
-            cv2.imshow("HSV Green", greenMask)  # Tag 1
-            cv2.imshow("HSV Blue", blueMask) # Yellow Tag 2
-            cv2.imshow("HSV Red", redMask) # Red Tag 2
-            cv2.imshow("HSV Block", blockMask) # Red Tag 2
+        gray = cv2.cvtColor(self.drawImg, cv2.COLOR_BGR2GRAY)
+        gray_filtered = cv2.inRange(gray, 0, 190)
 
-        cntsBlue = self.getCnts(blueMask)
-        cntsRed = self.getCnts(redMask)
-        cntsGreen = self.getCnts(greenMask)
+        if self.jengaDebug:
+            cv2.imshow("testing gray 1", gray_filtered)
+            self.checkWaitKey()
 
-        if cntsGreen == [] or cntsRed == [] or cntsBlue == []:
-            return False
+        arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_250)
+        arucoParams = cv2.aruco.DetectorParameters_create()
+        (corners, ids, rejected) = cv2.aruco.detectMarkers(gray_filtered, arucoDict, parameters = arucoParams)
+        print("(corners, ids, rejected)", (corners, ids, rejected))
+
+        self.drawContoursAruco(corners, ids)
 
         # Calculate the centers of each piece
+        blueCenter = np.mean(corners[1][0], axis = 0)
+        print("blueCenter =", blueCenter)
+        print("type(blueCenter) =", type(blueCenter))
+        greenCenter = np.mean(corners[0][0], axis = 0)
+        print("greenCenter =", greenCenter)
+        print("type(greenCenter) =", type(greenCenter))
 
-        (blueCenter, blueBox) = self.getPixelCenterSquare(cntsBlue)
-        (greenCenter, greenBox) = self.getPixelCenterSquare(cntsGreen)
-
-        if blueCenter is None:
-            print("Couldn't find center of blue Tag!")
-            return False
-        if greenCenter is None:
-            return False
-        #(greenCenter, greenBox) = self.getPixelCenterSquare(cntsGreen)
-
-        # if greenBox is not None:
-        #     self.drawContours(greenBox)
-        #     self.drawPoint(greenCenter)
-        if blueBox is not None:
-            self.drawContours(blueBox)
-            self.drawPoint(blueCenter)
-        if greenBox is not None:
-            self.drawContours(greenBox)
-            self.drawPoint(greenCenter)
 
         # Image coords pixels
         self.originTagPixel = np.array([[blueCenter[0]], [blueCenter[1]]])
@@ -204,6 +190,42 @@ class vision:
         self.drawImg = self.resized.copy()  # Reset the image for other operations!
         self.needsBasis = False
         return True # This means we were successful
+
+    # copied from https://www.pyimagesearch.com/2020/12/21/detecting-aruco-markers-with-opencv-and-python/
+    def drawContoursAruco(self, corners, ids):
+        # verify *at least* one ArUco marker was detected
+        if len(corners) > 0:
+            # flatten the ArUco IDs list
+            ids = ids.flatten()
+            # loop over the detected ArUCo corners
+            for (markerCorner, markerID) in zip(corners, ids):
+                # extract the marker corners (which are always returned in
+                # top-left, top-right, bottom-right, and bottom-left order)
+                corners = markerCorner.reshape((4, 2))
+                (topLeft, topRight, bottomRight, bottomLeft) = corners
+                # convert each of the (x, y)-coordinate pairs to integers
+                topRight = (int(topRight[0]), int(topRight[1]))
+                bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
+                bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
+                topLeft = (int(topLeft[0]), int(topLeft[1]))
+                        # draw the bounding box of the ArUCo detection
+                cv2.line(self.drawImg, topLeft, topRight, (0, 255, 0), 2)
+                cv2.line(self.drawImg, topRight, bottomRight, (0, 255, 0), 2)
+                cv2.line(self.drawImg, bottomRight, bottomLeft, (0, 255, 0), 2)
+                cv2.line(self.drawImg, bottomLeft, topLeft, (0, 255, 0), 2)
+                # compute and draw the center (x, y)-coordinates of the ArUco
+                # marker
+                cX = int((topLeft[0] + bottomRight[0]) / 2.0)
+                cY = int((topLeft[1] + bottomRight[1]) / 2.0)
+                cv2.circle(self.drawImg, (cX, cY), 4, (0, 0, 255), -1)
+                # draw the ArUco marker ID on the image
+                cv2.putText(self.drawImg, str(markerID),
+                    (topLeft[0], topLeft[1] - 15), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5, (0, 255, 0), 2)
+                print("[INFO] ArUco marker ID: {}".format(markerID))
+                # show the output image
+                cv2.imshow("Image 2", self.drawImg)
+                self.checkWaitKey(0)
 
     # Wrap some basic OpenCV for Easier Use
     def drawContours(self, box, color=(0, 0, 255), thickness=2):
@@ -435,3 +457,15 @@ class vision:
                 break
         cap.release()
         cv2.destroyAllWindows()
+
+    # wrapper for cv.waitKey that destroys all windows when ESC is pressed
+    def checkWaitKey(self, val=0): # val = 0 displays static frame; val = 1 dispays moving frame
+        # perform the waitKey, then check key strokes for special actions
+        key = cv2.waitKey(val) & 0xFF
+        if key == 27: # ESC
+            cv2.destroyAllWindows()
+            exit()
+        if key == 32: # Space
+            pass # could put debugging tools or something here
+            # TODO: toggle calibration flag and/or send calibration signal
+        return key

@@ -4,6 +4,7 @@ from numpy.core.numeric import ones
 from numpy.core.shape_base import block
 import robot
 import Ian_vision as vision
+# import vision
 import time
 
 def main():
