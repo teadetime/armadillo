@@ -21,7 +21,7 @@ def main():
         grabbingFrame = True
         if grabbingFrame:
             print("grabbing Frame")
-            grabImageSuccess = vs.grabImage(fromPath=True)
+            grabImageSuccess = vs.grabImage(fromPath=False)
 
             if not grabImageSuccess:
                 print("Please reposition Camera and check masking!")

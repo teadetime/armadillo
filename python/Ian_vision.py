@@ -29,7 +29,7 @@ class vision:
 
         # Image Loading and Resizing
         self.needsBasis = True  # Run ceratin calculations if they haven't been run before
-        self.camIndex = 2       # 0 is internal webcam
+        self.camIndex = 0       # 0 is internal webcam
         self.image = None
         self.resized = None     #imutils.resize(image, width=self.resizedSize)
         self.drawImg = None
@@ -85,7 +85,8 @@ class vision:
 
     def testCamera(self):
         # TODO: doesn't actually fail as instructed
-        cap = cv2.VideoCapture(self.camIndex)
+        cap = cv2.VideoCapture(self.camIndex, cv2.CAP_DSHOW)
+        print(cap)
         # Check if the webcam is opened correctly
         # while True:
         #     ret, frame = cap.read()
@@ -198,6 +199,76 @@ class vision:
         return True
     # TODO: WHY DOESNT THIS WORK!?!?!?
     #image = cv2.flip(image,0)
+
+    def establishBasisAruco(self):
+        self.ratio = self.image.shape[0] / float(self.resized.shape[0])
+
+        arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
+        arucoParams = cv2.aruco.DetectorParameters_create()
+        (corners, ids, rejected) = cv2.aruco.detectMarkers(self.drawImg, arucoDict, parameters = arucoParams)
+        print("(corners, ids, rejected)", (corners, ids, rejected))
+
+        # Calculate the centers of each piece
+        (greenCenter, greenBox) = self.getPixelCenterSquare(cntsGreen)
+        (yellowCenter, yellowBox) = self.getPixelCenterSquare(cntsYellow)
+        (redCenter, redBox) = self.getPixelCenterSquare(cntsRed)
+
+        greenBox = corners[0]
+        print(greenBox)
+
+        greenCenter = np.mean(corners[0], axis = 0)
+        redCenter = np.mean(corners[1], axis = 0)
+        greenCenter = np.mean(corners[0], axis = 0)
+
+        if greenBox is not None:
+            self.drawContours(greenBox)
+            self.drawPoint(greenCenter)
+        if yellowBox is not None:
+            self.drawContours(yellowBox)
+            self.drawPoint(yellowCenter)
+        if redBox is not None:
+            self.drawContours(redBox)
+            self.drawPoint(redCenter)
+
+
+        # Image coords pixels
+        self.originTagPixel = np.array([[greenCenter[0]], [greenCenter[1]]])
+        secondaryTag = np.array([[redCenter[0]], [redCenter[1]]])
+
+        self.basisWorld, self.basisPixel, self.frameRotation = self.calcBasis(self.greenWorldOrigin, self.redWorld, self.originTagPixel, secondaryTag)
+
+        self.drawBasis()
+
+        if self.debug:
+            print(f"World Basis: \n{self.basisWorld}\nPixel Basis: \n{self.basisPixel}")
+
+            # Testing the yellow block in center
+            ####THESE PARAMS NEED TO BE FROM THE BLOCK/OPENCV
+            blockRotationImage = 0
+            blockCenterImageFullFrame = np.array([[yellowCenter[0]],
+                                                [yellowCenter[1]]])
+            print("yellow", yellowCenter)
+            # Example to World Coords
+            coordWorld, rotationWorld = self.changeBasisAtoB(self.greenWorldOrigin, self.originTagPixel, self.frameRotation, self.basisWorld,
+                                                    blockCenterImageFullFrame, blockRotationImage )
+            print(f"Yellow World Coords:\n {coordWorld}\nWorld Rotation: {rotationWorld}")
+            # # Example to Pixel Coords
+            testWorldCoords = np.array([[0],[100]])
+            coordPixel, rotationBlock = self.changeBasisAtoB(self.originTagPixel, self.greenWorldOrigin , blockRotationImage, self.basisPixel,
+                                                     testWorldCoords, self.frameRotation  )
+            print(f"World->Pixel: {coordPixel}")
+            self.drawPoint(coordPixel, (0,255,0), 5)
+            for i in range(-500, 500, 50):
+                for j in range(0, 650, 50):
+                    testWorldCoords = np.array([[i],[j]])
+                    coordPixel, rotationBlock = self.changeBasisAtoB(self.originTagPixel, self.greenWorldOrigin , blockRotationImage,
+                                                    self.basisPixel, testWorldCoords, self.frameRotation  )
+                    self.drawPoint(coordPixel, (0,0,255))
+            cv2.imshow("Image", self.drawImg)
+            self.checkWaitKey(0)
+        self.drawImg = self.resized.copy()  # Reset the image for other operations!
+        self.needsBasis = False
+        return True # This means we were successful
 
     def establishBasis(self):
         self.ratio = self.image.shape[0] / float(self.resized.shape[0])
