@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 import math
 from time import sleep
+import os
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", required=True,
@@ -15,13 +16,21 @@ class vision:
         self.debug = True
         self.jengaDebug = True
 
+        # Nathan Values for qt2
+        # Exposure = 72
+        #Brightness = 74
+        #Contrast = 32
+        # Saturation = 42
+        # Gain = 50
+
+
         # Image Loading and Resizing
         self.needsBasis = True  # Run ceratin calculations if they haven't been run before
-        self.camIndex = 2       # 0 is internal webcam
+        self.camIndex = 0       # 0 is internal webcam
         self.image = None
         self.resized = None     #imutils.resize(image, width=self.resizedSize)
         self.drawImg = None
-        self.resizedSize = 1000
+        self.resizedSize = 600
         self.ratio = None       #image.shape[0] / float(resized.shape[0])
         self.hsv = None         #cv2.cvtColor(resized, cv2.COLOR_BGR2HSV)
 
@@ -30,34 +39,51 @@ class vision:
 
         # CONSTANTS
         # Offsets to use for all parts Only Using Two Squares RN
-        self.greenWorldOrigin = np.array([[200],[525]])
+        self.blueWorldOrigin = np.array([[300],[400]])
         self.originTagPixel = None
-        self.redWorld = np.array([[-200],[525]])
-        self.widthHeightLow = 0.9
-        self.widthHeightHigh = 1.1
+        self.greenWorld = np.array([[-300],[400]])
+        self.widthHeightLow = 0.8
+        self.widthHeightHigh = 1.2
         self.expectedSize = 31   # TODO Change This in Pixels
 
         # Boundaries for the different  Colors
-        self.lower_red = np.array([0,150,180])
-        self.upper_red = np.array([22,240,245])
-        self.lower_green = np.array([40,47,182])
-        self.upper_green = np.array([72,197,255])
+        #LINUX
+        if(os.name == 'posix'):
+            print("Running on Linux")
+            self.lower_red = np.array([0,109,116])
+            self.upper_red = np.array([27,255,255])
 
-        self.lower_blue = np.array([67,38,180])
-        self.upper_blue = np.array([96,114,255])
+            self.lower_blue = np.array([66,87,115])
+            self.upper_blue = np.array([130,198,255])
 
+            self.lowerBlocks =  np.array([0,0,79])
+            self.upperBlocks = np.array([75,108,205])
 
-        self.lower_yellow = np.array([26,43,240])
-        self.upper_yellow = np.array([43,110,255])
+            self.lower_green = np.array([28,38,144])
+            self.upper_green = np.array([65,90,255])
+            self.lower_yellow = np.array([26,43,240])
+            self.upper_yellow = np.array([43,110,255])
+        # WINDOWS
+        else:
+            print("Running on Windows!")
+            self.lower_red = np.array([0, 0, 0])
+            self.upper_red = np.array([57, 255, 255])
 
-        self.lowerBlocks =  np.array([10,0,140])
-        self.upperBlocks = np.array([47,70,255])
+            self.lower_blue = np.array([71,60,106])
+            self.upper_blue = np.array([179,255,255])
 
+            self.lowerBlocks = np.array([0,0,79])
+            self.upperBlocks = np.array([75,108,205])
+
+            self.lower_green = np.array([28,38,144])
+            self.upper_green = np.array([65,90,255])
+            self.lower_yellow = np.array([26,43,240])
+            self.upper_yellow = np.array([43,110,255])
         # Jenga block via pixels from our camera
         self.jengaWHigh = 42
-        self.jengaWLow = 36
-        self.jengaLHigh = 121
-        self.jengaLLow = 115
+        self.jengaWLow = 35
+        self.jengaLHigh = 130
+        self.jengaLLow = 120
         self.singleBlock = None     # Resets after finding a block sets to None if no block found
 
         self.basisWorld = None
@@ -66,7 +92,8 @@ class vision:
 
     def testCamera(self):
         # TODO: doesn't actually fail as instructed
-        cap = cv2.VideoCapture(self.camIndex, cv2.CAP_DSHOW)
+        cap = cv2.VideoCapture(self.camIndex, cv2.CAP_DSHOW) # this is necessary for connecting to camera on Windows!
+        # cap = cv2.VideoCapture(self.camIndex)
         if not cap.isOpened():
             cap.release()
             return False
@@ -84,7 +111,7 @@ class vision:
         self.drawImg = self.resized.copy()
         if self.needsBasis:
             success = self.establishBasis()
-            print(f"Establish Basis{success}")
+            print(f"Establish Basis Status? : {success}")
             if not success:
                 return False
         # Always update the block mask
@@ -101,42 +128,49 @@ class vision:
 
         # Create Masks Based on the Bounds
         greenMask = cv2.inRange(self.hsv, self.lower_green, self.upper_green)
-        yellowMask = cv2.inRange(self.hsv, self.lower_yellow, self.upper_yellow)
+        blueMask = cv2.inRange(self.hsv, self.lower_blue, self.upper_blue)
         redMask = cv2.inRange(self.hsv, self.lower_red, self.upper_red)
-        # if self.debug:
-        #     cv2.imshow("HSV Green", self.greenMask)  # Tag 1
-        #     cv2.imshow("HSV Yellow", self.yellowMask) # Yellow Tag 2
-        #     cv2.imshow("HSV Red", self.redMask) # Red Tag 2
-        cntsYellow = self.getCnts(yellowMask)
+        blockMask = cv2.inRange(self.hsv, self.lowerBlocks, self.upperBlocks)
+        if self.debug:
+            cv2.imshow("HSV Green", greenMask)  # Tag 1
+            cv2.imshow("HSV Blue", blueMask) # Yellow Tag 2
+            cv2.imshow("HSV Red", redMask) # Red Tag 2
+            cv2.imshow("HSV Block", blockMask) # Red Tag 2
+
+        cntsBlue = self.getCnts(blueMask)
         cntsRed = self.getCnts(redMask)
         cntsGreen = self.getCnts(greenMask)
 
-        if cntsGreen == [] or cntsRed == [] or cntsYellow == []:
+        if cntsGreen == [] or cntsRed == [] or cntsBlue == []:
             return False
 
-        print(cntsGreen)
-        print(cntsRed)
         # Calculate the centers of each piece
-        (greenCenter, greenBox) = self.getPixelCenterSquare(cntsGreen)
-        (yellowCenter, yellowBox) = self.getPixelCenterSquare(cntsYellow)
-        (redCenter, redBox) = self.getPixelCenterSquare(cntsRed)
 
+        (blueCenter, blueBox) = self.getPixelCenterSquare(cntsBlue)
+        (greenCenter, greenBox) = self.getPixelCenterSquare(cntsGreen)
+
+        if blueCenter is None:
+            print("Couldn't find center of blue Tag!")
+            return False
+        if greenCenter is None:
+            return False
+        #(greenCenter, greenBox) = self.getPixelCenterSquare(cntsGreen)
+
+        # if greenBox is not None:
+        #     self.drawContours(greenBox)
+        #     self.drawPoint(greenCenter)
+        if blueBox is not None:
+            self.drawContours(blueBox)
+            self.drawPoint(blueCenter)
         if greenBox is not None:
             self.drawContours(greenBox)
             self.drawPoint(greenCenter)
-        if yellowBox is not None:
-            self.drawContours(yellowBox)
-            self.drawPoint(yellowCenter)
-        if redBox is not None:
-            self.drawContours(redBox)
-            self.drawPoint(redCenter)
-
 
         # Image coords pixels
-        self.originTagPixel = np.array([[greenCenter[0]], [greenCenter[1]]])
-        secondaryTag = np.array([[redCenter[0]], [redCenter[1]]])
+        self.originTagPixel = np.array([[blueCenter[0]], [blueCenter[1]]])
+        secondaryTag = np.array([[greenCenter[0]], [greenCenter[1]]])
 
-        self.basisWorld, self.basisPixel, self.frameRotation = self.calcBasis(self.greenWorldOrigin, self.redWorld, self.originTagPixel, secondaryTag)
+        self.basisWorld, self.basisPixel, self.frameRotation = self.calcBasis(self.blueWorldOrigin, self.greenWorld, self.originTagPixel, secondaryTag)
 
         self.drawBasis()
 
@@ -146,26 +180,26 @@ class vision:
             # Testing the yellow block in center
             ####THESE PARAMS NEED TO BE FROM THE BLOCK/OPENCV
             blockRotationImage = 0
-            blockCenterImageFullFrame = np.array([[yellowCenter[0]],
-                                                [yellowCenter[1]]])
-            print("yellow", yellowCenter)
+            blockCenterImageFullFrame = np.array([[blueCenter[0]],
+                                                [blueCenter[1]]])
+            print("yellow", blueCenter)
             # Example to World Coords
-            coordWorld, rotationWorld = self.changeBasisAtoB(self.greenWorldOrigin, self.originTagPixel, self.frameRotation, self.basisWorld,
+            coordWorld, rotationWorld = self.changeBasisAtoB(self.blueWorldOrigin, self.originTagPixel, self.frameRotation, self.basisWorld,
                                                     blockCenterImageFullFrame, blockRotationImage )
             print(f"Yellow World Coords:\n {coordWorld}\nWorld Rotation: {rotationWorld}")
             # # Example to Pixel Coords
-            testWorldCoords = np.array([[0],[100]])
-            coordPixel, rotationBlock = self.changeBasisAtoB(self.originTagPixel, self.greenWorldOrigin , blockRotationImage, self.basisPixel,
+            testWorldCoords = np.array([[0],[0]])
+            coordPixel, rotationBlock = self.changeBasisAtoB(self.originTagPixel, self.blueWorldOrigin , blockRotationImage, self.basisPixel,
                                                      testWorldCoords, self.frameRotation  )
             print(f"World->Pixel: {coordPixel}")
             self.drawPoint(coordPixel, (0,255,0), 5)
-            for i in range(-500, 500, 50):
-                for j in range(0, 650, 50):
+            for i in range(-300, 350, 50):
+                for j in range(0, 500, 50):
                     testWorldCoords = np.array([[i],[j]])
-                    coordPixel, rotationBlock = self.changeBasisAtoB(self.originTagPixel, self.greenWorldOrigin , blockRotationImage,
+                    coordPixel, rotationBlock = self.changeBasisAtoB(self.originTagPixel, self.blueWorldOrigin , blockRotationImage,
                                                     self.basisPixel, testWorldCoords, self.frameRotation  )
                     self.drawPoint(coordPixel, (0,0,255))
-            cv2.imshow("Image", self.drawImg)
+            cv2.imshow("ImageTest", self.drawImg)
             cv2.waitKey(0)
         self.drawImg = self.resized.copy()  # Reset the image for other operations!
         self.needsBasis = False
@@ -203,6 +237,10 @@ class vision:
                 continue
             blockLong = max(rot_rect[1])*self.ratio
             blockShort = min(rot_rect[1])*self.ratio
+
+            # use these for making sure block is right size!
+            print(blockLong)
+            print(blockShort)
             if blockLong > self.jengaLHigh or blockLong < self.jengaLLow or blockShort > self.jengaWHigh or blockShort < self.jengaWLow:
                 # This isn't a jenga Block
                 continue
@@ -230,7 +268,7 @@ class vision:
     def getBlockWorld(self):
         singleBlockCenterPixel, singleBlockRotation =  self.getBlockPixel()
         # Lets take the block into world Coordinates!!!
-        coordWorld, rotationWorld = self.changeBasisAtoB(self.greenWorldOrigin, self.originTagPixel, self.frameRotation, self.basisWorld,
+        coordWorld, rotationWorld = self.changeBasisAtoB(self.blueWorldOrigin, self.originTagPixel, self.frameRotation, self.basisWorld,
                                                 singleBlockCenterPixel, singleBlockRotation)
 
         # TODO: what does this return if nothing has happened??
@@ -242,7 +280,7 @@ class vision:
         return coordWorld, rotationWorld
 
     # loop over the contours
-    def getPixelCenterSquare(self, cnts):
+    def getPixelCenterSquare(self, cnts, expectedSize=90):
         for c in cnts:
             # compute the center of the contour, then detect the name of the
             # shape using only the contour
@@ -250,15 +288,19 @@ class vision:
 
             # This isn't Valid
             if rot_rect[1][0] == 0 or rot_rect[1][1] == 0:
+                print("there")
                 continue
 
             # TODO Get Rid of too Big
-            #if rot_rect[1][0] > 1.2 * expectedSize or rot_rect[1][0] < .8 * expectedSize or  rot_rect[1][1] > 1.2 * expectedSize or rot_rect[1][1] < .8 * expectedSize:
-            #    continue
+            if rot_rect[1][0] < .8 * expectedSize or  rot_rect[1][1] < .8 * expectedSize:
+                print("Here")
+                continue
 
             widthHeightRatio = rot_rect[1][0]/rot_rect[1][1]
             if widthHeightRatio > self.widthHeightHigh or widthHeightRatio < self.widthHeightLow:
                 #Add a check to see if it about the right size!!
+                # Tag bad size
+                print("Bad tag size")
                 continue
 
             #rotation = rot_rect[2]
@@ -269,21 +311,31 @@ class vision:
             box = np.int0(box)
 
             return (rot_rect[0], box) # Returns the center in pixels and also the box
+        return (None, None) # Return empty tuple for recognition of a failure
 
     def calcBasis(self, baseTagWorld, secondaryTagWorld, baseTagPixel, secondaryTagPixel):
         """ np.array 2x1, np.array 2x1, np.array 2x1, np.array 2x1 """
-        tagToTagVectorWorld = secondaryTagWorld-baseTagWorld
+        tagToTagVectorWorld = baseTagWorld - secondaryTagWorld
         distWorld = np.hypot(tagToTagVectorWorld[0], tagToTagVectorWorld[1]) # Calculates hypotenuse!
 
-        tagToTagVectorPixel = secondaryTagPixel-baseTagPixel
+        tagToTagVectorPixel = baseTagPixel - secondaryTagPixel
         distPixel = np.hypot(tagToTagVectorPixel[0], tagToTagVectorPixel[1])
 
         frameRotation = math.atan2(tagToTagVectorPixel[1], tagToTagVectorPixel[0])  # This may need to be adjusted since images use weird coordinates
 
         mmPerPixel = distWorld/distPixel
 
-        xPosVector = -1* tagToTagVectorPixel/distPixel * mmPerPixel
+
+        weirdCorrectionX = np.array([[1],[1]])
+        weirdCorrectionY = np.array([[-1],[1]])
+        xPosVector = 1* tagToTagVectorPixel/distPixel * mmPerPixel
         yPosVector = -1* np.vstack((xPosVector[1], xPosVector[0]))
+        xPosVector = np.multiply(weirdCorrectionX, xPosVector)
+        yPosVector = np.multiply(weirdCorrectionY, yPosVector)
+
+        if(self.debug):
+            print(f"THIS IS X\n{xPosVector}")
+            print(f"THIS IS Y\n{yPosVector}")
 
         basis = np.hstack((xPosVector,yPosVector))
         basisInv = np.linalg.inv(basis)
@@ -308,8 +360,7 @@ class vision:
             pass
         cap = cv2.VideoCapture(self.camIndex)
         # Create a window
-        cv2.namedWindow('image')
-
+        cv2.namedWindow('image', cv2.WINDOW_NORMAL)
         # create trackbars for color change
         cv2.createTrackbar('HMin','image',0,179,nothing) # Hue is from 0-179 for Opencv
         cv2.createTrackbar('SMin','image',0,255,nothing)
@@ -324,8 +375,8 @@ class vision:
         cv2.setTrackbarPos('VMax', 'image', 255)
 
         # Initialize to check if HSV min/max value changes
-        hMin = sMin = vMin = hMax = sMax = vMax = 0
-        phMin = psMin = pvMin = phMax = psMax = pvMax = 0
+        hMin = sMin = vMin = hMax = sMax = vMax = 0 # new values
+        phMin = psMin = pvMin = phMax = psMax = pvMax = 0 # preious values
 
         # output = image
         wait_time = 33
@@ -348,9 +399,22 @@ class vision:
             lower = np.array([hMin, sMin, vMin])
             upper = np.array([hMax, sMax, vMax])
 
-            # Create HSV Image and threshold into a range.
             hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-            mask = cv2.inRange(hsv, lower, upper)
+
+            inverseHue = hMin > hMax
+            # account for hue wrapping around 255
+            if inverseHue:
+                print("inverseHue is in effect!")
+                inverseLower1 = np.array([0, sMin, vMin])
+                inverseUpper1 = np.array([hMax, sMax, vMax])
+                inverseLower2 = np.array([hMin, sMin, vMin])
+                inverseUpper2 = np.array([255, sMax, vMax])
+
+                mask = cv2.inRange(hsv, inverseLower1, inverseUpper1) | cv2.inRange(hsv, inverseLower2, inverseUpper2)
+            else:
+                # Create HSV Image and threshold into a range.
+                mask = cv2.inRange(hsv, lower, upper)
+
             output = cv2.bitwise_and(image,image, mask= mask)
 
             # Print if there is a change in HSV value
