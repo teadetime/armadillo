@@ -241,7 +241,7 @@ class robot:
                 data = self.serial.read().strip()     # This line is essential and somehow reads the empty line that is output at the end of Setup
                 break
 
-    def createMessage(self, messageType, jPos, vac = 0, speed = 0):
+    def createMessage(self, messageType, jPos, vac = 0, pump = 0):
         """
         Sends form startChar j1,j2,j3,j4,vac,speed endChar
         ie. <M,0,20,30,50,1.0,50>
@@ -251,18 +251,18 @@ class robot:
         self.lastObjective = messageType
         message = (self.startChar+messageType+self.splitChar+str(jPos[0])+self.splitChar+str(jPos[1])
                     +self.splitChar+str(jPos[2])+self.splitChar+str(jPos[3])
-                    +self.splitChar+str(vac)+self.splitChar+str(speed)+self.endChar)
+                    +self.splitChar+str(vac)+self.splitChar+str(pump)+self.endChar)
         return message
 
 
-    def moveTo(self, x, y, z, theta, suction):
+    def moveTo(self, x, y, z, theta, suction, pump):
         # Go to a position
         jPos = self.worldToJoint((x, y, z), theta)
         if not jPos:
             print("Arm is unable to get to reach this position!")
             return False
         stepPos = self.radTupleToStepTuple(jPos)
-        nextPoint = self.createMessage(self.commands["move"], stepPos, vac = float(suction), speed = 40.0)
+        nextPoint = self.createMessage(self.commands["move"], stepPos, vac = float(suction), pump = float(pump))
         self.serial.write(nextPoint)
         print(f"sent message: {nextPoint}")
         result = self.waitForResponse()
@@ -285,8 +285,32 @@ class robot:
         print(result)
 
     def controlVacPump(self, vac=1,pump=1):
-        controlMessage = self.createMessage(self.commands["control"], (0, 0, 0, 0), vac, pump)
+        controlMessage = self.createMessage(self.commands["control"], (0, 0, 0, 0), int(vac), int(pump))
         self.serial.write(controlMessage)
         print(f"Calibrating: {controlMessage}")
         result = self.waitForResponse()
         print(result)
+
+    def calcSmoothPick(self, coords, approachZ=5, stepSize=1, extract=False):
+        """
+        Calculates approach for the block using several points!
+        """
+        print("SMOOTH")
+        x = coords[0]
+        y = coords[1]
+        z = coords[2]
+        rotation = coords[3]
+
+        tupleApproach = []
+
+        steps = int(approachZ/stepSize)+1
+
+        for i in range(steps):
+            tupleApproach.append((x,y,z+i*stepSize,rotation)) 
+
+        if not extract:
+            return reversed(tupleApproach)
+        return tupleApproach
+
+    def calcSmoothPlace(coords):
+        pass
