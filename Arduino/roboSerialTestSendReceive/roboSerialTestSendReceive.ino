@@ -206,9 +206,9 @@ void loop() {
         j1Homed = false;
         j2Homed = false;
         j3Homed = false;
-        stepper1.setMaxSpeed(300);
-        stepper2.setMaxSpeed(300);
-        stepper3.setMaxSpeed(300);
+//        stepper1.setMaxSpeed(300);
+//        stepper2.setMaxSpeed(300);
+//        stepper3.setMaxSpeed(300);
         stepper1.moveTo(stepsRev*microStep);
         stepper2.moveTo(stepsRev*microStep);
         stepper3.moveTo(stepsRev*microStep);
