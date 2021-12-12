@@ -3,8 +3,8 @@ from numpy.core.numeric import ones
 
 from numpy.core.shape_base import block
 import robot
-import Ian_vision as vision
-# import vision
+# import Ian_vision as vision
+import vision
 import time
 
 def main():
@@ -33,6 +33,7 @@ def main():
                 else:
                     quit()
             blockCoords = list(vs.getBlockWorld())
+            print("BLOCK COORDS: ")
             print(blockCoords)
 
     if testingHomingandWorld:
@@ -80,6 +81,8 @@ def main():
         stackCoords = [(300, 300, 50, 0)] * 100
         stackPositionCostant = (0, 300, 50, 0)
         arm.home()
+        arm.moveTo(0, 400, 20, 0, 0)
+        # exit()
         for blockPosition, stackPosition in zip(blockCoords, stackCoords):
             # print(*midpoint, "hello")
             # print(*stackCoords, "world")
@@ -98,8 +101,6 @@ def main():
             arm.moveTo(midpoint[0], midpoint[1], midpoint[2], midpoint[3], suction = 1)
             arm.moveTo(stackPosition[0], stackPosition[1], stackPosition[2], stackPosition[3], suction = 1)
             arm.moveTo(stackPosition[0], stackPosition[1], stackPosition[2], stackPosition[3], suction = 0)
-
-
 
         arm.home()
         exit()

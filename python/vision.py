@@ -104,18 +104,27 @@ class vision:
         if fromPath:
             self.image = cv2.imread(args["image"])
         else:
-            cam = cv2.VideoCapture(self.camIndex)
+            cam = cv2.VideoCapture(self.camIndex, cv2.CAP_DSHOW)
+            cam.set(3,1280)
+            cam.set(4,1024)
             sleep(delay)
             ret, self.image = cam.read()
         self.resized = imutils.resize(self.image, width=self.resizedSize)
         self.drawImg = self.resized.copy()
+
         if self.needsBasis:
             success = self.establishBasis()
             print(f"Establish Basis Status? : {success}")
             if not success:
                 return False
         # Always update the block mask
-        self.blockMask = cv2.inRange(self.hsv, self.lowerBlocks, self.upperBlocks)
+        # self.blockMask = cv2.inRange(self.hsv, self.lowerBlocks, self.upperBlocks)
+
+        gray = cv2.cvtColor(self.drawImg, cv2.COLOR_BGR2GRAY)
+        # gray_filtered = cv2.inRange(gray, 190, 255)
+        gray_filtered = cv2.inRange(gray, 190, 255)
+        self.blockMask = gray_filtered
+
         if self.jengaDebug:
             cv2.imshow("HSV Block Mask", self.blockMask)  # Tag 1
         return True
