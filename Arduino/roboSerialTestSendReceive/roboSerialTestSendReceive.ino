@@ -185,7 +185,6 @@ void loop() {
       newData = false;
       objectiveInProgress = true;
       objectiveStartTime = currTime;
-      setVac(vacPC);
       if (objectiveType == messCharMove) {
         // TODO PUT THIS IN A FUNCTION THAT CALCULATES DEGREES TO STEPS
         moving = true;
@@ -207,12 +206,13 @@ void loop() {
         j1Homed = false;
         j2Homed = false;
         j3Homed = false;
-//        stepper1.setMaxSpeed(300);
-//        stepper2.setMaxSpeed(300);
-//        stepper3.setMaxSpeed(300);
+        stepper1.setMaxSpeed(300);
+        stepper2.setMaxSpeed(300);
+        stepper3.setMaxSpeed(300);
         stepper1.moveTo(stepsRev*microStep);
         stepper2.moveTo(stepsRev*microStep);
         stepper3.moveTo(stepsRev*microStep);
+        setVac(vacPC);
         servoPos = servoZero;
         servoEOF.write(servoPos);
       }
@@ -237,6 +237,7 @@ void loop() {
     switch (objectiveType) {
       case messCharMove:
         if (!motorsMoving()) {
+          setVac(vacPC);  
           // Send Objective completed message
           objectiveInProgress = false;
           moving = false;
@@ -249,6 +250,7 @@ void loop() {
         homingLoop();
         if(j1Homed==1 && j2Homed==1 && j3Homed==1){
           resetSteppers(j1PC,j2PC,j3PC,j4PC);
+          setVac(vacPC);
           sendObjectiveCompleted(objectiveType, messCharSuccess);
           moving = false;
           objectiveInProgress = false;
@@ -456,52 +458,4 @@ void homingLoop(){
       stepper3.setCurrentPosition(j3PC);
       j3Homed = true;
   }
-}
-
-void homingProcedureBlocking() {
-  // so far this homes each joint individually
-
-  //homes j1
-  stepper1.moveTo(10000);
-  readLimitSwitches();
-  while (digitalRead(j1_limitPin) == 0) {
-    stepper1.run();
-    readLimitSwitches();
-    //Serial.println(j1_limitVal);
-    if (j1_limitVal == 1) {
-    //  Serial.println(j1_limitVal);
-      stepper1.stop();
-      j1Homed = true;
-    }
-  }
-
-  // homes j2
-  stepper2.moveTo(10000);
-  readLimitSwitches();
-  while (digitalRead(j2_limitPin) == 1) {
-    stepper2.run();
-    readLimitSwitches();
-    //Serial.println(j2_limitVal);
-    if (j2_limitVal == 0) {
-    //  Serial.println(j2_limitVal);
-      stepper2.stop();
-      j2Homed = true;
-    }
-  }
-
-  // homes j3
-  stepper3.moveTo(10000);
-  readLimitSwitches();
-  while (digitalRead(j3_limitPin) == 1) {
-    stepper3.run();
-    readLimitSwitches();
-    //Serial.println(j3_limitVal);
-    if (j3_limitVal == 0) {
-      //Serial.println(j3_limitVal);
-      stepper3.stop();
-
-      j3Homed = true;
-    }
-  }
-
 }
