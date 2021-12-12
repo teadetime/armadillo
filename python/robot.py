@@ -283,3 +283,10 @@ class robot:
         print(f"Calibrating: {calibratingMessage}")
         result = self.waitForResponse()
         print(result)
+
+    def controlVacPump(self, vac=1,pump=1):
+        controlMessage = self.createMessage(self.commands["control"], (0, 0, 0, 0), vac, pump)
+        self.serial.write(controlMessage)
+        print(f"Calibrating: {controlMessage}")
+        result = self.waitForResponse()
+        print(result)

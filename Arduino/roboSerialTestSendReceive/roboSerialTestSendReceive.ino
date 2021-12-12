@@ -222,23 +222,24 @@ void loop() {
     }
   }
   
-  // checking for limit switch hit during general movement - this should happen multiple times in the main loop???
-  readLimitSwitches();
-  if(j1_limitVal == 0) {
-    stepper1.stop();
-  }
-  if(j1_limitVal == 1) {
-    stepper2.stop();
-  }
-  if(j1_limitVal == 1) {
-    stepper3.stop();
-  }
+
   ////////////////
   //Do Objective//
   ////////////////
   if (objectiveInProgress) {
     switch (objectiveType) {
       case messCharMove:
+        // checking for limit switch hit during general movement - this should happen multiple times in the main loop???
+        readLimitSwitches();
+        if(j1_limitVal == 1) {
+          stepper1.stop();
+        }
+        if(j2_limitVal == 0) {
+          stepper2.stop();
+        }
+        if(j3_limitVal == 0) {
+          stepper3.stop();
+        }
         if (!motorsMoving()) {
           setVac(vacPC);  
           // Send Objective completed message
