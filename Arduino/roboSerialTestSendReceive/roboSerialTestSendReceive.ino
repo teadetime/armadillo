@@ -72,6 +72,7 @@ const char messCharMove = 'M';      // First Byte in a message sent that has rob
 const char messCharInfo = 'I';      // First Byte in data the indicates something about an objective
 const char messCharHome = 'H';          // First Byte for messages regarding homing
 const char messCharTest = 'T';
+const char messCharControl = 'C';
 const char messCharOther = 'O';
 const char messCharSuccess = 'Y';
 const char messCharFail = 'N';
@@ -88,7 +89,7 @@ float j2PC = 0.0;
 float j3PC = 0.0;
 float j4PC = 0.0;
 float vacPC = 0.0;
-float speedPC = 0.0;
+float pumpPC = 0.0;
 boolean newData = false;
 
 bool moving = false;        //Set to true to if executing a move command
@@ -145,7 +146,7 @@ void setup() {
   Serial.begin(115200);     // Fast Baud to send data more quickly!
   establishContact();       // send a byte to establish contact until receiver responds
   digitalWrite(pumpPin, HIGH);
-  digitalWrite(vacPin, HIGH);
+  digitalWrite(vacPin, LOW);
 
 
   Serial.println();
@@ -183,6 +184,7 @@ void loop() {
       parseData();
       showParsedData();
       newData = false;
+      setPump(pumpPC);
       objectiveInProgress = true;
       objectiveStartTime = currTime;
       if (objectiveType == messCharMove) {
@@ -213,6 +215,7 @@ void loop() {
         stepper2.moveTo(stepsRev*microStep);
         stepper3.moveTo(stepsRev*microStep);
         setVac(vacPC);
+        setPump(pumpPC);
         servoPos = servoZero;
         servoEOF.write(servoPos);
       }
@@ -251,10 +254,18 @@ void loop() {
         if(j1Homed==1 && j2Homed==1 && j3Homed==1){
           resetSteppers(j1PC,j2PC,j3PC,j4PC);
           setVac(vacPC);
+          setPump(pumpPC);
           sendObjectiveCompleted(objectiveType, messCharSuccess);
           moving = false;
           objectiveInProgress = false;
         }
+        break;
+      case messCharControl:
+        setVac(vacPC);
+        setPump(pumpPC);
+        sendObjectiveCompleted(objectiveType, messCharSuccess);
+        moving = false;
+        objectiveInProgress = false;
         break;
       case messCharInfo:
         sendRobotState(numMessages);
@@ -361,7 +372,7 @@ void parseData() {      // split the data into its parts
   vacPC = atof(strtokIndx);     // convert this part to a float
 
   strtokIndx = strtok(NULL, ",");
-  speedPC = atof(strtokIndx);     // convert this part to a float
+  pumpPC = atof(strtokIndx);     // convert this part to a float
 
 }
 
@@ -380,8 +391,8 @@ void showParsedData() {
   Serial.println(j4PC);
   Serial.print("Vac: ");
   Serial.println(vacPC);
-  Serial.print("speed: ");
-  Serial.println(speedPC);
+  Serial.print("pump: ");
+  Serial.println(pumpPC);
   Serial.print("J1 offset (from potentiometer): ");
   Serial.println(j1PC_adjust);
   Serial.print("J2 offset (from potentiometer): ");
@@ -421,6 +432,10 @@ bool motorsMoving() {
 void setVac(float val) {
   // bool boolVal = val == 1.0;
   digitalWrite(vacPin, val);
+}
+void setPump(float val) {
+  // bool boolVal = val == 1.0;
+  digitalWrite(pumpPin, val);
 }
 
 /////////////////////////////
