@@ -74,16 +74,32 @@ def main():
         # 3. Home
 
 
-        midpoint = (200, 200, 200, 0) # the neutral position to go to between each move
+        midpoint = (0, 300, 50, 0) # the neutral position to go to between each move
         # stackCoords = stackPosition() # a generator function telling where the next block should be placed
         stackCoords = [(300, 300, 50, 0)] * 100
+        stackPositionCostant = (0, 300, 50, 0)
         arm.home()
         for blockPosition, stackPosition in zip(blockCoords, stackCoords):
-            arm.moveTo(*midpoint, suction = 0)
-            arm.moveTo(*blockPosition, suction = 1)
-            arm.moveTo(*midpoint, suction = 1)
-            arm.moveTo(*stackPosition, suction = 1)
-            arm.moveTo(*stackPosition, suction = 0)
+            # print(*midpoint, "hello")
+            # print(*stackCoords, "world")
+            # arm.moveTo(*midpoint, suction = 0)
+            # arm.moveTo(*blockPosition, suction = 1)
+            # arm.moveTo(*midpoint, suction = 1)
+            # arm.moveTo(*stackPosition, suction = 1)
+            # arm.moveTo(*stackPosition, suction = 0)
+
+            print("blockPosition =", blockPosition)
+            print("blockPosition[0] =", blockPosition[0])
+            print("blockPosition[0][0] =", blockPosition[0][0])
+
+            arm.moveTo(midpoint[0], midpoint[1], midpoint[2], midpoint[3], suction = 1)
+            arm.moveTo(blockPosition[0][0], blockPosition[0][1], 10, blockPosition[1], suction = 1)
+            arm.moveTo(midpoint[0], midpoint[1], midpoint[2], midpoint[3], suction = 1)
+            arm.moveTo(stackPosition[0], stackPosition[1], stackPosition[2], stackPosition[3], suction = 1)
+            arm.moveTo(stackPosition[0], stackPosition[1], stackPosition[2], stackPosition[3], suction = 0)
+
+
+
         arm.home()
         exit()
         raise ValueError

@@ -509,7 +509,7 @@ class vision:
                                                 singleBlockCenterPixel, singleBlockRotation)
 
         # TODO: what does this return if nothing has happened??
-        if self.jengaDebug:
+        if self.jengaDebug and 0:
             #print(f"Block: {singleBlockCenterPixel}, theta: {singleBlockRotation}")
             print(f"Jenga Block World Coords: {coordWorld}, World Rotation: {rotationWorld}")
             cv2.imshow("HSV Block", self.drawImg)

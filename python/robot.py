@@ -255,7 +255,6 @@ class robot:
         print(f"sent message: {nextPoint}")
         result = self.waitForResponse()
         print(result)
-        time.sleep(.5)
 
     def home(self):
         homeTuple = (self.j1ZeroSteps ,self.j2ZeroSteps, self.j3ZeroSteps, 0)
