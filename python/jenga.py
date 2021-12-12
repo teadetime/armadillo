@@ -4,7 +4,7 @@ import vision
 import time
 import numpy as np
 
-def towerPts(x0 = 0, y0 = 350, zOffset = 5, theta0 = 0, nLayers = 18):
+def towerPts(x0 = 0, y0 = 350, zOffset = 10, theta0 = 0, nLayers = 18):
             blockWidth = 20
             blockHeight = 15
             thetaOffset = 0 # -20
@@ -61,6 +61,18 @@ if __name__=='__main__':
         arm.home()
 
 
+        #Try Claibrating
+        # calibTuple = (-175, 250, 15)
+        # radsTuple = arm.worldToJoint(calibTuple, 0)
+        # stepsTuple = arm.radTupleToStepTuple(radsTuple)
+        # calibMessage = arm.createMessage(arm.commands["calibrate"],stepsTuple,0,0)
+        # arm.serial.write(calibMessage)
+        # print(f"Homing: {calibMessage}")
+        # result = arm.waitForResponse()
+
+
+
+
         if testingCameras:
             if not vs.testCamera():
                 print("Camera Not working")
@@ -84,7 +96,7 @@ if __name__=='__main__':
 
 
             #Go to a position
-            testPoint = (coords[0],coords[1], 15, rotation) 
+            testPoint = (coords[0],coords[1], 14, rotation) 
             arm.moveTo(*testPoint, suction = 0)
             testPoint = (coords[0],coords[1], 5, rotation) 
             arm.moveTo(*testPoint, suction = 1)
@@ -94,55 +106,19 @@ if __name__=='__main__':
 
             t = towerPts()
             testPoint = next(t)
+
+            testPoint = (300,400, 25, 0) 
+            arm.moveTo(*testPoint, suction = 1)
+            testPoint = (300,400, 15, 0) 
             arm.moveTo(*testPoint, suction = 1)
             arm.moveTo(*testPoint, suction = 0)
 
+            testPoint = (300,400, 40, 0) 
+            arm.moveTo(*testPoint, suction = 0)
 
-            # testPoint = (-coords[0],coords[1], 40, 0) 
-            # arm.moveTo(*testPoint, suction = 1)
-
-            # testPoint = (-coords[0],coords[1], 12, 0) 
-            # arm.moveTo(*testPoint, suction = 1)
-            
-            # testPoint = (-coords[0],coords[1], 8, 0) 
+            # testPoint[2] = testPoint[2] + 5
             # arm.moveTo(*testPoint, suction = 0)
 
-            # testPoint = (-coords[0],coords[1], 20, 0) 
-            # arm.moveTo(*testPoint, suction = 0)
-
-            testPoint = (0,300, 40, 0) 
-            arm.moveTo(*testPoint, suction = 0)
-
-            grabbingFrame = True
-            while grabbingFrame:
-                grabImageSuccess = vs.grabImage(fromPath=False)
-                if not grabImageSuccess:
-                    print("Please reposition Camera and check masking!")
-                    vs.tuneWindow()
-                    x = input('Retry (R) or Quit (Q): ')
-                    if x == 'R':
-                        pass
-                    else:
-                        quit()
-                else:
-                    grabbingFrame = False
-            (coords, rotation) = vs.getBlockWorld()
-            print(coords)
-            print(rotation)
-
-            #Go to a position
-            testPoint = (coords[0],coords[1], 15, rotation) 
-            arm.moveTo(*testPoint, suction = 0)
-            testPoint = (coords[0],coords[1], 5, rotation) 
-            arm.moveTo(*testPoint, suction = 1)
-
-            testPoint = (coords[0],coords[1], 40, rotation) 
-            arm.moveTo(*testPoint, suction = 1)
-
-            t = towerPts()
-            testPoint = next(t)
-            arm.moveTo(*testPoint, suction = 1)
-            arm.moveTo(*testPoint, suction = 0)
         # testPoint = (-300, 400, 15, 0) 
         # arm.moveTo(*testPoint, suction = 0)
         # time.sleep(5)
@@ -221,9 +197,9 @@ if __name__=='__main__':
 
         for i in range(-45, 45, 15):
             arm.moveTo(0, 350, 30, i, 0)
-        arm.moveTo(0, 350, 30, 0, 0)
+        arm.moveTo(0, 400, 30, 0, 0)
 
-        arm.home()
+        #arm.home()
         exit()
 
 
