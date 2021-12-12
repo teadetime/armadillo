@@ -176,20 +176,11 @@ class vision:
         self.resized = imutils.resize(self.image, width=self.resizedSize)
         self.drawImg = self.resized.copy()
 
-        arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
-        arucoParams = cv2.aruco.DetectorParameters_create()
-        (corners, ids, rejected) = cv2.aruco.detectMarkers(self.image, arucoDict, parameters = arucoParams)
-
-        print(corners, ids, rejected)
-        exit()
-
-
-
         # if pickSwatches:
         #     self.pickSwatchColors() # reset the color basis for the swatches
 
         if self.needsBasis:
-            success = self.establishBasis()
+            success = self.establishBasisAruco()
             if not success:
                 return False
         # Always update the block mask
@@ -212,32 +203,51 @@ class vision:
     def establishBasisAruco(self):
         self.ratio = self.image.shape[0] / float(self.resized.shape[0])
 
-        arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
+        cv2.imshow("testing 1", self.drawImg)
+        self.checkWaitKey()
+
+        gray = cv2.cvtColor(self.drawImg, cv2.COLOR_BGR2GRAY)
+        # gray_filtered = cv2.inRange(gray, 190, 255)
+        gray_filtered = cv2.inRange(gray, 0, 190)
+        cv2.imshow("testing gray 1", gray_filtered)
+        self.checkWaitKey()
+
+        arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_250)
         arucoParams = cv2.aruco.DetectorParameters_create()
-        (corners, ids, rejected) = cv2.aruco.detectMarkers(self.drawImg, arucoDict, parameters = arucoParams)
+        (corners, ids, rejected) = cv2.aruco.detectMarkers(gray_filtered, arucoDict, parameters = arucoParams)
         print("(corners, ids, rejected)", (corners, ids, rejected))
 
-        # Calculate the centers of each piece
-        (greenCenter, greenBox) = self.getPixelCenterSquare(cntsGreen)
-        (yellowCenter, yellowBox) = self.getPixelCenterSquare(cntsYellow)
-        (redCenter, redBox) = self.getPixelCenterSquare(cntsRed)
+        print("corners =", corners)
+        print("corners[0] =", corners[0])
+        # greenBox = np.array(corners[0])
+        greenBox = tuple(corners)
+        print("greenBox =", greenBox)
+        print("type(greenBox) =", type(greenBox))
 
-        greenBox = corners[0]
-        print(greenBox)
+        self.drawContoursAruco(corners, ids)
 
-        greenCenter = np.mean(corners[0], axis = 0)
-        redCenter = np.mean(corners[1], axis = 0)
-        greenCenter = np.mean(corners[0], axis = 0)
+        # print("corners, ", corners)
+        # print("type of corners, ", type(corners))
+        # print("corners[0], ", corners[0])
+        # print("type of corners[0], ", type(corners[0]))
+        # print("corners[0][0], ", corners[0][0])
+        # print("type of corners[0][0], ", type(corners[0][0]))
+        # print("corners[0][0][0], ", corners[0][0][0])
+        # print("type of corners[0][0][0], ", type(corners[0][0][0]))
+        # print("corners[0][0][0][0], ", corners[0][0][0][0])
+        # print("type of corners[0][0][0][0], ", type(corners[0][0][0][0]))
 
-        if greenBox is not None:
-            self.drawContours(greenBox)
-            self.drawPoint(greenCenter)
-        if yellowBox is not None:
-            self.drawContours(yellowBox)
-            self.drawPoint(yellowCenter)
-        if redBox is not None:
-            self.drawContours(redBox)
-            self.drawPoint(redCenter)
+        greenCenter = np.mean(corners[1][0], axis = 0)
+        print("greenCenter =", greenCenter)
+        print("type(greenCenter) =", type(greenCenter))
+        redCenter = np.mean(corners[0][0], axis = 0)
+        print("redCenter =", redCenter)
+        print("type(redCenter) =", type(redCenter))
+        yellowCenter = np.mean(corners[0][0], axis = 0)
+        print("yellowCenter =", yellowCenter)
+        print("type(yellowCenter) =", type(yellowCenter))
+        # redCenter = np.mean(corners[1], axis = 0)
+        # greenCenter = np.mean(corners[0], axis = 0)
 
 
         # Image coords pixels
@@ -379,6 +389,12 @@ class vision:
 
     # Wrap some basic OpenCV for Easier Use
     def drawContours(self, box, color=(0, 0, 255), thickness=2):
+        print("box =", box)
+        print("type(box) =", type(box))
+        # box = tuple(box)
+        print("box =", box)
+        print("type(box) =", type(box))
+
         cv2.drawContours(self.drawImg,[box],0,(0, 0, 255),thickness)
 
     def drawPoint(self, point, color = (0, 255, 255), r = 1):
@@ -709,6 +725,41 @@ class vision:
             pass # could put debugging tools or something here
             # TODO: toggle calibration flag and/or send calibration signal
         return key
+
+    def drawContoursAruco(self, corners, ids):
+        # verify *at least* one ArUco marker was detected
+        if len(corners) > 0:
+            # flatten the ArUco IDs list
+            ids = ids.flatten()
+            # loop over the detected ArUCo corners
+            for (markerCorner, markerID) in zip(corners, ids):
+                # extract the marker corners (which are always returned in
+                # top-left, top-right, bottom-right, and bottom-left order)
+                corners = markerCorner.reshape((4, 2))
+                (topLeft, topRight, bottomRight, bottomLeft) = corners
+                # convert each of the (x, y)-coordinate pairs to integers
+                topRight = (int(topRight[0]), int(topRight[1]))
+                bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
+                bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
+                topLeft = (int(topLeft[0]), int(topLeft[1]))
+                        # draw the bounding box of the ArUCo detection
+                cv2.line(self.drawImg, topLeft, topRight, (0, 255, 0), 2)
+                cv2.line(self.drawImg, topRight, bottomRight, (0, 255, 0), 2)
+                cv2.line(self.drawImg, bottomRight, bottomLeft, (0, 255, 0), 2)
+                cv2.line(self.drawImg, bottomLeft, topLeft, (0, 255, 0), 2)
+                # compute and draw the center (x, y)-coordinates of the ArUco
+                # marker
+                cX = int((topLeft[0] + bottomRight[0]) / 2.0)
+                cY = int((topLeft[1] + bottomRight[1]) / 2.0)
+                cv2.circle(self.drawImg, (cX, cY), 4, (0, 0, 255), -1)
+                # draw the ArUco marker ID on the image
+                cv2.putText(self.drawImg, str(markerID),
+                    (topLeft[0], topLeft[1] - 15), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5, (0, 255, 0), 2)
+                print("[INFO] ArUco marker ID: {}".format(markerID))
+                # show the output image
+                cv2.imshow("Image 2", self.drawImg)
+                self.checkWaitKey(0)
 
 
 if __name__=='__main__':
