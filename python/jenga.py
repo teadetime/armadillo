@@ -25,9 +25,9 @@ def towerPts(x0 = 0, y0 = 350, zOffset = 10, theta0 = 0, nLayers = 18):
 if __name__=='__main__':
     arm = robot.robot()
     vs = vision.vision()
-
+    
     testingHomingandWorld = True
-    testingCameras = True
+    testingCameras = False
 
     
     if testingHomingandWorld:
@@ -60,7 +60,22 @@ if __name__=='__main__':
         ##############################
         arm.home()
 
+        # test = (0, 300,10,0)
+        # arm.moveTo(*test, suction = 0)
+        arm.controlVacPump(0,1)
 
+        testingPick = arm.calcSmoothPick((0,300,5,0))
+        for pos in testingPick:
+            arm.moveTo(*pos, suction = 1)
+
+        testingPick = arm.calcSmoothPick((0,300,5,0), 15, extract=True)
+        for pos in testingPick:
+            arm.moveTo(*pos, suction = 1)
+
+        ##testingPick = arm.calcSmoothPick((0,300,15,0), extract=True)
+        
+        arm.controlVacPump(0,0)
+        quit()
         #Try Claibrating
         # calibTuple = (-175, 250, 15)
         # radsTuple = arm.worldToJoint(calibTuple, 0)
