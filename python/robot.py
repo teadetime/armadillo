@@ -54,6 +54,9 @@ class robot:
         self.limitJ3 = math.pi/2+math.radians(92)
         self.limitJ3min = math.radians(85)
 
+        self.lookingForBlock = True
+        self.j4Offset = 0 # THis is used for non perpendicular picks!
+
         print(f"j1Limit: {self.limitJ1}\nj2Limit: {self.limitJ2}\nj3Limit: {self.limitJ3}")
         self.j1ZeroSteps = self.radToSteps(self.limitJ1, self.J1microSteps, self.J1gearing)
         self.j2ZeroSteps = self.radToSteps(self.limitJ2, self.J2microSteps, self.J2gearing)
@@ -101,8 +104,26 @@ class robot:
         Takes True world frame coordinates of the block! thetab is relative to block
         coords: tuple looks like -> (xb,yb,zb)
         '''
+        if self.lookingForBlock:
+            self.j4Offset = 0   # Reset the offset and see if we need a new offset for where we are going
+             # Determine if this is a hard to pick spot
+            aproxArmAngle = math.atan2(-coords[0], coords[1])
+
+            # This means we should pick at a different angle!
+            if thetab-aproxArmAngle > 85 and thetab-aproxArmAngle < 95:
+                #Left
+                if coords[0]<0:
+                    self.j4Offset = 45
+                else: #Right
+                    self.j4Offset = -45
+        else: 
+            # Keep using the offset that is already here
+            pass
         # First lets assume we are choosing the position of the end effector ie 45*
-        thetabRad = math.radians(thetab)
+        thetabRad = math.radians(thetab+self.j4Offset)
+
+
+  
 
         # Calculate the xyz of arm
         #First work backwords from block to position the end of servo
