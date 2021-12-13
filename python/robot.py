@@ -333,10 +333,10 @@ class robot:
             return reversed(tupleApproach)
         return tupleApproach
 
-    def calcSmoothPlace(coords, approachZ=15, approachTangent=5,steps = 15, behind=False):
+    def calcSmoothPlace(coords, approachZ=15, approachTangent=5,steps = 15,direction=1, behind=False):
             rotation = coords[3]
-            deltaX = approachTangent * math.sin(math.radians(rotation))
-            deltaY = approachTangent * math.sin(math.radians(rotation))
+            deltaX = approachTangent * math.sin(math.radians(rotation)) * direction
+            deltaY = approachTangent * math.sin(math.radians(rotation)) * direction
             if behind:
                 deltaX *= -1
                 deltaY *= -1
