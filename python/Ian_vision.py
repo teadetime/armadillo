@@ -29,7 +29,7 @@ class vision:
 
         # Image Loading and Resizing
         self.needsBasis = True  # Run ceratin calculations if they haven't been run before
-        self.camIndex = 2       # 0 is internal webcam
+        self.camIndex = 0       # 0 is internal webcam
         self.image = None
         self.resized = None     #imutils.resize(image, width=self.resizedSize)
         self.drawImg = None
@@ -42,9 +42,9 @@ class vision:
 
         # CONSTANTS
         # Offsets to use for all parts Only Using Two Squares RN
-        self.greenWorldOrigin = np.array([[200],[525]])
+        self.greenWorldOrigin = np.array([[300],[400]])
         self.originTagPixel = None
-        self.redWorld = np.array([[-200],[525]])
+        self.redWorld = np.array([[-300],[400]])
         self.widthHeightLow = 0.9
         self.widthHeightHigh = 1.1
         self.expectedSize = 31   # TODO Change This in Pixels
@@ -85,7 +85,8 @@ class vision:
 
     def testCamera(self):
         # TODO: doesn't actually fail as instructed
-        cap = cv2.VideoCapture(self.camIndex)
+        cap = cv2.VideoCapture(self.camIndex, cv2.CAP_DSHOW)
+        print(cap)
         # Check if the webcam is opened correctly
         # while True:
         #     ret, frame = cap.read()
@@ -169,35 +170,135 @@ class vision:
             self.imagePath = args["image"]
         else:
             cam = cv2.VideoCapture(self.camIndex)
+            cam.set(3,1280)
+            cam.set(4,1024)
             sleep(delay)
             ret, self.image = cam.read()
 
         self.resized = imutils.resize(self.image, width=self.resizedSize)
         self.drawImg = self.resized.copy()
 
-        if pickSwatches:
-            self.pickSwatchColors() # reset the color basis for the swatches
+        # if pickSwatches:
+        #     self.pickSwatchColors() # reset the color basis for the swatches
 
         if self.needsBasis:
-            success = self.establishBasis()
+            success = self.establishBasisAruco()
             if not success:
                 return False
         # Always update the block mask
 
-        self.blockMask = cv2.inRange(self.hsv, self.lowerBlocks, self.upperBlocks)
+        gray = cv2.cvtColor(self.drawImg, cv2.COLOR_BGR2GRAY)
+        # gray_filtered = cv2.inRange(gray, 190, 255)
+        gray_filtered = cv2.inRange(gray, 190, 255)
 
-        kernel = np.ones((3,3), np.uint8)
-        eroded = cv2.erode(self.blockMask, kernel, iterations=3)
-        cv2.imshow("eroded", eroded)
-        self.blockMask = eroded
+        # self.hsv = cv2.cvtColor(self.resized, cv2.COLOR_BGR2HSV)
+        # self.blockMask = cv2.inRange(self.hsv, self.lowerBlocks, self.upperBlocks)
+        self.blockMask = gray_filtered
 
-        print(self.blockMask)
+        # kernel = np.ones((3,3), np.uint8)
+        # eroded = cv2.erode(self.blockMask, kernel, iterations=3)
+        # cv2.imshow("eroded", eroded)
+        # self.blockMask = eroded
+
+        # print(self.blockMask)
 
         if self.jengaDebug:
             cv2.imshow("HSV Block Mask", self.blockMask)  # Tag 1
         return True
     # TODO: WHY DOESNT THIS WORK!?!?!?
     #image = cv2.flip(image,0)
+
+    def establishBasisAruco(self):
+        self.ratio = self.image.shape[0] / float(self.resized.shape[0])
+
+        if self.jengaDebug:
+            cv2.imshow("testing 1", self.drawImg)
+            self.checkWaitKey()
+
+        gray = cv2.cvtColor(self.drawImg, cv2.COLOR_BGR2GRAY)
+        # gray_filtered = cv2.inRange(gray, 190, 255)
+        gray_filtered = cv2.inRange(gray, 0, 190)
+
+        if self.jengaDebug:
+            cv2.imshow("testing gray 1", gray_filtered)
+            self.checkWaitKey()
+
+        arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_250)
+        arucoParams = cv2.aruco.DetectorParameters_create()
+        (corners, ids, rejected) = cv2.aruco.detectMarkers(gray_filtered, arucoDict, parameters = arucoParams)
+        print("(corners, ids, rejected)", (corners, ids, rejected))
+
+        print("corners =", corners)
+        print("corners[0] =", corners[0])
+        # greenBox = np.array(corners[0])
+        greenBox = tuple(corners)
+        print("greenBox =", greenBox)
+        print("type(greenBox) =", type(greenBox))
+
+        self.drawContoursAruco(corners, ids)
+
+        # print("corners, ", corners)
+        # print("type of corners, ", type(corners))
+        # print("corners[0], ", corners[0])
+        # print("type of corners[0], ", type(corners[0]))
+        # print("corners[0][0], ", corners[0][0])
+        # print("type of corners[0][0], ", type(corners[0][0]))
+        # print("corners[0][0][0], ", corners[0][0][0])
+        # print("type of corners[0][0][0], ", type(corners[0][0][0]))
+        # print("corners[0][0][0][0], ", corners[0][0][0][0])
+        # print("type of corners[0][0][0][0], ", type(corners[0][0][0][0]))
+
+        greenCenter = np.mean(corners[1][0], axis = 0)
+        print("greenCenter =", greenCenter)
+        print("type(greenCenter) =", type(greenCenter))
+        redCenter = np.mean(corners[0][0], axis = 0)
+        print("redCenter =", redCenter)
+        print("type(redCenter) =", type(redCenter))
+        yellowCenter = np.mean(corners[0][0], axis = 0)
+        print("yellowCenter =", yellowCenter)
+        print("type(yellowCenter) =", type(yellowCenter))
+        # redCenter = np.mean(corners[1], axis = 0)
+        # greenCenter = np.mean(corners[0], axis = 0)
+
+
+        # Image coords pixels
+        self.originTagPixel = np.array([[greenCenter[0]], [greenCenter[1]]])
+        secondaryTag = np.array([[redCenter[0]], [redCenter[1]]])
+
+        self.basisWorld, self.basisPixel, self.frameRotation = self.calcBasis(self.greenWorldOrigin, self.redWorld, self.originTagPixel, secondaryTag)
+
+        self.drawBasis()
+
+        if self.debug:
+            print(f"World Basis: \n{self.basisWorld}\nPixel Basis: \n{self.basisPixel}")
+
+            # Testing the yellow block in center
+            ####THESE PARAMS NEED TO BE FROM THE BLOCK/OPENCV
+            blockRotationImage = 0
+            blockCenterImageFullFrame = np.array([[yellowCenter[0]],
+                                                [yellowCenter[1]]])
+            print("yellow", yellowCenter)
+            # Example to World Coords
+            coordWorld, rotationWorld = self.changeBasisAtoB(self.greenWorldOrigin, self.originTagPixel, self.frameRotation, self.basisWorld,
+                                                    blockCenterImageFullFrame, blockRotationImage )
+            print(f"Yellow World Coords:\n {coordWorld}\nWorld Rotation: {rotationWorld}")
+            # # Example to Pixel Coords
+            testWorldCoords = np.array([[0],[100]])
+            coordPixel, rotationBlock = self.changeBasisAtoB(self.originTagPixel, self.greenWorldOrigin , blockRotationImage, self.basisPixel,
+                                                     testWorldCoords, self.frameRotation  )
+            print(f"World->Pixel: {coordPixel}")
+            self.drawPoint(coordPixel, (0,255,0), 5)
+            for i in range(-500, 500, 50):
+                for j in range(0, 650, 50):
+                    testWorldCoords = np.array([[i],[j]])
+                    coordPixel, rotationBlock = self.changeBasisAtoB(self.originTagPixel, self.greenWorldOrigin , blockRotationImage,
+                                                    self.basisPixel, testWorldCoords, self.frameRotation  )
+                    self.drawPoint(coordPixel, (0,0,255))
+            cv2.imshow("Image", self.drawImg)
+            self.checkWaitKey(0)
+        self.drawImg = self.resized.copy()  # Reset the image for other operations!
+        self.needsBasis = False
+        return True # This means we were successful
 
     def establishBasis(self):
         self.ratio = self.image.shape[0] / float(self.resized.shape[0])
@@ -233,7 +334,7 @@ class vision:
             cv2.imshow("HSV Red", redMask) # Red Tag 2
 
 
-        self.checkWaitKey()
+            self.checkWaitKey()
 
         cntsYellow = self.getCnts(yellowMask)
         cntsRed = self.getCnts(redMask)
@@ -299,6 +400,12 @@ class vision:
 
     # Wrap some basic OpenCV for Easier Use
     def drawContours(self, box, color=(0, 0, 255), thickness=2):
+        print("box =", box)
+        print("type(box) =", type(box))
+        # box = tuple(box)
+        print("box =", box)
+        print("type(box) =", type(box))
+
         cv2.drawContours(self.drawImg,[box],0,(0, 0, 255),thickness)
 
     def drawPoint(self, point, color = (0, 255, 255), r = 1):
@@ -323,6 +430,8 @@ class vision:
         print(cnts)
         self.boxList = []
         self.boxPolygons = []
+        rot_rectList = []
+        rotationList = []
         blockMask2 = cv2.cvtColor(self.blockMask, cv2.COLOR_GRAY2BGR)  #add this line
         for c in reversed(cnts): # Start from top of frame since I can't seem to flip the image
             rot_rect = cv2.minAreaRect(c)
@@ -339,6 +448,9 @@ class vision:
             if rot_rect[1][0] <= rot_rect[1][1]:
                 rotation += 90
             rotation *= -1      # All rotation needs to be adjusted!
+
+            rot_rectList.append(rot_rect)
+            rotationList.append(rotation)
 
             #DEBUG
             if self.jengaDebug:
@@ -390,7 +502,14 @@ class vision:
         np.savetxt(truthFile, self.truthList, delimiter = ",", fmt='%f')
         print("file completed")
         self.checkWaitKey(0)
-        return None
+
+    # return np.array([[rot_rect[0][0]],[rot_rect[0][1]]] ), rotation
+
+
+        for this_classification, this_rot_rect, this_rotation in zip(self.truthList, rot_rectList, rotationList):
+            if this_classification == 1:
+                yield np.array([[this_rot_rect[0][0]],[rot_rect[0][1]]] ), this_rotation
+        # return None
 
     def receiveClassificationInput(self, default = None):
         newClassification = self.checkWaitKey(0) & 0xFF
@@ -489,18 +608,21 @@ class vision:
         return self.BlockType.NOT_BLOCK
 
     def getBlockWorld(self):
-        singleBlockCenterPixel, singleBlockRotation =  self.getBlockPixel()
+      for singleBlockCenterPixel, singleBlockRotation in self.getBlockPixel(): # reorder this code once it works i.e. don't call the change basis function on every iteration
+        # singleBlockCenterPixel, singleBlockRotation = next(self.getBlockPixel())
+
         # Lets take the block into world Coordinates!!!
         coordWorld, rotationWorld = self.changeBasisAtoB(self.greenWorldOrigin, self.originTagPixel, self.frameRotation, self.basisWorld,
                                                 singleBlockCenterPixel, singleBlockRotation)
 
         # TODO: what does this return if nothing has happened??
-        if self.jengaDebug:
+        if self.jengaDebug and 0:
             #print(f"Block: {singleBlockCenterPixel}, theta: {singleBlockRotation}")
             print(f"Jenga Block World Coords: {coordWorld}, World Rotation: {rotationWorld}")
             cv2.imshow("HSV Block", self.drawImg)
             self.checkWaitKey(0)
-        return coordWorld, rotationWorld
+        # return coordWorld, rotationWorld
+        yield coordWorld, rotationWorld
 
     # loop over the contours
     def getPixelCenterSquare(self, cnts):
@@ -612,7 +734,43 @@ class vision:
             exit()
         if key == 32: # Space
             pass # could put debugging tools or something here
+            # TODO: toggle calibration flag and/or send calibration signal
         return key
+
+    def drawContoursAruco(self, corners, ids):
+        # verify *at least* one ArUco marker was detected
+        if len(corners) > 0:
+            # flatten the ArUco IDs list
+            ids = ids.flatten()
+            # loop over the detected ArUCo corners
+            for (markerCorner, markerID) in zip(corners, ids):
+                # extract the marker corners (which are always returned in
+                # top-left, top-right, bottom-right, and bottom-left order)
+                corners = markerCorner.reshape((4, 2))
+                (topLeft, topRight, bottomRight, bottomLeft) = corners
+                # convert each of the (x, y)-coordinate pairs to integers
+                topRight = (int(topRight[0]), int(topRight[1]))
+                bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
+                bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
+                topLeft = (int(topLeft[0]), int(topLeft[1]))
+                        # draw the bounding box of the ArUCo detection
+                cv2.line(self.drawImg, topLeft, topRight, (0, 255, 0), 2)
+                cv2.line(self.drawImg, topRight, bottomRight, (0, 255, 0), 2)
+                cv2.line(self.drawImg, bottomRight, bottomLeft, (0, 255, 0), 2)
+                cv2.line(self.drawImg, bottomLeft, topLeft, (0, 255, 0), 2)
+                # compute and draw the center (x, y)-coordinates of the ArUco
+                # marker
+                cX = int((topLeft[0] + bottomRight[0]) / 2.0)
+                cY = int((topLeft[1] + bottomRight[1]) / 2.0)
+                cv2.circle(self.drawImg, (cX, cY), 4, (0, 0, 255), -1)
+                # draw the ArUco marker ID on the image
+                cv2.putText(self.drawImg, str(markerID),
+                    (topLeft[0], topLeft[1] - 15), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5, (0, 255, 0), 2)
+                print("[INFO] ArUco marker ID: {}".format(markerID))
+                # show the output image
+                cv2.imshow("Image 2", self.drawImg)
+                self.checkWaitKey(0)
 
 
 if __name__=='__main__':
