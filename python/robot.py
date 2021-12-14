@@ -49,10 +49,13 @@ class robot:
 
         # Radian values for the limit switches
         self.limitJ1 = math.pi/2 + math.radians(13.8)
-        self.limitJ2 = math.radians(90)
+        self.limitJ2 = math.radians(89)
         self.limitJ2min = math.radians(0)
-        self.limitJ3 = math.pi/2+math.radians(91.5)
+        self.limitJ3 = math.pi/2+math.radians(92)
         self.limitJ3min = math.radians(85)
+
+        self.lookingForBlock = True
+        self.j4Offset = 0 # THis is used for non perpendicular picks!
 
         print(f"j1Limit: {self.limitJ1}\nj2Limit: {self.limitJ2}\nj3Limit: {self.limitJ3}")
         self.j1ZeroSteps = self.radToSteps(self.limitJ1, self.J1microSteps, self.J1gearing)
@@ -79,6 +82,7 @@ class robot:
         self.commands["home"] = 'H'
         self.commands["other"] = 'O'
         self.commands["control"] = 'C'
+        self.commands["calibrate"] = 'B'
 
         # self.infoChar = 'I'
         # self.move = "M"
@@ -100,8 +104,26 @@ class robot:
         Takes True world frame coordinates of the block! thetab is relative to block
         coords: tuple looks like -> (xb,yb,zb)
         '''
+        if self.lookingForBlock:
+            self.j4Offset = 0   # Reset the offset and see if we need a new offset for where we are going
+             # Determine if this is a hard to pick spot
+            aproxArmAngle = math.atan2(-coords[0], coords[1])
+
+            # This means we should pick at a different angle!
+            if thetab-aproxArmAngle > 85 and thetab-aproxArmAngle < 95:
+                #Left
+                if coords[0]<0:
+                    self.j4Offset = 45
+                else: #Right
+                    self.j4Offset = -45
+        else: 
+            # Keep using the offset that is already here
+            pass
         # First lets assume we are choosing the position of the end effector ie 45*
-        thetabRad = math.radians(thetab)
+        thetabRad = math.radians(thetab+self.j4Offset)
+
+
+  
 
         # Calculate the xyz of arm
         #First work backwords from block to position the end of servo
@@ -127,10 +149,10 @@ class robot:
 
         print(theta1, theta2, theta3)
 
-        if theta2 > self.limitJ2 or theta2 < self.limitJ2min:
-            return None
-        if theta3 > self.limitJ3 or theta3 < self.limitJ3min:
-            return None
+        # if theta2 > self.limitJ2 or theta2 < self.limitJ2min:
+        #     return None
+        # if theta3 > self.limitJ3 or theta3 < self.limitJ3min:
+        #     return None
 
         print(thetab)
 
@@ -225,7 +247,7 @@ class robot:
                     resultChar = data.split(self.splitChar)[-1]
                     return(resultChar == self.successChar)
                     break
-            time.sleep(.05)
+            time.sleep(.02)
         return
 
     def waitForArduino(self):
@@ -240,7 +262,7 @@ class robot:
                 data = self.serial.read().strip()     # This line is essential and somehow reads the empty line that is output at the end of Setup
                 break
 
-    def createMessage(self, messageType, jPos, vac = 0, speed = 0):
+    def createMessage(self, messageType, jPos, vac = 0, pump = 0):
         """
         Sends form startChar j1,j2,j3,j4,vac,speed endChar
         ie. <M,0,20,30,50,1.0,50>
@@ -250,18 +272,18 @@ class robot:
         self.lastObjective = messageType
         message = (self.startChar+messageType+self.splitChar+str(jPos[0])+self.splitChar+str(jPos[1])
                     +self.splitChar+str(jPos[2])+self.splitChar+str(jPos[3])
-                    +self.splitChar+str(vac)+self.splitChar+str(speed)+self.endChar)
+                    +self.splitChar+str(vac)+self.splitChar+str(pump)+self.endChar)
         return message
 
 
-    def moveTo(self, x, y, z, theta, suction):
+    def moveTo(self, x, y, z, theta, suction, pump):
         # Go to a position
         jPos = self.worldToJoint((x, y, z), theta)
         if not jPos:
             print("Arm is unable to get to reach this position!")
             return False
         stepPos = self.radTupleToStepTuple(jPos)
-        nextPoint = self.createMessage(self.commands["move"], stepPos, vac = float(suction), speed = 40.0)
+        nextPoint = self.createMessage(self.commands["move"], stepPos, vac = float(suction), pump = float(pump))
         self.serial.write(nextPoint)
         print(f"sent message: {nextPoint}")
         result = self.waitForResponse()
@@ -282,3 +304,51 @@ class robot:
         print(f"Calibrating: {calibratingMessage}")
         result = self.waitForResponse()
         print(result)
+
+    def controlVacPump(self, vac=1,pump=1):
+        controlMessage = self.createMessage(self.commands["control"], (0, 0, 0, 0), int(vac), int(pump))
+        self.serial.write(controlMessage)
+        print(f"Calibrating: {controlMessage}")
+        result = self.waitForResponse()
+        print(result)
+
+    def calcSmoothPick(self, coords, approachZ=5, stepSize=1, extract=False):
+        """
+        Calculates approach for the block using several points!
+        """
+        print("SMOOTH")
+        x = coords[0]
+        y = coords[1]
+        z = coords[2]
+        rotation = coords[3]
+
+        tupleApproach = []
+
+        steps = int(approachZ/stepSize)+1
+
+        for i in range(steps):
+            tupleApproach.append((x,y,z+i*stepSize,rotation)) 
+
+        if not extract:
+            return reversed(tupleApproach)
+        return tupleApproach
+
+    def calcSmoothPlace(self, coords, approachZ=15, approachTangent=20,steps = 15,direction=1, behind=False):
+            rotation = coords[3]
+            deltaX = approachTangent * math.sin(math.radians(rotation)) * direction
+            deltaY = approachTangent * math.cos(math.radians(rotation)) * direction
+            if behind:
+                deltaX *= -1
+                deltaY *= -1
+            
+            stepX = deltaX/steps
+            stepY = deltaY/steps
+            stepZ = approachZ/steps
+            
+            tupleApproach = []
+            for i in range(steps):
+                tupleApproach.append((coords[0]+i*stepX,coords[1]+i*stepY,coords[2]+i*stepZ,rotation)) 
+
+            if not behind:
+                return reversed(tupleApproach)
+            return tupleApproach

@@ -1916,4 +1916,18 @@ hr {
     height: 350px;
   }
 }
+
+.disp1:hover{
+  background: #232323;
+}
+
+.hide1{
+  display: none !important;
+}
+
+.disp1:hover + .hide1{
+  display: block !important;
+}
+
+
 /*# sourceMappingURL=style.css.map */

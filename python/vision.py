@@ -13,8 +13,8 @@ args = vars(ap.parse_args())
 
 class vision:
     def __init__(self):
-        self.debug = True
-        self.jengaDebug = True
+        self.debug = False
+        self.jengaDebug = False
 
         # Nathan Values for qt2
         # Exposure = 72
@@ -53,14 +53,14 @@ class vision:
             self.lower_red = np.array([0,109,116])
             self.upper_red = np.array([27,255,255])
 
-            self.lower_blue = np.array([66,87,115])
-            self.upper_blue = np.array([130,198,255])
+            self.lower_blue = np.array([80,90,107])
+            self.upper_blue = np.array([118,218,255])
 
-            self.lowerBlocks =  np.array([0,0,79])
-            self.upperBlocks = np.array([75,108,205])
+            self.lowerBlocks =  np.array([0,0,136])
+            self.upperBlocks = np.array([41,93,228])
 
-            self.lower_green = np.array([28,38,144])
-            self.upper_green = np.array([65,90,255])
+            self.lower_green = np.array([30,50,140])
+            self.upper_green = np.array([86,170,255])
             self.lower_yellow = np.array([26,43,240])
             self.upper_yellow = np.array([43,110,255])
         # WINDOWS
@@ -80,7 +80,7 @@ class vision:
             self.lower_yellow = np.array([26,43,240])
             self.upper_yellow = np.array([43,110,255])
         # Jenga block via pixels from our camera
-        self.jengaWHigh = 42
+        self.jengaWHigh = 45
         self.jengaWLow = 35
         self.jengaLHigh = 130
         self.jengaLLow = 120
