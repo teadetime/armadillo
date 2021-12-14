@@ -4,17 +4,17 @@ import vision
 import time
 import numpy as np
 
-def towerPts(x0 = 0, y0 = 350, zOffset = 10, theta0 = 0, nLayers = 18):
-            blockWidth = 20
+def towerPts(x0 = 0, y0 = 350, zOffset = 0, theta0 = -90, nLayers = 18):
+            blockWidth = 23
             blockHeight = 15
             thetaOffset = 0 # -20
             theta = theta0 + thetaOffset
 
             for layer in range(nLayers):
                 if layer % 2 == 0:
-                    yield (x0 - blockWidth, y0, blockHeight * layer + zOffset, theta)
-                    yield (x0,              y0, blockHeight * layer + zOffset, theta)
                     yield (x0 + blockWidth, y0, blockHeight * layer + zOffset, theta)
+                    yield (x0,              y0, blockHeight * layer + zOffset, theta)
+                    yield (x0 - blockWidth, y0, blockHeight * layer + zOffset, theta)
 
                 if layer % 2 == 1:
                     yield (x0, y0 - blockWidth, blockHeight * layer + zOffset, theta + 90)
@@ -63,43 +63,54 @@ if __name__=='__main__':
         #test = (-300, 300,10,0)
         # arm.moveTo(*test, suction = 0)
         arm.controlVacPump(1,1)
-        time.sleep(2)
+        t = towerPts(x0=200,y0=350, zOffset=6)
+        for i in range(54):
+            placePoint = next(t)
+            print(placePoint)
 
-        top = (370, 370, 150,0)
-        arm.moveTo(*top, suction = 1, pump=1)
-        time.sleep(1)
-        print("weirds")
+            # Perch
+            perch = (-100, 250, placePoint[2]+60, 0)
+            arm.moveTo(*perch, suction = 1, pump=1)
 
-        top = (-425, 80, 65,0)
-        arm.moveTo(*top, suction = 1, pump=1)
-        time.sleep(1)
-        print("weirds")
+            block = (-242, 195, 4,0)
+            # arm.moveTo(*top, suction = 1, pump=1)
+            # time.sleep(1)
+            # print("weirds")
+            grabPlace = arm.calcSmoothPlace(block, approachZ=10, approachTangent=0,steps=2)
+            for pos in grabPlace:
+                arm.moveTo(*pos, suction = 1, pump=1)
 
-        # testingPick = arm.calcSmoothPick(top, 6, 2)
-        # for pos in testingPick:
-        #     arm.moveTo(*pos, suction = 1, pump=1)
+            # Extract
+            grabPlace = arm.calcSmoothPlace(block, approachZ=30, approachTangent=0,steps=2, behind=-1)
+            print(list(grabPlace))
+            for pos in grabPlace:
+                arm.moveTo(*pos, suction = 1, pump=1)
 
-        # testingPick = arm.calcSmoothPick(test, 15, extract=True)
-        # for pos in testingPick:
-        #     arm.moveTo(*pos, suction = 1, pump=1)
 
-        # testingPlace= arm.calcSmoothPlace(test)
-        # print(list(testingPlace))
-        # for pos in testingPlace:
-        #     arm.moveTo(*pos, suction = 1, pump=1)
+            # Perch
+            placeAngle = math.atan2(100,200)
+            print("Angles")
+            print(placeAngle, placePoint[3])
+            # Perch
+            perch = (-100, 250, placePoint[2]+60,placePoint[3]+placeAngle)
+            
+            arm.moveTo(*perch, suction = 1, pump=1)
+
+            # PLace
+            testingPlace= arm.calcSmoothPlace(placePoint,direction=1,steps=3, behind=False)
+            for pos in testingPlace:
+                arm.moveTo(*pos, suction = 1, pump=1)
+
+            arm.controlVacPump(0,0)
+            testingPlace= arm.calcSmoothPlace(placePoint,approachTangent=0,steps=2, behind=True)
+            for pos in testingPlace:
+                arm.moveTo(*pos, suction = 0, pump=0)
+            
+             
+
         
-        # testingPlace= arm.calcSmoothPlace(test,direction=1, behind=False)
-        # for pos in testingPlace:
-        #     arm.moveTo(*pos, suction = 1, pump=1)
-
-        # arm.controlVacPump(0,0)
-
-        # testingPlace= arm.calcSmoothPlace(test,approachTangent=0,direction=-1, behind=True)
-        # for pos in testingPlace:
-        #     arm.moveTo(*pos, suction = 0, pump=0)
-        ##testingPick = arm.calcSmoothPick((0,300,15,0), extract=True)
-        
-        arm.controlVacPump(1,1)
+        arm.home()
+        arm.controlVacPump(0,0)
 
         
         quit()

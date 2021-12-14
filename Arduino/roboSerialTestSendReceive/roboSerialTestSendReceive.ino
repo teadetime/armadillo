@@ -217,6 +217,7 @@ void loop() {
         setVac(vacPC);
         setPump(pumpPC);
         servoPos = servoZero;
+
         servoEOF.write(servoPos);
       }
     }
@@ -241,7 +242,8 @@ void loop() {
 //          stepper3.stop();
 //        }
         if (!motorsMoving()) {
-          setVac(vacPC);  
+          setVac(vacPC);
+          servoEOF.write(servoPos);
           // Send Objective completed message
           objectiveInProgress = false;
           moving = false;
