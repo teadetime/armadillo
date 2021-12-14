@@ -20,16 +20,16 @@ def towerPts(x0 = 0, y0 = 350, zOffset = 0, theta0 = -90, nLayers = 18):
                     yield (x0, y0 - blockWidth, blockHeight * layer + zOffset, theta + 90)
                     yield (x0, y0,              blockHeight * layer + zOffset, theta + 90)
                     yield (x0, y0 + blockWidth, blockHeight * layer + zOffset, theta + 90)
-                    
+
 
 if __name__=='__main__':
     arm = robot.robot()
     vs = vision.vision()
-    
+
     testingHomingandWorld = True
     testingCameras = False
 
-    
+
     if testingHomingandWorld:
         #####################
         # Test Zero Position#
@@ -48,18 +48,18 @@ if __name__=='__main__':
         # jPos = arm.worldToJoint(xyz, block_angle)
         # print(f"Reconvert: {arm.radTupleToStepTuple(jPos)}")
 
-        # Check for Arduinio
-        if not arm.serial.connected:
-            print("Please Connect Arduino")
-            quit()
+        # # Check for Arduinio
+        # if not arm.serial.connected:
+        #     print("Please Connect Arduino")
+        #     quit()
 
-        arm.waitForArduino()
+        # arm.waitForArduino()
 
         ##############################
         ##Initiate Homing Proceedure##
         ##############################
         arm.home()
-        
+
         #test = (-300, 300,10,0)
         # arm.moveTo(*test, suction = 0)
         arm.controlVacPump(1,1)
@@ -112,7 +112,7 @@ if __name__=='__main__':
         arm.home()
         arm.controlVacPump(0,0)
 
-        
+
         quit()
         #Try Claibrating
         # calibTuple = (-175, 250, 15)
@@ -149,49 +149,49 @@ if __name__=='__main__':
 
 
             #Go to a position
-            testPoint = (coords[0],coords[1], 14, rotation) 
+            testPoint = (coords[0],coords[1], 14, rotation)
             arm.moveTo(*testPoint, suction = 0)
-            testPoint = (coords[0],coords[1], 5, rotation) 
+            testPoint = (coords[0],coords[1], 5, rotation)
             arm.moveTo(*testPoint, suction = 1)
 
-            testPoint = (coords[0],coords[1], 40, rotation) 
+            testPoint = (coords[0],coords[1], 40, rotation)
             arm.moveTo(*testPoint, suction = 1)
 
             t = towerPts()
             testPoint = next(t)
 
-            testPoint = (300,400, 25, 0) 
+            testPoint = (300,400, 25, 0)
             arm.moveTo(*testPoint, suction = 1)
-            testPoint = (300,400, 15, 0) 
+            testPoint = (300,400, 15, 0)
             arm.moveTo(*testPoint, suction = 1)
             arm.moveTo(*testPoint, suction = 0)
 
-            testPoint = (300,400, 40, 0) 
+            testPoint = (300,400, 40, 0)
             arm.moveTo(*testPoint, suction = 0)
 
             # testPoint[2] = testPoint[2] + 5
             # arm.moveTo(*testPoint, suction = 0)
 
-        # testPoint = (-300, 400, 15, 0) 
+        # testPoint = (-300, 400, 15, 0)
         # arm.moveTo(*testPoint, suction = 0)
         # time.sleep(5)
-        # testPoint = (-300, 400, 45, 0) 
+        # testPoint = (-300, 400, 45, 0)
         # arm.moveTo(*testPoint, suction = 0)
 
-        # testPoint = (0, 400, 15, 0) 
+        # testPoint = (0, 400, 15, 0)
         # arm.moveTo(*testPoint, suction = 0)
         # time.sleep(5)
-        # testPoint = (0, 400, 45, 0) 
+        # testPoint = (0, 400, 45, 0)
         # arm.moveTo(*testPoint, suction = 0)
 
-        # testPoint = (300, 400, 15, 0) 
+        # testPoint = (300, 400, 15, 0)
         # arm.moveTo(*testPoint, suction = 0)
         # time.sleep(5)
-        # testPoint = (300, 400, 45, 0) 
+        # testPoint = (300, 400, 45, 0)
         # arm.moveTo(*testPoint, suction = 0)
         # arm.home()
         # quit()
-        
+
         # ORDER OF OPERATIONS:
         # 1. Home
         # 2. For each block, stackPosition in zip(blockList, stackPosition):
@@ -242,7 +242,7 @@ if __name__=='__main__':
         # testGridPts()
         # exit()
 
-        
+
 
         # for towerPt in towerPts():
         #     arm.moveTo(*towerPt, 0)

@@ -26,11 +26,11 @@ class vision:
 
         # Image Loading and Resizing
         self.needsBasis = True  # Run ceratin calculations if they haven't been run before
-        self.camIndex = 3       # 0 is internal webcam
+        self.camIndex = 0       # 0 is internal webcam
         self.image = None
         self.resized = None     #imutils.resize(image, width=self.resizedSize)
         self.drawImg = None
-        self.resizedSize = 1000
+        self.resizedSize = 600
         self.ratio = None       #image.shape[0] / float(resized.shape[0])
         self.hsv = None         #cv2.cvtColor(resized, cv2.COLOR_BGR2HSV)
 
@@ -66,13 +66,13 @@ class vision:
         # WINDOWS
         else:
             print("Running on Windows!")
-            self.lower_red = np.array([0,0,0])
-            self.upper_red = np.array([179,255,255])
+            self.lower_red = np.array([0, 0, 0])
+            self.upper_red = np.array([57, 255, 255])
 
-            self.lower_blue = np.array([0,0,0])
-            self.upper_blue = np.array([130,198,255])
+            self.lower_blue = np.array([71,60,106])
+            self.upper_blue = np.array([179,255,255])
 
-            self.lowerBlocks =  np.array([0,0,79])
+            self.lowerBlocks = np.array([0,0,79])
             self.upperBlocks = np.array([75,108,205])
 
             self.lower_green = np.array([28,38,144])
@@ -136,7 +136,7 @@ class vision:
             cv2.imshow("HSV Blue", blueMask) # Yellow Tag 2
             cv2.imshow("HSV Red", redMask) # Red Tag 2
             cv2.imshow("HSV Block", blockMask) # Red Tag 2
-           
+
         cntsBlue = self.getCnts(blueMask)
         cntsRed = self.getCnts(redMask)
         cntsGreen = self.getCnts(greenMask)
@@ -360,8 +360,7 @@ class vision:
             pass
         cap = cv2.VideoCapture(self.camIndex)
         # Create a window
-        cv2.namedWindow('image')
-
+        cv2.namedWindow('image', cv2.WINDOW_NORMAL)
         # create trackbars for color change
         cv2.createTrackbar('HMin','image',0,179,nothing) # Hue is from 0-179 for Opencv
         cv2.createTrackbar('SMin','image',0,255,nothing)
