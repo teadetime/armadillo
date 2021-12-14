@@ -149,10 +149,10 @@ class robot:
 
         print(theta1, theta2, theta3)
 
-        if theta2 > self.limitJ2 or theta2 < self.limitJ2min:
-            return None
-        if theta3 > self.limitJ3 or theta3 < self.limitJ3min:
-            return None
+        # if theta2 > self.limitJ2 or theta2 < self.limitJ2min:
+        #     return None
+        # if theta3 > self.limitJ3 or theta3 < self.limitJ3min:
+        #     return None
 
         print(thetab)
 
@@ -247,7 +247,7 @@ class robot:
                     resultChar = data.split(self.splitChar)[-1]
                     return(resultChar == self.successChar)
                     break
-            time.sleep(.05)
+            time.sleep(.02)
         return
 
     def waitForArduino(self):
@@ -333,10 +333,10 @@ class robot:
             return reversed(tupleApproach)
         return tupleApproach
 
-    def calcSmoothPlace(coords, approachZ=15, approachTangent=5,steps = 15,direction=1, behind=False):
+    def calcSmoothPlace(self, coords, approachZ=15, approachTangent=20,steps = 15,direction=1, behind=False):
             rotation = coords[3]
             deltaX = approachTangent * math.sin(math.radians(rotation)) * direction
-            deltaY = approachTangent * math.sin(math.radians(rotation)) * direction
+            deltaY = approachTangent * math.cos(math.radians(rotation)) * direction
             if behind:
                 deltaX *= -1
                 deltaY *= -1
@@ -347,7 +347,7 @@ class robot:
             
             tupleApproach = []
             for i in range(steps):
-                tupleApproach.append((coords[1]+i*stepX,coords[1]+i*stepY,coords[2]+i*stepZ,rotation)) 
+                tupleApproach.append((coords[0]+i*stepX,coords[1]+i*stepY,coords[2]+i*stepZ,rotation)) 
 
             if not behind:
                 return reversed(tupleApproach)

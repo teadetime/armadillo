@@ -59,22 +59,49 @@ if __name__=='__main__':
         ##Initiate Homing Proceedure##
         ##############################
         arm.home()
-
-        # test = (0, 300,10,0)
+        
+        #test = (-300, 300,10,0)
         # arm.moveTo(*test, suction = 0)
-        arm.controlVacPump(0,1)
+        arm.controlVacPump(1,1)
+        time.sleep(2)
 
-        testingPick = arm.calcSmoothPick((0,300,5,0))
-        for pos in testingPick:
-            arm.moveTo(*pos, suction = 1)
+        top = (370, 370, 150,0)
+        arm.moveTo(*top, suction = 1, pump=1)
+        time.sleep(1)
+        print("weirds")
 
-        testingPick = arm.calcSmoothPick((0,300,5,0), 15, extract=True)
-        for pos in testingPick:
-            arm.moveTo(*pos, suction = 1)
+        top = (-425, 80, 65,0)
+        arm.moveTo(*top, suction = 1, pump=1)
+        time.sleep(1)
+        print("weirds")
 
+        # testingPick = arm.calcSmoothPick(top, 6, 2)
+        # for pos in testingPick:
+        #     arm.moveTo(*pos, suction = 1, pump=1)
+
+        # testingPick = arm.calcSmoothPick(test, 15, extract=True)
+        # for pos in testingPick:
+        #     arm.moveTo(*pos, suction = 1, pump=1)
+
+        # testingPlace= arm.calcSmoothPlace(test)
+        # print(list(testingPlace))
+        # for pos in testingPlace:
+        #     arm.moveTo(*pos, suction = 1, pump=1)
+        
+        # testingPlace= arm.calcSmoothPlace(test,direction=1, behind=False)
+        # for pos in testingPlace:
+        #     arm.moveTo(*pos, suction = 1, pump=1)
+
+        # arm.controlVacPump(0,0)
+
+        # testingPlace= arm.calcSmoothPlace(test,approachTangent=0,direction=-1, behind=True)
+        # for pos in testingPlace:
+        #     arm.moveTo(*pos, suction = 0, pump=0)
         ##testingPick = arm.calcSmoothPick((0,300,15,0), extract=True)
         
-        arm.controlVacPump(0,0)
+        arm.controlVacPump(1,1)
+
+        
         quit()
         #Try Claibrating
         # calibTuple = (-175, 250, 15)
