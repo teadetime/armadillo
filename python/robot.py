@@ -38,7 +38,7 @@ class robot:
         self.L1 = 322               # mm length of first Arm Bearing to bearing
         self.L2 = 322               # 2nd Arm
         self.L3 = 17.5                # Length of rotating end effector
-        self.maxExtension=550           # How far out can the arm go!
+        self.maxExtension=650           # How far out can the arm go!
         #
         self.J1microSteps = 16
         self.J2microSteps = 16
@@ -48,8 +48,8 @@ class robot:
         self.J3gearing = 3
 
         # Radian values for the limit switches
-        self.limitJ1 = math.pi/2 + math.radians(13.8)
-        self.limitJ2 = math.radians(89)
+        self.limitJ1 = math.pi/2 + math.radians(13.4) # + math.radians(13.8)
+        self.limitJ2 = math.radians(87)
         self.limitJ2min = math.radians(0)
         self.limitJ3 = math.pi/2+math.radians(92)
         self.limitJ3min = math.radians(85)
@@ -107,7 +107,7 @@ class robot:
         '''
 
         # CHeck to see if the arm is going to a bad place!
-        if coords[1] < -75 or 160 > math.sqrt(coords[0]**2 + coords[1]**2) or  math.sqrt(coords[0]**2 + coords[1]**2) > self.maxExtension:
+        if coords[1] < -75 or 150 > math.sqrt(coords[0]**2 + coords[1]**2) or  math.sqrt(coords[0]**2 + coords[1]**2) > self.maxExtension:
             print("Cannot reach this position")
             return False
 

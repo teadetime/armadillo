@@ -120,7 +120,7 @@ class vision:
                 return False
         # Always update the block mask
         self.blockMask = cv2.inRange(self.hsv, self.lowerBlocks, self.upperBlocks)
-        if self.jengaDebug or 1:
+        if self.jengaDebug:
             cv2.imshow("HSV Block Mask", self.blockMask)  # Tag 1
             cv2.waitKey()
             cv2.imshow("HSV Block Mask", self.hsv)  # Tag 1
