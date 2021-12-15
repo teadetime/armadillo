@@ -141,7 +141,7 @@ FACEBOOK: https://www.facebook.com/themefisher
                     <!-- Feature Title -->
                     <h3>Suction Subsystem</h3>
                     <!-- Feature Description -->
-                    <p class="desc">The vacuum pump creates negative pressure at the end effector suction cup, which is just enough force to pick up a Jenga block, or maybe a phone. (insert image?) The pump is in series with a solenoid valve, which opens and closes the air flow. The pump and solenoid are switched on and off with transistors on the low side, with pull down resistors on the gate pins.</p>
+                    <p class="desc">The vacuum pump creates negative pressure at the end effector suction cup, which is just enough force to pick up a Jenga block, or maybe a phone. The pump is in series with a solenoid valve, which opens and closes the air flow. The pump and solenoid are switched on and off with transistors on the low side, with pull down resistors on the gate pins.</p>
                 </div>
             </div>
 
@@ -170,17 +170,9 @@ FACEBOOK: https://www.facebook.com/themefisher
     </div>
 </section>
 
-<section id="Suction" class="feature section pt-0">
+<section id="Drive" class="feature section pt-0">
     <div class="container">
         <div class="row">
-            <div class="col-lg-6 mr-auto align-self-center">
-                <div class="feature-content">
-                    <!-- Feature Title -->
-                    <h3>Drive Subsystem</h3>
-                    <!-- Feature Description -->
-                    <p class="desc">The stepper motors are controlled by three DRV8825 stepper drivers, which are commanded by the Arduino. The stepper drivers are set to 1/16 microstepping, which makes the robot arm move very smoothly and precisely, while still moving fast enough for our purposes. The microstepping level is assigned in hardware with jumper caps between the DRV8825 step size selector pins and a 5V rail. Stepper motors hold their position when powered on, locking the arm in place. The enable pins on the drivers are software-controlled, so that the motors can be turned off to manually reposition the arm.</p>
-                </div>
-            </div>
             <div class="col-lg-3 mr-auto justify-content-center">
                 <!-- Feature Mockup -->
                 <div class="image-content" data-aos="fade-right">
@@ -193,6 +185,15 @@ FACEBOOK: https://www.facebook.com/themefisher
                     <img class="img-fluid" src="images/electrical/drive_pic.png" alt="jenga">
                 </div>
             </div>
+            <div class="col-lg-6 mr-auto align-self-center">
+                <div class="feature-content">
+                    <!-- Feature Title -->
+                    <h3>Drive Subsystem</h3>
+                    <!-- Feature Description -->
+                    <p class="desc">The stepper motors are controlled by three DRV8825 stepper drivers, which are commanded by the Arduino. The stepper drivers are set to 1/16 microstepping, which makes the robot arm move very smoothly and precisely, while still moving fast enough for our purposes. The microstepping level is assigned in hardware with jumper caps between the DRV8825 step size selector pins and a 5V rail. Stepper motors hold their position when powered on, locking the arm in place. The enable pins on the drivers are software-controlled, so that the motors can be turned off to manually reposition the arm.</p>
+                </div>
+            </div>
+
         </div>
     </div>
 </section>

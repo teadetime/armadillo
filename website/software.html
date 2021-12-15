@@ -88,7 +88,7 @@ FACEBOOK: https://www.facebook.com/themefisher
                 <div class="block">
                     <h1>Software Design</h1>
                     <p>
-
+                        <a href="https://github.com/teadetime/armadillo/blob/main/python/jenga.py">View Source Code</a>
                     </p>
                 </div>
             </div>
@@ -111,10 +111,20 @@ FACEBOOK: https://www.facebook.com/themefisher
                     <!-- Feature Title -->
                     <h3>Overview</h3>
                     <!-- Feature Description -->
-                    <p class="desc">The main mechanical component is the arm itself. Designed similarly to
-                    industrial palletizing robots, it features a total of 3 four bar linkages which serve
-                    to keep the steppers at the base of the robot, and also keep the end effector level.
-                    This makes the arm light and perfect for stacking jenga blocks.</p>
+                    <p class="desc">This robotic arm is practically useless without the software and firmware to control it! We modeled a control scheme like that of industrial robot arms where there is a dedicated robot controller taking care of the arm’s movements and a different computer and piece of software telling the arm what to actually do. To accomplish our goal of stacking jenga blocks we also utilized OpenCV https://opencv.org/ to accomplish various vision related tasks like locating the jenga blocks within the world!
+                    </p>
+                    <p>
+                        The software behind this project is broken into four main chunks:
+                        <ol>
+                            <li>Computer Vision (Block detection and pixel to coordinate mapping)</li>
+                            <ol>
+                                <li>Establish basis</li>
+                                <li>Block detection</li>
+                            </ol>
+                            <li>Robot Arm Angles to Cartesian Coordinates</li>
+                            <li>Arduino Robot Controller Firmware</li>
+                        </ol>
+                    </p>
                 </div>
 
             </div>
