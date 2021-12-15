@@ -50,28 +50,30 @@ if __name__=='__main__':
         # print(f"Reconvert: {arm.radTupleToStepTuple(jPos)}")
 
         # Check for Arduinio
-        # if not arm.serial.connected:
-        #     print("Please Connect Arduino")
-        #     quit()
+        if not arm.serial.connected:
+            print("Please Connect Arduino")
+            quit()
 
-        # arm.waitForArduino()
-        # arm.controlVacPump(0,0)
-
+        arm.waitForArduino()
+        arm.controlVacPump(0,0)
+        time.sleep(5)
         ##############################
         ##Initiate Homing Proceedure##
         ##############################
-        # arm.home()
+        arm.home()
 
-        # test = (0, 400,10,0)
-        # arm.moveTo(*test, suction = 0, pump=0)
+        test = (0, 400,10,0)
+        arm.moveTo(*test, suction = 0, pump=0)
 
         #time.sleep(5)
 
         arm.controlVacPump(1,1)
-        t = towerPts(x0=300,y0=400, zOffset=6)
+        t = towerPts(x0=300,y0=400, zOffset=5) # xxxxx
         for i in range(54):
-        #     placePoint = next(t)
-        #     print(placePoint)
+            if i % 6 == 0 and i > 0:
+                arm.home()
+            placePoint = next(t)
+            print(placePoint)
 
             arm.lookingForBlock = True
             # Perch
@@ -94,18 +96,24 @@ if __name__=='__main__':
                         quit()
                 else:
                     grabbingFrame = False
-            (coords, rotation) = next(vs.getBlockWorld())
+            gbw = vs.getBlockWorld()
+            (coords, rotation) = next(gbw)
             print(coords)
             print(rotation)
 
-            block = (coords[0],coords[1], 3,rotation)
+            block = (coords[0],coords[1], 2 - (i // 3) / 2.3,rotation) # xxxxx
             # arm.moveTo(*top, suction = 1, pump=1)
             # time.sleep(1)
             # print("weirds")
-            grabPlace = arm.calcSmoothPlace(block, approachZ=15, approachTangent=0,steps=4)
-            for pos in grabPlace:
-                arm.moveTo(*pos, suction = 1, pump=1)
-                arm.lookingForBlock = False
+            for moveAttempt in range(3):
+                grabPlace = arm.calcSmoothPlace(block, approachZ=15, approachTangent=0,steps=4)
+                for pos in grabPlace:
+                    moveSuccess = arm.moveTo(*pos, suction = 1, pump=1) # xxxxx
+                    arm.lookingForBlock = False
+                    if moveSuccess:
+                        break
+                    (coords, rotation) = next(gbw)
+
 
             # Extract
             grabPlace = arm.calcSmoothPlace(block, approachZ=50, approachTangent=0,steps=2, behind=-1)
@@ -119,12 +127,12 @@ if __name__=='__main__':
             arm.moveTo(*perch, suction = 1, pump=1)
 
             # PLace
-            testingPlace= arm.calcSmoothPlace(placePoint,direction=1,steps=3, behind=False)
+            testingPlace= arm.calcSmoothPlace(placePoint,approachTangent=25,direction=1,steps=3, behind=False)
             for pos in testingPlace:
                 arm.moveTo(*pos, suction = 1, pump=1)
 
             arm.controlVacPump(0,0)
-            testingPlace= arm.calcSmoothPlace(placePoint,approachZ=20 ,approachTangent=0,steps=2, behind=True)
+            testingPlace= arm.calcSmoothPlace(placePoint,approachZ=30 ,approachTangent=0,steps=2, behind=True)
             for pos in testingPlace:
                 arm.moveTo(*pos, suction = 0, pump=0)
 
