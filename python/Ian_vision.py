@@ -174,6 +174,8 @@ class vision:
             cam.set(4,1024)
             sleep(delay)
             ret, self.image = cam.read()
+            cam.set(3,1280)
+            cam.set(4,1024)
 
         self.resized = imutils.resize(self.image, width=self.resizedSize)
         self.drawImg = self.resized.copy()
@@ -203,7 +205,8 @@ class vision:
         # print(self.blockMask)
 
         if self.jengaDebug:
-            cv2.imshow("HSV Block Mask", self.blockMask)  # Tag 1
+            # cv2.imshow("HSV Block Mask", self.blockMask)  # Tag 1
+            pass
         return True
     # TODO: WHY DOESNT THIS WORK!?!?!?
     #image = cv2.flip(image,0)
@@ -212,7 +215,7 @@ class vision:
         self.ratio = self.image.shape[0] / float(self.resized.shape[0])
 
         if self.jengaDebug:
-            cv2.imshow("testing 1", self.drawImg)
+            # cv2.imshow("testing 1", self.drawImg)
             self.checkWaitKey()
 
         gray = cv2.cvtColor(self.drawImg, cv2.COLOR_BGR2GRAY)
@@ -220,7 +223,7 @@ class vision:
         gray_filtered = cv2.inRange(gray, 0, 190)
 
         if self.jengaDebug:
-            cv2.imshow("testing gray 1", gray_filtered)
+            # cv2.imshow("testing gray 1", gray_filtered)
             self.checkWaitKey()
 
         arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_250)
@@ -262,8 +265,11 @@ class vision:
 
 
         # Image coords pixels
+        # the first two lines are the correct orientation
         self.originTagPixel = np.array([[greenCenter[0]], [greenCenter[1]]])
         secondaryTag = np.array([[redCenter[0]], [redCenter[1]]])
+        # self.originTagPixel = np.array([[redCenter[0]], [redCenter[1]]])
+        # secondaryTag = np.array([[greenCenter[0]], [greenCenter[1]]])
 
         self.basisWorld, self.basisPixel, self.frameRotation = self.calcBasis(self.greenWorldOrigin, self.redWorld, self.originTagPixel, secondaryTag)
 
@@ -293,110 +299,13 @@ class vision:
                     testWorldCoords = np.array([[i],[j]])
                     coordPixel, rotationBlock = self.changeBasisAtoB(self.originTagPixel, self.greenWorldOrigin , blockRotationImage,
                                                     self.basisPixel, testWorldCoords, self.frameRotation  )
-                    self.drawPoint(coordPixel, (0,0,255))
-            cv2.imshow("Image", self.drawImg)
+                    self.drawPoint(coordPixel, (0,255,255))
+            cv2.imshow("Basis", self.drawImg)
             self.checkWaitKey(0)
         self.drawImg = self.resized.copy()  # Reset the image for other operations!
         self.needsBasis = False
         return True # This means we were successful
 
-    def establishBasis(self):
-        self.ratio = self.image.shape[0] / float(self.resized.shape[0])
-        self.hsv = cv2.cvtColor(self.resized, cv2.COLOR_BGR2HSV)
-
-        # Create Masks Based on the Bounds
-        greenMask = cv2.inRange(self.hsv, self.lower_green, self.upper_green)
-        yellowMask = cv2.inRange(self.hsv, self.lower_yellow, self.upper_yellow)
-        redMask = cv2.inRange(self.hsv, self.lower_red, self.upper_red)
-
-        if self.debug:
-            cv2.imshow("HSV Green Before", greenMask)  # Tag 1
-            cv2.imshow("HSV Yellow Before", yellowMask) # Yellow Tag 2
-            cv2.imshow("HSV Red Before", redMask) # Red Tag 2
-
-        kernel = np.ones((5,5), np.uint8) * 2
-
-        yellowMask = cv2.morphologyEx(yellowMask, cv2.MORPH_CLOSE, kernel, iterations = 4)
-        redMask = cv2.morphologyEx(redMask, cv2.MORPH_CLOSE, kernel, iterations = 4)
-        greenMask = cv2.morphologyEx(greenMask, cv2.MORPH_CLOSE, kernel, iterations = 4)
-
-        # yellowMask = cv2.morphologyEx(yellowMask, cv2.MORPH_OPEN, kernel, iterations = 4)
-        # redMask = cv2.morphologyEx(redMask, cv2.MORPH_OPEN, kernel, iterations = 4)
-        # greenMask = cv2.morphologyEx(greenMask, cv2.MORPH_OPEN, kernel, iterations = 4)
-
-        # yellowMask = cv2.morphologyEx(yellowMask, cv2.MORPH_CLOSE, kernel, iterations = 4)
-        # redMask = cv2.morphologyEx(redMask, cv2.MORPH_CLOSE, kernel, iterations = 4)
-        # greenMask = cv2.morphologyEx(greenMask, cv2.MORPH_CLOSE, kernel, iterations = 4)
-
-        if self.debug:
-            cv2.imshow("HSV Green", greenMask)  # Tag 1
-            cv2.imshow("HSV Yellow", yellowMask) # Yellow Tag 2
-            cv2.imshow("HSV Red", redMask) # Red Tag 2
-
-
-            self.checkWaitKey()
-
-        cntsYellow = self.getCnts(yellowMask)
-        cntsRed = self.getCnts(redMask)
-        cntsGreen = self.getCnts(greenMask)
-
-        if not cntsGreen or not cntsRed:
-            return False
-
-        # Calculate the centers of each piece
-        (greenCenter, greenBox) = self.getPixelCenterSquare(cntsGreen)
-        (yellowCenter, yellowBox) = self.getPixelCenterSquare(cntsYellow)
-        (redCenter, redBox) = self.getPixelCenterSquare(cntsRed)
-
-        if greenBox is not None:
-            self.drawContours(greenBox)
-            self.drawPoint(greenCenter)
-        if yellowBox is not None:
-            self.drawContours(yellowBox)
-            self.drawPoint(yellowCenter)
-        if redBox is not None:
-            self.drawContours(redBox)
-            self.drawPoint(redCenter)
-
-
-        # Image coords pixels
-        self.originTagPixel = np.array([[greenCenter[0]], [greenCenter[1]]])
-        secondaryTag = np.array([[redCenter[0]], [redCenter[1]]])
-
-        self.basisWorld, self.basisPixel, self.frameRotation = self.calcBasis(self.greenWorldOrigin, self.redWorld, self.originTagPixel, secondaryTag)
-
-        self.drawBasis()
-
-        if self.debug:
-            print(f"World Basis: \n{self.basisWorld}\nPixel Basis: \n{self.basisPixel}")
-
-            # Testing the yellow block in center
-            ####THESE PARAMS NEED TO BE FROM THE BLOCK/OPENCV
-            blockRotationImage = 0
-            blockCenterImageFullFrame = np.array([[yellowCenter[0]],
-                                                [yellowCenter[1]]])
-            print("yellow", yellowCenter)
-            # Example to World Coords
-            coordWorld, rotationWorld = self.changeBasisAtoB(self.greenWorldOrigin, self.originTagPixel, self.frameRotation, self.basisWorld,
-                                                    blockCenterImageFullFrame, blockRotationImage )
-            print(f"Yellow World Coords:\n {coordWorld}\nWorld Rotation: {rotationWorld}")
-            # # Example to Pixel Coords
-            testWorldCoords = np.array([[0],[100]])
-            coordPixel, rotationBlock = self.changeBasisAtoB(self.originTagPixel, self.greenWorldOrigin , blockRotationImage, self.basisPixel,
-                                                     testWorldCoords, self.frameRotation  )
-            print(f"World->Pixel: {coordPixel}")
-            self.drawPoint(coordPixel, (0,255,0), 5)
-            for i in range(-500, 500, 50):
-                for j in range(0, 650, 50):
-                    testWorldCoords = np.array([[i],[j]])
-                    coordPixel, rotationBlock = self.changeBasisAtoB(self.originTagPixel, self.greenWorldOrigin , blockRotationImage,
-                                                    self.basisPixel, testWorldCoords, self.frameRotation  )
-                    self.drawPoint(coordPixel, (0,0,255))
-            cv2.imshow("Image", self.drawImg)
-            self.checkWaitKey(0)
-        self.drawImg = self.resized.copy()  # Reset the image for other operations!
-        self.needsBasis = False
-        return True # This means we were successful
 
     # Wrap some basic OpenCV for Easier Use
     def drawContours(self, box, color=(0, 0, 255), thickness=2):
@@ -479,11 +388,11 @@ class vision:
                 #     drawOnOriginalImage = True
 
                 cv2.drawContours(blockMask2,[box], 0, self.outlineColorDict[classification.value], 2)
-                cv2.imshow("With Detection", blockMask2)
+                # cv2.imshow("With Detection", blockMask2)
 
                 # if drawOnOriginalImage:
                 cv2.drawContours(self.drawImg,[box],0,self.outlineColorDict[classification.value], 2)
-                cv2.imshow("Image", self.drawImg)
+                # cv2.imshow("Image", self.drawImg)
 
                 # newClassification = self.receiveClassificationInput(default = classification)
                 # self.truthList.append(newClassification)
@@ -539,7 +448,7 @@ class vision:
 
         #while loop to live update
         while (1):
-            cv2.imshow(imgName, self.drawImg)
+            # cv2.imshow(imgName, self.drawImg)
             if self.checkWaitKey(1) == ord(' '):
                 break
 
@@ -560,6 +469,12 @@ class vision:
                         cv2.drawContours(self.drawImg, [self.boxList[i]], 0, self.outlineColorDict[classification], 2) # modified color: magenta
                         cv2.imshow(self.boxPickImgName, self.drawImg)
 
+        elif event == cv2.EVENT_RBUTTONDOWN:
+            coordWorld, rotationWorld = self.changeBasisAtoB(self.greenWorldOrigin, self.originTagPixel, self.frameRotation, self.basisWorld, [x, y], 0)
+            print("You just clicked on", coordWorld[0])
+            print("The pixel coordinates are", (x, y))
+
+
     def checkBlockCriteria(self, blockShort, blockLong, box, rotation):
 
         print("Box = ")
@@ -575,14 +490,14 @@ class vision:
         if closeUp.size <= 0: # check if the image is empty
             return self.BlockType.OUT_OF_BOUNDS
 
-        cv2.imshow("Box Close-Up", closeUp)
+        # cv2.imshow("Box Close-Up", closeUp)
         # self.checkWaitKey(0)
         #rotation angle in degree
         rotated = ndimage.rotate(closeUp, -rotation)
-        cv2.imshow("Rotated Close-Up", rotated)
+        # cv2.imshow("Rotated Close-Up", rotated)
 
         resized = self.basicResize(rotated, self.mlDim)
-        cv2.imshow("Scaled Rotated Close-Up", resized)
+        # cv2.imshow("Scaled Rotated Close-Up", resized)
 
         print("image variable type =", type(resized))
         newVector = np.reshape(resized, -1) # convert to a vector
@@ -680,6 +595,8 @@ class vision:
         """
         blockCenterImage = aVector - aOffset
         bVector = np.matmul(basis, blockCenterImage)
+        # bVector[0] = bVector[0] - bOffset[0]
+        # bVector[1] = bVector[1] + bOffset[1]
         bVector = bVector + bOffset
         rotation = bRot-fRot
         return bVector, rotation
@@ -769,7 +686,7 @@ class vision:
                     0.5, (0, 255, 0), 2)
                 print("[INFO] ArUco marker ID: {}".format(markerID))
                 # show the output image
-                cv2.imshow("Image 2", self.drawImg)
+                # cv2.imshow("Image 2", self.drawImg)
                 self.checkWaitKey(0)
 
 

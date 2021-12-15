@@ -1,6 +1,7 @@
 import math
 import robot
-import vision
+# import vision
+import Ian_vision as vision
 import time
 import numpy as np
 
@@ -27,7 +28,7 @@ if __name__=='__main__':
     vs = vision.vision()
 
     testingHomingandWorld = True
-    testingCameras = False
+    testingCameras = True
 
 
     if testingHomingandWorld:
@@ -54,6 +55,59 @@ if __name__=='__main__':
         #     quit()
 
         # arm.waitForArduino()
+        # arm.home()
+
+
+        if testingCameras:
+            if not vs.testCamera():
+                print("Camera Not working")
+
+            grabbingFrame = True
+            while grabbingFrame:
+                grabImageSuccess = vs.grabImage(fromPath=False)
+                if not grabImageSuccess:
+                    print("Please reposition Camera and check masking!")
+                    vs.tuneWindow()
+                    x = input('Retry (R) or Quit (Q): ')
+                    if x == 'R':
+                        pass
+                    else:
+                        quit()
+                else:
+                    grabbingFrame = False
+            (coords, rotation) = next(vs.getBlockWorld())
+            print("coords =", coords)
+            print("rotation =", rotation)
+            vs.drawPoint(coords, (255, 255, 0))
+            vs.checkWaitKey()
+
+            arm.moveTo(coords[0], coords[1], 15, rotation, suction = 1, pump = 1)
+            # #Go to a position
+            # testPoint = (coords[0],coords[1], 14, rotation)
+            # arm.moveTo(*testPoint, suction = 0, pump = 0)
+            # testPoint = (coords[0],coords[1], 5, rotation)
+            # arm.moveTo(*testPoint, suction = 1, pump = 0)
+
+            # testPoint = (coords[0],coords[1], 40, rotation)
+            # arm.moveTo(*testPoint, suction = 1, pump = 0)
+
+            # t = towerPts()
+            # testPoint = next(t)
+
+            # testPoint = (300,400, 25, 0)
+            # arm.moveTo(*testPoint, suction = 1, pump = 0)
+            # testPoint = (300,400, 15, 0)
+            # arm.moveTo(*testPoint, suction = 1, pump = 0)
+            # arm.moveTo(*testPoint, suction = 0, pump = 0)
+
+            # testPoint = (300,400, 40, 0)
+            # arm.moveTo(*testPoint, suction = 0, pump = 0)
+
+            # # testPoint[2] = testPoint[2] + 5
+            # # arm.moveTo(*testPoint, suction = 0, pump = 0)
+
+
+
 
         ##############################
         ##Initiate Homing Proceedure##
@@ -113,53 +167,6 @@ if __name__=='__main__':
         # result = arm.waitForResponse()
 
 
-
-
-        if testingCameras:
-            if not vs.testCamera():
-                print("Camera Not working")
-
-            grabbingFrame = True
-            while grabbingFrame:
-                grabImageSuccess = vs.grabImage(fromPath=False)
-                if not grabImageSuccess:
-                    print("Please reposition Camera and check masking!")
-                    vs.tuneWindow()
-                    x = input('Retry (R) or Quit (Q): ')
-                    if x == 'R':
-                        pass
-                    else:
-                        quit()
-                else:
-                    grabbingFrame = False
-            (coords, rotation) = vs.getBlockWorld()
-            print(coords)
-            print(rotation)
-
-
-            #Go to a position
-            testPoint = (coords[0],coords[1], 14, rotation)
-            arm.moveTo(*testPoint, suction = 0)
-            testPoint = (coords[0],coords[1], 5, rotation)
-            arm.moveTo(*testPoint, suction = 1)
-
-            testPoint = (coords[0],coords[1], 40, rotation)
-            arm.moveTo(*testPoint, suction = 1)
-
-            t = towerPts()
-            testPoint = next(t)
-
-            testPoint = (300,400, 25, 0)
-            arm.moveTo(*testPoint, suction = 1)
-            testPoint = (300,400, 15, 0)
-            arm.moveTo(*testPoint, suction = 1)
-            arm.moveTo(*testPoint, suction = 0)
-
-            testPoint = (300,400, 40, 0)
-            arm.moveTo(*testPoint, suction = 0)
-
-            # testPoint[2] = testPoint[2] + 5
-            # arm.moveTo(*testPoint, suction = 0)
 
         # testPoint = (-300, 400, 15, 0)
         # arm.moveTo(*testPoint, suction = 0)
