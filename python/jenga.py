@@ -86,7 +86,7 @@ if __name__=='__main__':
                         quit()
                 else:
                     grabbingFrame = False
-            (coords, rotation) = vs.getBlockWorld()
+            (coords, rotation) = next(vs.getBlockWorld())
             print(coords)
             print(rotation)
 
