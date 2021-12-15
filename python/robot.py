@@ -51,7 +51,7 @@ class robot:
         self.limitJ1 = math.pi/2 + math.radians(13.8)
         self.limitJ2 = math.radians(89)
         self.limitJ2min = math.radians(0)
-        self.limitJ3 = math.pi/2+math.radians(92)
+        self.limitJ3 = math.pi/2+math.radians(9)
         self.limitJ3min = math.radians(85)
 
         self.lookingForBlock = True

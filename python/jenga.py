@@ -27,7 +27,7 @@ if __name__=='__main__':
     vs = vision.vision()
 
     testingHomingandWorld = True
-    testingCameras = False
+    testingCameras = True
 
 
     if testingHomingandWorld:
@@ -48,12 +48,12 @@ if __name__=='__main__':
         # jPos = arm.worldToJoint(xyz, block_angle)
         # print(f"Reconvert: {arm.radTupleToStepTuple(jPos)}")
 
-        # # Check for Arduinio
-        # if not arm.serial.connected:
-        #     print("Please Connect Arduino")
-        #     quit()
+        # Check for Arduinio
+        if not arm.serial.connected:
+            print("Please Connect Arduino")
+            quit()
 
-        # arm.waitForArduino()
+        arm.waitForArduino()
 
         ##############################
         ##Initiate Homing Proceedure##
@@ -69,10 +69,27 @@ if __name__=='__main__':
             print(placePoint)
 
             # Perch
-            perch = (-100, 250, placePoint[2]+60, 0)
+            perch = (-100, 300, placePoint[2]+70, 0)
             arm.moveTo(*perch, suction = 1, pump=1)
 
-            block = (-242, 195, 4,0)
+            grabbingFrame = True
+            while grabbingFrame:
+                grabImageSuccess = vs.grabImage(fromPath=False)
+                if not grabImageSuccess:
+                    print("Please reposition Camera and check masking!")
+                    vs.tuneWindow()
+                    x = input('Retry (R) or Quit (Q): ')
+                    if x == 'R':
+                        pass
+                    else:
+                        quit()
+                else:
+                    grabbingFrame = False
+            (coords, rotation) = vs.getBlockWorld()
+            print(coords)
+            print(rotation)
+
+            block = (coords[0],coords[1], 3,rotation)
             # arm.moveTo(*top, suction = 1, pump=1)
             # time.sleep(1)
             # print("weirds")
@@ -359,17 +376,21 @@ if __name__=='__main__':
         # result = arm.waitForResponse()
         # print(result)
 
-    #for jPos in jPosList:
-        # Calculate position
-        # layer = jengaBlock // 3 + 1
-        # rotation = (layer % 2) * 90
-        # position = (jengaBlock) % 3
-        # jPos = (jengaBlock*10,0,0,0)
-
-        # print(f"Working on Block:{jengaBlock+1} Layer:{layer}, rotation:{rotation}, position {position} ")
-        #nextPoint = createMessage(move,jPos,1.0,40.0)
-        #print(lastObjective)
-        # s.write(nextPoint)
-        # print(f"sent message: {nextPoint}")
-        # result = waitForResponse()
-        #time.sleep(1)
+    # Camera Testing
+    else:
+        grabbingFrame = True
+        while grabbingFrame:
+            grabImageSuccess = vs.grabImage(fromPath=False)
+            if not grabImageSuccess:
+                print("Please reposition Camera and check masking!")
+                vs.tuneWindow()
+                x = input('Retry (R) or Quit (Q): ')
+                if x == 'R':
+                    pass
+                else:
+                    quit()
+            else:
+                grabbingFrame = False
+        (coords, rotation) = vs.getBlockWorld()
+        print(coords)
+        print(rotation)
