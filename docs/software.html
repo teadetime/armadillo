@@ -111,7 +111,7 @@ FACEBOOK: https://www.facebook.com/themefisher
                     <!-- Feature Title -->
                     <h3>Overview</h3>
                     <!-- Feature Description -->
-                    <p class="desc">This robotic arm is practically useless without the software and firmware to control it! We modeled a control scheme like that of industrial robot arms where there is a dedicated robot controller taking care of the arm’s movements and a different computer and piece of software telling the arm what to actually do. To accomplish our goal of stacking jenga blocks we also utilized OpenCV https://opencv.org/ to accomplish various vision related tasks like locating the jenga blocks within the world!
+                    <p class="desc">This robotic arm is practically useless without the software and firmware to control it! We modeled a control scheme like that of industrial robot arms where there is a dedicated robot controller taking care of the arm’s movements and a different computer and piece of software telling the arm what to actually do. To accomplish our goal of stacking jenga blocks we also utilized <a style="color:yellow" href="https://opencv.org/">OpenCV</a>  to accomplish various vision related tasks like locating the jenga blocks within the world!
                     </p>
                     <p>
                         The software behind this project is broken into four main chunks:
@@ -138,13 +138,19 @@ FACEBOOK: https://www.facebook.com/themefisher
             <div class="col-lg-8 mr-auto align-self-center">
                 <div class="feature-content">
                     <!-- Feature Title -->
-                    <h3>Materials</h3>
+                    <h3>Kinematics and Inverse Kinematics</h3>
                     <!-- Feature Description -->
-                    <p class="desc">For modularity, the arm is made up of many small 3d printed components.
-                    This allowed us to prototype quickly and change only the components we needed to. The long
-                    linkage sections of the arm are made from carbon fiber tubes, which provide the rigidity
-                    necessary for precision movement without making the end of the arm too heavy to drive. To further
-                    lightweight the arm, the top pivot is a 3D printed bolt, much lighter than the steel alternative.</p>
+                    <p class="desc">For our purposes it is essential to establish a mapping of the robot into the world space! These are called the inverse kinematics. In industrial applications <a style="color:yellow" href="https://en.wikipedia.org/wiki/Inverse_kinematics">inverse kinematics </a> allow for the smooth movement of robots along any vector. This is accomplished by mapping the partial derivatives of cartesian space into partial derivatives of each joint.
+                    </p>
+                    <p>
+                        Fortunately for us the forward kinematics of this arm are quite simple and just involve decomposing the various angles into x,y, and z components.
+                    </p>
+                    <p>
+                        The inverse kinematics, or figuring out how to position the robot to reach a point in space is a little more difficult! We have a 4 axis system, which actually allows us to reach each position in a variety of positions. This design was intentional because we want to be able to be able to have different end effector rotations to pick up the blocks for stacking.
+                    </p>
+                    <p>
+                        The way we constrain these solutions is picking up the block in a reliable manner. We chose to always have the final joint rotated normal to a block as that gives us the ability to place it. This means that for any point in space we also specify the rotation of the block at that point. You can see an example of this below.
+                    </p>
                 </div>
             </div>
             <div class="col-lg-4 mr-auto justify-content-center">
