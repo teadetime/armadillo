@@ -356,8 +356,8 @@ class vision:
             blockShort = min(rot_rect[1])*self.ratio
 
             # use these for making sure block is right size!
-            print(blockLong)
-            print(blockShort)
+            # print(blockLong)
+            # print(blockShort)
             if blockLong > self.jengaLHigh or blockLong < self.jengaLLow or blockShort > self.jengaWHigh or blockShort < self.jengaWLow:
                 # This isn't a jenga Block
                 continue
@@ -434,7 +434,8 @@ class vision:
                     0.5, (0, 255, 0), 2)
                 print("[INFO] ArUco marker ID: {}".format(markerID))
                 # show the output image
-                cv2.imshow("Image 2", self.drawImg)
+                if self.jengaDebug:
+                    cv2.imshow("Image 2", self.drawImg)
                 
             cv2.waitKey(0)
     # loop over the contours

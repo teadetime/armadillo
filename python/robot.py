@@ -37,8 +37,8 @@ class robot:
         self.P1xyz = (0,0,110)       # Only the Z offset does anything
         self.L1 = 322               # mm length of first Arm Bearing to bearing
         self.L2 = 322               # 2nd Arm
-        self.L3 = 18                # Length of rotating end effector
-
+        self.L3 = 17.5                # Length of rotating end effector
+        self.maxExtension=550           # How far out can the arm go!
         #
         self.J1microSteps = 16
         self.J2microSteps = 16
@@ -107,12 +107,12 @@ class robot:
         '''
 
         # CHeck to see if the arm is going to a bad place!
-        if coords[1] < -75 or (160 > math.sqrt(coords[0]**2 + coords[1]**2) > 450):
+        if coords[1] < -75 or 160 > math.sqrt(coords[0]**2 + coords[1]**2) or  math.sqrt(coords[0]**2 + coords[1]**2) > self.maxExtension:
+            print("Cannot reach this position")
             return False
 
         armAngle = math.degrees(math.atan2(-coords[0], coords[1]))
-        blockAngle = thetab
-        print(thetab-armAngle)
+        print(f"jOffset: {self.j4Offset}")
         if thetab-armAngle <=-90:
             print("Left Side")
             thetab += 180
@@ -123,10 +123,10 @@ class robot:
         if self.lookingForBlock:
             self.j4Offset = 0   # Reset the offset and see if we need a new offset for where we are going
              # Determine if this is a hard to pick spot
-            aproxArmAngle = math.atan2(-coords[0], coords[1])
 
+            print(f"Angle for looking at parallel picks:{abs(thetab-armAngle)}")
             # This means we should pick at a different angle!
-            if thetab-aproxArmAngle > 85 and thetab-aproxArmAngle < 95:
+            if abs(thetab-armAngle) > 80 and abs(thetab-armAngle < 100):
                 #Left
                 if coords[0]<0:
                     self.j4Offset = 45

@@ -64,17 +64,20 @@ if __name__=='__main__':
         # test = (0, 400,10,0)
         # arm.moveTo(*test, suction = 0, pump=0)
 
-        time.sleep(5)
+        #time.sleep(5)
 
         arm.controlVacPump(1,1)
-        t = towerPts(x0=200,y0=350, zOffset=6)
+        t = towerPts(x0=300,y0=400, zOffset=6)
         for i in range(54):
             placePoint = next(t)
             print(placePoint)
 
             arm.lookingForBlock = True
             # Perch
-            perch = (-100, 300, placePoint[2]+70, 0)
+            perchx = 0
+            perchy = 400
+            placeAngle = math.atan2(perchx,perchy)
+            perch = (perchx, perchy, placePoint[2]+80,placePoint[3]+placeAngle)
             arm.moveTo(*perch, suction = 1, pump=1)
 
             grabbingFrame = True
@@ -98,24 +101,19 @@ if __name__=='__main__':
             # arm.moveTo(*top, suction = 1, pump=1)
             # time.sleep(1)
             # print("weirds")
-            grabPlace = arm.calcSmoothPlace(block, approachZ=10, approachTangent=0,steps=2)
+            grabPlace = arm.calcSmoothPlace(block, approachZ=15, approachTangent=0,steps=4)
             for pos in grabPlace:
                 arm.moveTo(*pos, suction = 1, pump=1)
                 arm.lookingForBlock = False
 
             # Extract
-            grabPlace = arm.calcSmoothPlace(block, approachZ=30, approachTangent=0,steps=2, behind=-1)
+            grabPlace = arm.calcSmoothPlace(block, approachZ=50, approachTangent=0,steps=2, behind=-1)
             print(list(grabPlace))
             for pos in grabPlace:
                 arm.moveTo(*pos, suction = 1, pump=1)
 
-
             # Perch
-            placeAngle = math.atan2(100,200)
-            print("Angles")
-            print(placeAngle, placePoint[3])
-            # Perch
-            perch = (-100, 250, placePoint[2]+60,placePoint[3]+placeAngle)
+            perch = (0, 400, placePoint[2]+80,placePoint[3]+placeAngle)
 
             arm.moveTo(*perch, suction = 1, pump=1)
 
@@ -125,7 +123,7 @@ if __name__=='__main__':
                 arm.moveTo(*pos, suction = 1, pump=1)
 
             arm.controlVacPump(0,0)
-            testingPlace= arm.calcSmoothPlace(placePoint,approachTangent=0,steps=2, behind=True)
+            testingPlace= arm.calcSmoothPlace(placePoint,approachZ=20 ,approachTangent=0,steps=2, behind=True)
             for pos in testingPlace:
                 arm.moveTo(*pos, suction = 0, pump=0)
 
