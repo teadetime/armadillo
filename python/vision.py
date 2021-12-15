@@ -178,7 +178,7 @@ class vision:
         # print("type(yellowCenter) =", type(yellowCenter))
 
 
-        
+
 
         # Calculate the centers of each piece
 
@@ -343,6 +343,7 @@ class vision:
         return imutils.grab_contours(cnts)
 
     def getBlockPixel(self):
+        blockPositions = []
         cnts = self.getCnts(self.blockMask)
         for c in reversed(cnts): # Start from top of frame since I can't seem to flip the image
             rot_rect = cv2.minAreaRect(c)
@@ -378,22 +379,28 @@ class vision:
                 self.drawContours(box)
                 self.drawPoint(rot_rect[0], (255,0,0))
 
-            return np.array([[rot_rect[0][0]],[rot_rect[0][1]]] ), rotation
+            blockPositions.append((np.array([[rot_rect[0][0]],[rot_rect[0][1]]] ), rotation))
+            # return np.array([[rot_rect[0][0]],[rot_rect[0][1]]] ), rotation
+            yield from blockPositions
+        print("No blocks detected")
         return None
 
     def getBlockWorld(self):
-        singleBlockCenterPixel, singleBlockRotation =  self.getBlockPixel()
-        # Lets take the block into world Coordinates!!!
-        coordWorld, rotationWorld = self.changeBasisAtoB(self.blueWorldOrigin, self.originTagPixel, self.frameRotation, self.basisWorld,
-                                                singleBlockCenterPixel, singleBlockRotation)
+        for singleBlockCenterPixel, singleBlockRotation in self.getBlockPixel():
 
-        # TODO: what does this return if nothing has happened??
-        if self.jengaDebug:
-            #print(f"Block: {singleBlockCenterPixel}, theta: {singleBlockRotation}")
-            print(f"Jenga Block World Coords: {coordWorld}, World Rotation: {rotationWorld}")
-            cv2.imshow("HSV Block", self.drawImg)
-            cv2.waitKey(0)
-        return coordWorld, rotationWorld
+            # Lets take the block into world Coordinates!!!
+            coordWorld, rotationWorld = self.changeBasisAtoB(self.blueWorldOrigin, self.originTagPixel, self.frameRotation, self.basisWorld,
+                                                    singleBlockCenterPixel, singleBlockRotation)
+
+            # TODO: what does this return if nothing has happened??
+            if self.jengaDebug:
+                #print(f"Block: {singleBlockCenterPixel}, theta: {singleBlockRotation}")
+                print(f"Jenga Block World Coords: {coordWorld}, World Rotation: {rotationWorld}")
+                cv2.imshow("HSV Block", self.drawImg)
+                cv2.waitKey(0)
+
+            yield coordWorld, rotationWorld
+            # return coordWorld, rotationWorld
 
     def drawContoursAruco(self, corners, ids):
         # verify *at least* one ArUco marker was detected
