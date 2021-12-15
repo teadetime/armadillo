@@ -37,7 +37,7 @@ class robot:
         self.P1xyz = (0,0,110)       # Only the Z offset does anything
         self.L1 = 322               # mm length of first Arm Bearing to bearing
         self.L2 = 322               # 2nd Arm
-        self.L3 = 17.5                 # Length of rotating end effector
+        self.L3 = 18                # Length of rotating end effector
 
         #
         self.J1microSteps = 16
@@ -51,7 +51,7 @@ class robot:
         self.limitJ1 = math.pi/2 + math.radians(13.8)
         self.limitJ2 = math.radians(89)
         self.limitJ2min = math.radians(0)
-        self.limitJ3 = math.pi/2+math.radians(9)
+        self.limitJ3 = math.pi/2+math.radians(92)
         self.limitJ3min = math.radians(85)
 
         self.lookingForBlock = True
@@ -99,11 +99,27 @@ class robot:
         self.endChar = '>'
 
 
-    def worldToJoint(self, coords , thetab):
+    def worldToJoint(self, coords, thetab):
+        print("Block Rotation!:", thetab)
         '''
         Takes True world frame coordinates of the block! thetab is relative to block
         coords: tuple looks like -> (xb,yb,zb)
         '''
+
+        # CHeck to see if the arm is going to a bad place!
+        if coords[1] < -75 or (160 > math.sqrt(coords[0]**2 + coords[1]**2) > 450):
+            return False
+
+        armAngle = math.degrees(math.atan2(-coords[0], coords[1]))
+        blockAngle = thetab
+        print(thetab-armAngle)
+        if thetab-armAngle <=-90:
+            print("Left Side")
+            thetab += 180
+        elif thetab-armAngle >= 90:
+            thetab -= 180
+            print("RightSide")
+
         if self.lookingForBlock:
             self.j4Offset = 0   # Reset the offset and see if we need a new offset for where we are going
              # Determine if this is a hard to pick spot
@@ -128,6 +144,7 @@ class robot:
         # Calculate the xyz of arm
         #First work backwords from block to position the end of servo
         za = coords[2] + self.suctionOffset #Z_arm
+
         xa = coords[0] + self.L3*math.sin(thetabRad)
         ya = coords[1] - self.L3*math.cos(thetabRad)
 
@@ -147,17 +164,17 @@ class robot:
         theta3 = math.acos((self.L1**2 - b**2 + self.L2**2)/(2*self.L1*self.L2)) + theta2
         theta1 = math.atan2(-xa, ya) # Flip the coordinates since we need to offset by pi/2 this allows us to handle negatives!
 
-        print(theta1, theta2, theta3)
+        #print(theta1, theta2, theta3)
 
         # if theta2 > self.limitJ2 or theta2 < self.limitJ2min:
         #     return None
         # if theta3 > self.limitJ3 or theta3 < self.limitJ3min:
         #     return None
 
-        print(thetab)
+       
 
         theta4 = -(theta1 - thetabRad)
-
+        print("theta4:", math.degrees(theta4))
         return (theta1, theta2, theta3, theta4)
 
     def jointToWorld(self, stepPos):

@@ -428,8 +428,8 @@ class vision:
                 print("[INFO] ArUco marker ID: {}".format(markerID))
                 # show the output image
                 cv2.imshow("Image 2", self.drawImg)
-                cv2.waitKey(0)
-
+                
+            cv2.waitKey(0)
     # loop over the contours
     def getPixelCenterSquare(self, cnts, expectedSize=90):
         for c in cnts:

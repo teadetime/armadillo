@@ -1,7 +1,7 @@
 import math
 import robot
 # import vision
-import Ian_vision as vision
+import vision as vision
 import time
 import numpy as np
 
@@ -61,14 +61,18 @@ if __name__=='__main__':
         ##############################
         arm.home()
 
-        #test = (-300, 300,10,0)
-        # arm.moveTo(*test, suction = 0)
+        # test = (0, 400,10,0)
+        # arm.moveTo(*test, suction = 0, pump=0)
+
+        time.sleep(5)
+
         arm.controlVacPump(1,1)
         t = towerPts(x0=200,y0=350, zOffset=6)
         for i in range(54):
             placePoint = next(t)
             print(placePoint)
 
+            arm.lookingForBlock = True
             # Perch
             perch = (-100, 300, placePoint[2]+70, 0)
             arm.moveTo(*perch, suction = 1, pump=1)
@@ -97,6 +101,7 @@ if __name__=='__main__':
             grabPlace = arm.calcSmoothPlace(block, approachZ=10, approachTangent=0,steps=2)
             for pos in grabPlace:
                 arm.moveTo(*pos, suction = 1, pump=1)
+                arm.lookingForBlock = False
 
             # Extract
             grabPlace = arm.calcSmoothPlace(block, approachZ=30, approachTangent=0,steps=2, behind=-1)
@@ -123,6 +128,9 @@ if __name__=='__main__':
             testingPlace= arm.calcSmoothPlace(placePoint,approachTangent=0,steps=2, behind=True)
             for pos in testingPlace:
                 arm.moveTo(*pos, suction = 0, pump=0)
+
+            arm.lookingForBlock = True
+             
 
 
 

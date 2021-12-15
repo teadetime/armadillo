@@ -127,20 +127,20 @@ void setup() {
   digitalWrite(vacPin, LOW);
 
   messTime = millis();
-  stepper1.setMaxSpeed(800);
+  stepper1.setMaxSpeed(900);
   stepper1.setSpeed(700);
   stepper1.setCurrentPosition(0);
-  stepper1.setAcceleration(300);
+  stepper1.setAcceleration(350);
 
   stepper2.setMaxSpeed(1000);
   stepper2.setSpeed(300);
   stepper2.setCurrentPosition(0);
-  stepper2.setAcceleration(100);
+  stepper2.setAcceleration(150);
 
   stepper3.setMaxSpeed(1000);
   stepper3.setSpeed(500);
   stepper3.setCurrentPosition(0);
-  stepper3.setAcceleration(200);
+  stepper3.setAcceleration(500);
 
   objectiveStartTime = messTime;    // Set this to the current time
   Serial.begin(115200);     // Fast Baud to send data more quickly!
