@@ -50,32 +50,33 @@ if __name__=='__main__':
         # print(f"Reconvert: {arm.radTupleToStepTuple(jPos)}")
 
         # Check for Arduinio
-        if not arm.serial.connected:
-            print("Please Connect Arduino")
-            quit()
+        # if not arm.serial.connected:
+        #     print("Please Connect Arduino")
+        #     quit()
 
-        arm.waitForArduino()
+        # arm.waitForArduino()
+        # arm.controlVacPump(0,0)
 
         ##############################
         ##Initiate Homing Proceedure##
         ##############################
-        arm.home()
+        # arm.home()
 
         # test = (0, 400,10,0)
         # arm.moveTo(*test, suction = 0, pump=0)
 
-        time.sleep(5)
+        # time.sleep(5)
 
-        arm.controlVacPump(1,1)
-        t = towerPts(x0=200,y0=350, zOffset=6)
+        # arm.controlVacPump(1,1)
+        # t = towerPts(x0=200,y0=350, zOffset=6)
         for i in range(54):
-            placePoint = next(t)
-            print(placePoint)
+        #     placePoint = next(t)
+        #     print(placePoint)
 
-            arm.lookingForBlock = True
-            # Perch
-            perch = (-100, 300, placePoint[2]+70, 0)
-            arm.moveTo(*perch, suction = 1, pump=1)
+        #     arm.lookingForBlock = True
+        #     # Perch
+        #     perch = (-100, 300, placePoint[2]+70, 0)
+        #     arm.moveTo(*perch, suction = 1, pump=1)
 
             grabbingFrame = True
             while grabbingFrame:
@@ -130,7 +131,7 @@ if __name__=='__main__':
                 arm.moveTo(*pos, suction = 0, pump=0)
 
             arm.lookingForBlock = True
-             
+
 
 
 
