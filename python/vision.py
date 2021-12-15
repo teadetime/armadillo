@@ -26,7 +26,10 @@ class vision:
 
         # Image Loading and Resizing
         self.needsBasis = True  # Run ceratin calculations if they haven't been run before
-        self.camIndex = 2       # 0 is internal webcam
+        if(os.name == 'posix'):
+            self.camIndex = 2       # 0 is internal webcam
+        else:
+            self.camIndex = 0       # 0 is internal webcam
         self.image = None
         self.resized = None     #imutils.resize(image, width=self.resizedSize)
         self.drawImg = None
@@ -72,8 +75,8 @@ class vision:
             self.lower_blue = np.array([71,60,106])
             self.upper_blue = np.array([179,255,255])
 
-            self.lowerBlocks = np.array([0,0,79])
-            self.upperBlocks = np.array([75,108,205])
+            self.lowerBlocks =  np.array([19,0,200])
+            self.upperBlocks = np.array([150,80,255])
 
             self.lower_green = np.array([28,38,144])
             self.upper_green = np.array([65,90,255])
@@ -117,8 +120,11 @@ class vision:
                 return False
         # Always update the block mask
         self.blockMask = cv2.inRange(self.hsv, self.lowerBlocks, self.upperBlocks)
-        if self.jengaDebug:
+        if self.jengaDebug or 1:
             cv2.imshow("HSV Block Mask", self.blockMask)  # Tag 1
+            cv2.waitKey()
+            cv2.imshow("HSV Block Mask", self.hsv)  # Tag 1
+            cv2.waitKey()
         return True
     # TODO: WHY DOESNT THIS WORK!?!?!?
     #image = cv2.flip(image,0)
