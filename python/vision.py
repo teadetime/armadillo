@@ -6,6 +6,9 @@ import math
 from time import sleep
 from enum import Enum
 import os
+from shapely.geometry import Polygon, Point
+
+
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", required=True,
@@ -54,6 +57,17 @@ class vision:
         self.widthHeightLow = 0.8
         self.widthHeightHigh = 1.2
         self.expectedSize = 31   # TODO Change This in Pixels
+
+        self.outlineColorDict = { # BGR
+            self.BlockType.NOT_BLOCK.value: (140, 0, 0), # dark blue
+            self.BlockType.BLOCK.value: (0, 255, 255), # yellow
+            self.BlockType.CLUSTER.value: (0, 255, 0), # green
+            self.BlockType.EDGE_BLOCK.value: (0, 180, 180), # dark yellow
+            self.BlockType.END_BLOCK.value: (0, 128, 128), # darker yellow
+            self.BlockType.OUT_OF_BOUNDS.value: (0, 0, 0), # black
+            self.BlockType.SWATCH.value: (0, 0, 255), # red
+            self.BlockType.ROBOT.value: (0, 0, 170), # dark red
+        }
 
         # Boundaries for the different  Colors
         #LINUX
@@ -335,10 +349,13 @@ class vision:
 
     def getBlockPixel(self, mlFile = "C:/dev/delme/mlOutput.csv", truthFile = "C:/dev/delme/truthList.csv"):
         cnts = self.getCnts(self.blockMask)
+        # print("cnts =", cnts)
         self.boxList = []
         self.boxPolygons = []
         rot_rectList = []
         rotationList = []
+        self.truthList = []
+
         blockMask2 = cv2.cvtColor(self.blockMask, cv2.COLOR_GRAY2BGR) # add this line
         for c in reversed(cnts): # Start from top of frame since I can't seem to flip the image
             rot_rect = cv2.minAreaRect(c)
@@ -365,52 +382,27 @@ class vision:
                 print(f"ratio:{self.ratio}, w: {self.ratio*rot_rect[1][0]}, h: {self.ratio*rot_rect[1][1]}")
                 print(f"Final rotation: {rotation}")
 
-                box = cv2.boxPoints(rot_rect) #* ratio
-                box = np.int0(box)
+            box = cv2.boxPoints(rot_rect) #* ratio
+            box = np.int0(box)
 
-                classification = self.checkBlockCriteria(blockShort, blockLong, box, rotation)
-                if classification == self.BlockType.OUT_OF_BOUNDS:
-                    continue
+            classification = self.checkBlockCriteria(blockShort, blockLong, box, rotation)
+            if classification == self.BlockType.OUT_OF_BOUNDS:
+                continue
 
-                self.boxList.append(box)
-                self.boxPolygons.append(Polygon(box))
+            self.boxList.append(box)
+            self.boxPolygons.append(Polygon(box))
+            self.truthList.append(0)
 
-                # if classification == self.BlockType.NOT_BLOCK:
-                #     color = (255, 0, 0)
-                #     drawOnOriginalImage = False
-                # elif classification == self.BlockType.CLUSTER:
-                #     color = (0, 255, 0)
-                #     drawOnOriginalImage = False
-                # elif classification == self.BlockType.BLOCK:
-                #     color = (0, 255, 255)
-                #     drawOnOriginalImage = True
+            cv2.drawContours(blockMask2,[box], 0, self.outlineColorDict[classification.value], 2)
+            # cv2.imshow("With Detection", blockMask2)
 
-                cv2.drawContours(blockMask2,[box], 0, self.outlineColorDict[classification.value], 2)
-                # cv2.imshow("With Detection", blockMask2)
+            # if drawOnOriginalImage:
+            cv2.drawContours(self.drawImg,[box],0,self.outlineColorDict[classification.value], 2)
+            cv2.imshow("Image", self.drawImg)
 
-                # if drawOnOriginalImage:
-                cv2.drawContours(self.drawImg,[box],0,self.outlineColorDict[classification.value], 2)
-                cv2.imshow("Image", self.drawImg)
-
-                # newClassification = self.receiveClassificationInput(default = classification)
-                # self.truthList.append(newClassification)
-                # self.truthList.append(classification.value)
-
-        self.pickBox(imgName = "Image")
-        # pd.DataFrame(np.array(self.mlArray)).to_csv("C:/dev/delme/mlOutput2.csv")
-        # print("mlArray[0] =", np.array(self.mlArray)[0].shape)
-        # print("mlArray[0] =", self.mlArray[0])
-        # print(type(self.mlArray))
-        # arrayToDisplay = np.stack(self.mlArray, axis = 0)
-        # print("size of mlArray:", arrayToDisplay.shape)
+        self.pickBox(imgName = "Image 123123")
         print("truthlist =", self.truthList)
-        # arrayToDisplay.tofile("C:/dev/delme/mlOutput2.csv", format = "%1.2f")
-        # np.savetxt(mlFile, arrayToDisplay, delimiter = ",", fmt='%f')
-        # np.savetxt(truthFile, self.truthList, delimiter = ",", fmt='%f')
         print("file completed")
-        # self.checkWaitKey(0)
-
-        # return np.array([[rot_rect[0][0]],[rot_rect[0][1]]] ), rotation
 
 
         for this_classification, this_rot_rect, this_rotation in zip(self.truthList, rot_rectList, rotationList):
@@ -453,6 +445,7 @@ class vision:
 # Mouse Callback function - this is triggered every time the mouse moves
     def selectBox(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
+            print("Polygons =", self.boxPolygons)
             for i, boxPolygon in enumerate(self.boxPolygons):
                 if boxPolygon.contains(Point(x, y)):
                     cv2.drawContours(self.drawImg,[self.boxList[i]],0,(255, 255, 0), 2) # modifying color: cyan
@@ -487,21 +480,6 @@ class vision:
         print(closeUp)
         if closeUp.size <= 0: # check if the image is empty
             return self.BlockType.OUT_OF_BOUNDS
-
-        # cv2.imshow("Box Close-Up", closeUp)
-        # self.checkWaitKey(0)
-        #rotation angle in degree
-        rotated = ndimage.rotate(closeUp, -rotation)
-        # cv2.imshow("Rotated Close-Up", rotated)
-
-        resized = self.basicResize(rotated, self.mlDim)
-        # cv2.imshow("Scaled Rotated Close-Up", resized)
-
-        print("image variable type =", type(resized))
-        newVector = np.reshape(resized, -1) # convert to a vector
-        print("newVector shape =", newVector.shape)
-
-        self.mlArray.append(newVector)
 
         if self.jengaDebug:
             print(blockLong, blockShort)
