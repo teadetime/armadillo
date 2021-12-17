@@ -48,7 +48,7 @@ if __name__=='__main__':
         # print(f"World: {xyz}")
         # jPos = arm.worldToJoint(xyz, block_angle)
         # print(f"Reconvert: {arm.radTupleToStepTuple(jPos)}")
-        # vs.jengaDebug = True
+        vs.jengaDebug = True
         grabbingFrame = True
         while grabbingFrame:
             grabImageSuccess = vs.grabImage(fromPath=False)

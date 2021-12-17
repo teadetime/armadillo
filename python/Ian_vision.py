@@ -470,6 +470,7 @@ class vision:
                         cv2.imshow(self.boxPickImgName, self.drawImg)
 
         elif event == cv2.EVENT_RBUTTONDOWN:
+
             coordWorld, rotationWorld = self.changeBasisAtoB(self.greenWorldOrigin, self.originTagPixel, self.frameRotation, self.basisWorld, [x, y], 0)
             print("You just clicked on", coordWorld[0])
             print("The pixel coordinates are", (x, y))

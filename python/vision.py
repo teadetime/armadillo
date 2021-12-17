@@ -134,7 +134,7 @@ class vision:
         self.hsv = cv2.cvtColor(self.resized, cv2.COLOR_BGR2HSV)
         self.drawImg = self.resized.copy()
         if self.needsBasis:
-            success = self.establishBasis2()
+            success = self.establishBasisAruco()
             print(f"Establish Basis Status? : {success}")
             if not success:
                 return False
@@ -150,7 +150,7 @@ class vision:
     #image = cv2.flip(image,0)
 
 
-    def establishBasis2(self):
+    def establishBasisAruco(self):
         self.ratio = self.image.shape[0] / float(self.resized.shape[0])
         gray = cv2.cvtColor(self.drawImg, cv2.COLOR_BGR2GRAY)
 
@@ -195,9 +195,9 @@ class vision:
         # print("corners[0][0][0][0], ", corners[0][0][0][0])
         # print("type of corners[0][0][0][0], ", type(corners[0][0][0][0]))
 
-        originCenter = np.mean(corners[1][0], axis = 0)
+        originCenter = np.mean(corners[0][0], axis = 0)
         print("greenCenter =", originCenter)
-        secondaryCenter = np.mean(corners[0][0], axis = 0)
+        secondaryCenter = np.mean(corners[1][0], axis = 0)
         print("redCenter =", secondaryCenter)
         # yellowCenter = np.mean(corners[0][0], axis = 0)
         # print("yellowCenter =", yellowCenter)
@@ -356,7 +356,6 @@ class vision:
         rotationList = []
         self.truthList = []
 
-        blockMask2 = cv2.cvtColor(self.blockMask, cv2.COLOR_GRAY2BGR) # add this line
         for c in reversed(cnts): # Start from top of frame since I can't seem to flip the image
             rot_rect = cv2.minAreaRect(c)
             rotation = rot_rect[2]
@@ -391,10 +390,7 @@ class vision:
 
             self.boxList.append(box)
             self.boxPolygons.append(Polygon(box))
-            self.truthList.append(0)
-
-            cv2.drawContours(blockMask2,[box], 0, self.outlineColorDict[classification.value], 2)
-            # cv2.imshow("With Detection", blockMask2)
+            self.truthList.append(classification.value)
 
             # if drawOnOriginalImage:
             cv2.drawContours(self.drawImg,[box],0,self.outlineColorDict[classification.value], 2)
@@ -445,7 +441,7 @@ class vision:
 # Mouse Callback function - this is triggered every time the mouse moves
     def selectBox(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
-            print("Polygons =", self.boxPolygons)
+            # print("Polygons =", self.boxPolygons)
             for i, boxPolygon in enumerate(self.boxPolygons):
                 if boxPolygon.contains(Point(x, y)):
                     cv2.drawContours(self.drawImg,[self.boxList[i]],0,(255, 255, 0), 2) # modifying color: cyan
@@ -461,7 +457,7 @@ class vision:
                         cv2.imshow(self.boxPickImgName, self.drawImg)
 
         elif event == cv2.EVENT_RBUTTONDOWN:
-            coordWorld, rotationWorld = self.changeBasisAtoB(self.greenWorldOrigin, self.originTagPixel, self.frameRotation, self.basisWorld, [x, y], 0)
+            coordWorld, rotationWorld = self.changeBasisAtoB(self.blueWorldOrigin, self.originTagPixel, self.frameRotation, self.basisWorld, [x, y], 0)
             print("You just clicked on", coordWorld[0])
             print("The pixel coordinates are", (x, y))
 
