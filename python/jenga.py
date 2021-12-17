@@ -48,6 +48,24 @@ if __name__=='__main__':
         # print(f"World: {xyz}")
         # jPos = arm.worldToJoint(xyz, block_angle)
         # print(f"Reconvert: {arm.radTupleToStepTuple(jPos)}")
+        # vs.jengaDebug = True
+        grabbingFrame = True
+        while grabbingFrame:
+            grabImageSuccess = vs.grabImage(fromPath=False)
+            if not grabImageSuccess:
+                print("Please reposition Camera and check masking!")
+                vs.tuneWindow()
+                x = input('Retry (R) or Quit (Q): ')
+                if x == 'R':
+                    pass
+                else:
+                    quit()
+            else:
+                grabbingFrame = False
+        gbw = vs.getBlockWorld()
+        (coords, rotation) = next(gbw)
+        print(coords)
+        print(rotation)
 
         # Check for Arduinio
         if not arm.serial.connected:
