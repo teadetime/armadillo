@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 import math
 from time import sleep
+from enum import Enum
 import os
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -39,6 +40,11 @@ class vision:
 
         # Create Masks Based on the Bounds
         self.blockMask = None
+
+        self.mlDim = (100, 100) # machine-learning image size
+        self.mlArray = []
+        self.truthList = []
+        self.imagePath = None
 
         # CONSTANTS
         # Offsets to use for all parts Only Using Two Squares RN
@@ -327,6 +333,197 @@ class vision:
         self.needsBasis = False
         return True # This means we were successful
 
+    def getBlockPixel(self, mlFile = "C:/dev/delme/mlOutput.csv", truthFile = "C:/dev/delme/truthList.csv"):
+        cnts = self.getCnts(self.blockMask)
+        self.boxList = []
+        self.boxPolygons = []
+        rot_rectList = []
+        rotationList = []
+        blockMask2 = cv2.cvtColor(self.blockMask, cv2.COLOR_GRAY2BGR) # add this line
+        for c in reversed(cnts): # Start from top of frame since I can't seem to flip the image
+            rot_rect = cv2.minAreaRect(c)
+            rotation = rot_rect[2]
+            # small pixel cutoff
+            pixelCutoff = 1
+            if rot_rect[1][1] < pixelCutoff or rot_rect[1][0] < pixelCutoff: # THIS HANDLES-> or rot_rect[1][1] == 0 or rot_rect[1][0] == 0:
+                continue
+            blockLong = max(rot_rect[1])*self.ratio
+            blockShort = min(rot_rect[1])*self.ratio
+
+
+            # This means the block is in a certain orientation that needs an offset
+            if rot_rect[1][0] <= rot_rect[1][1]:
+                rotation += 90
+            rotation *= -1      # All rotation needs to be adjusted!
+
+            rot_rectList.append(rot_rect)
+            rotationList.append(rotation)
+
+            #DEBUG
+            if self.jengaDebug:
+                print(f"Center(x,y): {rot_rect[0]}, Width,Height: {rot_rect[1]}, rotation: {rotation}")
+                print(f"ratio:{self.ratio}, w: {self.ratio*rot_rect[1][0]}, h: {self.ratio*rot_rect[1][1]}")
+                print(f"Final rotation: {rotation}")
+
+                box = cv2.boxPoints(rot_rect) #* ratio
+                box = np.int0(box)
+
+                classification = self.checkBlockCriteria(blockShort, blockLong, box, rotation)
+                if classification == self.BlockType.OUT_OF_BOUNDS:
+                    continue
+
+                self.boxList.append(box)
+                self.boxPolygons.append(Polygon(box))
+
+                # if classification == self.BlockType.NOT_BLOCK:
+                #     color = (255, 0, 0)
+                #     drawOnOriginalImage = False
+                # elif classification == self.BlockType.CLUSTER:
+                #     color = (0, 255, 0)
+                #     drawOnOriginalImage = False
+                # elif classification == self.BlockType.BLOCK:
+                #     color = (0, 255, 255)
+                #     drawOnOriginalImage = True
+
+                cv2.drawContours(blockMask2,[box], 0, self.outlineColorDict[classification.value], 2)
+                # cv2.imshow("With Detection", blockMask2)
+
+                # if drawOnOriginalImage:
+                cv2.drawContours(self.drawImg,[box],0,self.outlineColorDict[classification.value], 2)
+                cv2.imshow("Image", self.drawImg)
+
+                # newClassification = self.receiveClassificationInput(default = classification)
+                # self.truthList.append(newClassification)
+                # self.truthList.append(classification.value)
+
+        self.pickBox(imgName = "Image")
+        # pd.DataFrame(np.array(self.mlArray)).to_csv("C:/dev/delme/mlOutput2.csv")
+        # print("mlArray[0] =", np.array(self.mlArray)[0].shape)
+        # print("mlArray[0] =", self.mlArray[0])
+        # print(type(self.mlArray))
+        # arrayToDisplay = np.stack(self.mlArray, axis = 0)
+        # print("size of mlArray:", arrayToDisplay.shape)
+        print("truthlist =", self.truthList)
+        # arrayToDisplay.tofile("C:/dev/delme/mlOutput2.csv", format = "%1.2f")
+        # np.savetxt(mlFile, arrayToDisplay, delimiter = ",", fmt='%f')
+        # np.savetxt(truthFile, self.truthList, delimiter = ",", fmt='%f')
+        print("file completed")
+        # self.checkWaitKey(0)
+
+        # return np.array([[rot_rect[0][0]],[rot_rect[0][1]]] ), rotation
+
+
+        for this_classification, this_rot_rect, this_rotation in zip(self.truthList, rot_rectList, rotationList):
+            if this_classification == 1:
+                yield np.array([[this_rot_rect[0][0]],[rot_rect[0][1]]] ), this_rotation
+        # return None
+
+    def receiveClassificationInput(self, default = None):
+        newClassification = self.checkWaitKey(0) & 0xFF
+        if newClassification in set( ord(str(item.value)) for item in self.BlockType ):
+            return newClassification - ord('0')
+        else:
+            return default
+
+    class BlockType(Enum):
+        NOT_BLOCK = 0
+        BLOCK = 1
+        CLUSTER = 2
+        EDGE_BLOCK = 3
+        END_BLOCK = 4
+        OUT_OF_BOUNDS = 5
+        SWATCH = 6
+        ROBOT = 7
+
+    def pickBox(self, imgName):
+        self.boxPickImgName = imgName
+        cv2.namedWindow(imgName)
+
+        #mouse call back function declaration
+        cv2.setMouseCallback(imgName, self.selectBox)
+
+        print("Left click to choose a color, spacebar to save and exit")
+
+        #while loop to live update
+        while (1):
+            cv2.imshow(imgName, self.drawImg)
+            if self.checkWaitKey(1) == ord(' '):
+                break
+
+# Mouse Callback function - this is triggered every time the mouse moves
+    def selectBox(self, event, x, y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            for i, boxPolygon in enumerate(self.boxPolygons):
+                if boxPolygon.contains(Point(x, y)):
+                    cv2.drawContours(self.drawImg,[self.boxList[i]],0,(255, 255, 0), 2) # modifying color: cyan
+                    cv2.imshow(self.boxPickImgName, self.drawImg)
+                    classification = self.receiveClassificationInput()
+                    print("classification = ", classification)
+                    if classification is not None: # if the default value None was not returned:
+                        print("truthList =", self.truthList)
+                        print("len =", len(self.truthList))
+                        print("i =", i)
+                        self.truthList[i] = classification
+                        cv2.drawContours(self.drawImg, [self.boxList[i]], 0, self.outlineColorDict[classification], 2) # modified color: magenta
+                        cv2.imshow(self.boxPickImgName, self.drawImg)
+
+        elif event == cv2.EVENT_RBUTTONDOWN:
+            coordWorld, rotationWorld = self.changeBasisAtoB(self.greenWorldOrigin, self.originTagPixel, self.frameRotation, self.basisWorld, [x, y], 0)
+            print("You just clicked on", coordWorld[0])
+            print("The pixel coordinates are", (x, y))
+
+
+    def checkBlockCriteria(self, blockShort, blockLong, box, rotation):
+
+        print("Box = ")
+        print(box)
+        x1 = min(box, key = lambda x: x[0])[0]
+        x2 = max(box, key = lambda x: x[0])[0]
+        y1 = min(box, key = lambda x: x[1])[1]
+        y2 = max(box, key = lambda x: x[1])[1]
+        print(x1, x2, y1, y2)
+        closeUp = self.blockMask[y1:y2, x1:x2]
+        print("rotation = ", rotation)
+        print(closeUp)
+        if closeUp.size <= 0: # check if the image is empty
+            return self.BlockType.OUT_OF_BOUNDS
+
+        # cv2.imshow("Box Close-Up", closeUp)
+        # self.checkWaitKey(0)
+        #rotation angle in degree
+        rotated = ndimage.rotate(closeUp, -rotation)
+        # cv2.imshow("Rotated Close-Up", rotated)
+
+        resized = self.basicResize(rotated, self.mlDim)
+        # cv2.imshow("Scaled Rotated Close-Up", resized)
+
+        print("image variable type =", type(resized))
+        newVector = np.reshape(resized, -1) # convert to a vector
+        print("newVector shape =", newVector.shape)
+
+        self.mlArray.append(newVector)
+
+        if self.jengaDebug:
+            print(blockLong, blockShort)
+
+        inBlockDimensionRange = blockLong  > 60 and blockLong  < 110 and \
+                                blockShort > 10 and blockShort < 25
+
+        if inBlockDimensionRange:
+            return self.BlockType.BLOCK
+
+        inClusterDimensionRange = blockLong  > 60 and blockLong  < 150 and \
+                                  blockShort > 20 and blockShort < 100
+
+        if inClusterDimensionRange:
+            return self.BlockType.CLUSTER
+
+        return self.BlockType.NOT_BLOCK
+
+
+
+
+
     # Wrap some basic OpenCV for Easier Use
     def drawContours(self, box, color=(0, 0, 255), thickness=2):
         cv2.drawContours(self.drawImg,[box],0,(0, 0, 255),thickness)
@@ -348,7 +545,7 @@ class vision:
         cv2.CHAIN_APPROX_SIMPLE)
         return imutils.grab_contours(cnts)
 
-    def getBlockPixel(self):
+    def getBlockPixelOld(self):
         blockPositions = []
         cnts = self.getCnts(self.blockMask)
         for c in reversed(cnts): # Start from top of frame since I can't seem to flip the image
@@ -442,7 +639,6 @@ class vision:
                 # show the output image
                 if self.jengaDebug:
                     cv2.imshow("Image 2", self.drawImg)
-                
             cv2.waitKey(0)
     # loop over the contours
     def getPixelCenterSquare(self, cnts, expectedSize=90):
@@ -593,10 +789,22 @@ class vision:
                 pvMax = vMax
 
             # Display output image
-            cv2.imshow('image',output)
+            if self.jengaDebug:
+                cv2.imshow('image',output)
 
             # Wait longer to prevent freeze for videos.
             if cv2.waitKey(wait_time) & 0xFF == ord('q'):
                 break
         cap.release()
         cv2.destroyAllWindows()
+
+    def checkWaitKey(self, val=0): # val = 0 displays static frame; val = 1 dispays moving frame
+        # perform the waitKey, then check key strokes for special actions
+        key = cv2.waitKey(val) & 0xFF
+        if key == 27: # ESC
+            cv2.destroyAllWindows()
+            exit()
+        if key == 32: # Space
+            pass # could put debugging tools or something here
+            # TODO: toggle calibration flag and/or send calibration signal
+        return key
