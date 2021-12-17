@@ -29,6 +29,7 @@ if __name__=='__main__':
 
     testingHomingandWorld = True
     testingCameras = True
+    startWithCameraTest = False # False # True
 
 
     if testingHomingandWorld:
@@ -67,6 +68,40 @@ if __name__=='__main__':
         print(coords)
         print(rotation)
 
+        if startWithCameraTest:
+            grabbingFrame = True
+            vs.jengaDebug = True
+            while grabbingFrame:
+                grabImageSuccess = vs.grabImage(fromPath=False)
+                if not grabImageSuccess:
+                    print("Please reposition Camera and check masking!")
+                    vs.tuneWindow()
+                    x = input('Retry (R) or Quit (Q): ')
+                    if x == 'R':
+                        pass
+                    else:
+                        quit()
+                else:
+                    grabbingFrame = False
+
+            gbw = list(vs.getBlockWorld())
+            print(gbw)
+            (coords, rotation) = next(gbw)
+            print(coords)
+            print(rotation)
+
+
+        # tuningWindow = True
+        # while tuningWindow:
+        #     gbw = vs.getBlockWorld()
+        #     try:
+        #         (coords, rotation) = next(gbw)
+        #         print(coords)
+        #         print(rotation)
+        #         tuningWindow = False
+        #     except StopIteration:
+        #         vs.tuneWindow()
+
         # Check for Arduinio
         if not arm.serial.connected:
             print("Please Connect Arduino")
@@ -74,7 +109,7 @@ if __name__=='__main__':
 
         arm.waitForArduino()
         arm.controlVacPump(0,0)
-        time.sleep(5)
+        time.sleep(1)
         ##############################
         ##Initiate Homing Proceedure##
         ##############################
@@ -86,7 +121,7 @@ if __name__=='__main__':
         #time.sleep(5)
 
         arm.controlVacPump(1,1)
-        t = towerPts(x0=300,y0=400, zOffset=5) # xxxxx
+        t = towerPts(x0=300,y0=400, zOffset=1) # xxxxx
         for i in range(54):
             if i % 6 == 0 and i > 0:
                 arm.home()
@@ -119,7 +154,7 @@ if __name__=='__main__':
             print(coords)
             print(rotation)
 
-            block = (coords[0],coords[1], 2 - (i // 3) / 2.3,rotation) # xxxxx
+            block = (coords[0],coords[1], -5 - (i // 3) / 2.3,rotation) # xxxxx
             # arm.moveTo(*top, suction = 1, pump=1)
             # time.sleep(1)
             # print("weirds")
